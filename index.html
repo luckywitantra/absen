@@ -3,126 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aicha - Mesin Presensi</title>
+    <title>Aicha HC - Mesin Outlet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         body { background: #0f172a; font-family: sans-serif; }
-        .camera-box { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 1.5rem; overflow: hidden; border: 4px solid #334155; }
+        .camera-box { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 1rem; overflow: hidden; border: 4px solid #334155; }
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .tab-btn.active { color: #2563eb; border-bottom: 3px solid #2563eb; background: #eff6ff; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
-        <div class="bg-slate-900 p-6 text-center border-b border-slate-800">
-            <h1 class="text-white font-black tracking-tighter text-2xl italic">AICHA HC</h1>
-            <p id="geo-status" class="text-rose-400 text-[10px] tracking-widest font-bold mt-1">📍 MENCARI SATELIT GPS...</p>
+    <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
+        <div class="bg-slate-900 p-5 text-center">
+            <h1 class="text-white font-black tracking-tighter text-2xl italic">AICHA FRANCHISE</h1>
+            <p id="geo-status" class="text-rose-400 text-[10px] tracking-widest font-bold mt-1">📍 MENCARI GPS...</p>
         </div>
 
-        <div class="p-6 space-y-5">
+        <div class="flex border-b border-slate-100">
+            <button onclick="switchTab('absen')" id="tab-absen" class="tab-btn active flex-1 py-4 text-xs font-black transition-all">ABSENSI</button>
+            <button onclick="switchTab('reg')" id="tab-reg" class="tab-btn flex-1 py-4 text-xs font-black text-slate-400 transition-all">REGISTRASI</button>
+        </div>
+
+        <div class="p-6 space-y-4">
             <div class="camera-box"><video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas></div>
 
-            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
-                <div>
-                    <span class="text-[9px] font-black text-slate-400 uppercase">Biometrik AI</span>
+            <!-- PANEL ABSENSI -->
+            <div id="panel-absen" class="space-y-4">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <span class="text-[9px] font-black text-slate-400 uppercase">IDENTITAS AI (FACE LOCK 100%)</span>
                     <h2 id="ai-name" class="text-lg font-black text-slate-300 italic">Memindai...</h2>
+                </div>
+
+                <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected>Pilih Lokasi Outlet Saat Ini</option>
+                </select>
+                
+                <select id="sel-shift" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected>Pilih Shift (Pilih Outlet Dulu)</option>
+                </select>
+                
+                <div id="dist-alert" class="hidden bg-rose-100 text-rose-600 p-2 rounded-xl text-[10px] font-bold text-center"></div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 text-white py-3 rounded-xl font-black shadow-lg shadow-blue-200 disabled:opacity-30 transition-all">MASUK</button>
+                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-slate-900 text-white py-3 rounded-xl font-black shadow-lg shadow-slate-200 disabled:opacity-30 transition-all">PULANG</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <select id="input-outlet" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"></select>
-                <select id="input-shift" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"></select>
-            </div>
-            
-            <div id="distance-alert" class="hidden bg-rose-100 text-rose-600 p-3 rounded-xl text-xs font-bold text-center"></div>
-
-            <div class="grid grid-cols-2 gap-4 pt-2">
-                <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 text-white py-4 rounded-xl font-black shadow-lg shadow-blue-200 disabled:opacity-30 transition-all">MASUK</button>
-                <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-slate-900 text-white py-4 rounded-xl font-black shadow-lg shadow-slate-200 disabled:opacity-30 transition-all">PULANG</button>
+            <!-- PANEL REGISTRASI (Dikembalikan ke Mesin Outlet) -->
+            <div id="panel-reg" class="hidden space-y-3">
+                <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-[10px] text-blue-700 font-bold text-center mb-2">
+                    Minta Staf Senior/Manager mendampingi proses registrasi. Pastikan wajah terang dan tidak memakai masker/kacamata gelap.
+                </div>
+                <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="reg-role" class="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                        <option value="Staff">Role: Staff</option>
+                        <option value="Senior">Role: Senior</option>
+                    </select>
+                    <select id="reg-outlet" class="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                        <option value="" disabled selected>Pilih Outlet...</option>
+                    </select>
+                </div>
+                <button onclick="daftarkan()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-black shadow-lg mt-2">KUNCI BIOMETRIK</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxAFoxRDA3MLERNMeovKgszipeF1sN74ifx2UXTKYgf82kUAFGSxurFJFvhPMxBTuCuqw/exec";
+        const API_URL = "URL_WEBAPP_GAS_ANDA"; // Masukkan URL Deploy GAS Anda
+        
         const video = document.getElementById('video');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
-        let userLat = 0, userLng = 0, currentDistance = 0, isLocationValid = false;
+        let userLat = 0, userLng = 0, distance = 0, isLocValid = false;
 
         window.addEventListener('load', () => {
             if(navigator.geolocation) {
                 navigator.geolocation.watchPosition(
-                    pos => { userLat = pos.coords.latitude; userLng = pos.coords.longitude; document.getElementById('geo-status').innerText = "📍 GPS TERKUNCI"; document.getElementById('geo-status').className = "text-emerald-400 text-[10px] tracking-widest font-bold mt-1"; validasiJarak(); },
-                    err => { document.getElementById('geo-status').innerText = "📍 IZINKAN GPS LOKASI!"; Swal.fire('Error GPS', 'Mohon izinkan akses lokasi (GPS) pada browser.', 'error'); },
-                    { enableHighAccuracy: true }
+                    pos => { 
+                        userLat = pos.coords.latitude; userLng = pos.coords.longitude; 
+                        document.getElementById('geo-status').innerText = "📍 GPS TERKUNCI"; 
+                        document.getElementById('geo-status').className = "text-emerald-400 text-[10px] tracking-widest font-bold mt-1"; 
+                        cekJarak(); 
+                    },
+                    err => { Swal.fire('Error GPS', 'Izin Lokasi Browser ditolak!', 'error'); }, { enableHighAccuracy: true }
                 );
             }
-            setTimeout(initApp, 1000);
+            setTimeout(initApp, 800);
         });
 
-        // Rumus Haversine: Menghitung jarak bumi dalam meter
         function hitungJarak(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+            const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
             const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2) * Math.sin(Δλ/2)*Math.sin(Δλ/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         async function initApp() {
-            Swal.fire({ title: 'Sinkronisasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Sinkronisasi Server...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             await Promise.all([ faceapi.nets.tinyFaceDetector.loadFromUri(URL), faceapi.nets.faceLandmark68Net.loadFromUri(URL), faceapi.nets.faceRecognitionNet.loadFromUri(URL) ]);
 
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                 const data = await res.json();
-                
-                dbOutlet = data.dataOutlet;
-                dbShift = data.dataShift;
+                dbOutlet = data.dataOutlet; dbShift = data.dataShift;
 
-                const outSel = document.getElementById('input-outlet');
-                outSel.innerHTML = '<option value="" disabled selected>Pilih Outlet</option>';
-                dbOutlet.forEach(o => outSel.innerHTML += `<option value="${o.nama}">${o.nama}</option>`);
-
-                const shfSel = document.getElementById('input-shift');
-                shfSel.innerHTML = '<option value="" disabled selected>Pilih Shift</option>';
-                dbShift.forEach(s => shfSel.innerHTML += `<option value="${s.kode}" data-jam="${s.jamMasuk}">${s.kode} (${s.jamMasuk})</option>`);
+                // Isi Dropdown Outlet
+                let outHtml = '<option value="" disabled selected>Pilih Lokasi Outlet</option>';
+                dbOutlet.forEach(o => outHtml += `<option value="${o.nama}">${o.nama}</option>`);
+                document.getElementById('sel-outlet').innerHTML = outHtml;
+                document.getElementById('reg-outlet').innerHTML = outHtml;
 
                 if (data.dataKaryawan.length > 0) {
                     const labeled = data.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role}), [new Float32Array(k.descriptor)]));
                     faceMatcher = new faceapi.FaceMatcher(labeled, 0.40);
                 }
-                startCam();
+                
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(s => { video.srcObject = s; Swal.close(); }).catch(e => Swal.fire('Error', 'Kamera diblokir.', 'error'));
             } catch (e) { Swal.fire('Error', 'Gagal memuat database.', 'error'); }
         }
 
-        function startCam() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(s => { video.srcObject = s; Swal.close(); }).catch(e => Swal.fire('Error', 'Izin kamera ditolak.', 'error'));
+        // FUNGSI BARU: Filter Shift berdasarkan Outlet yang dipilih
+        function loadShiftDropdown() {
+            cekJarak();
+            const outletName = document.getElementById('sel-outlet').value;
+            const shiftSelect = document.getElementById('sel-shift');
+            shiftSelect.innerHTML = '<option value="" disabled selected>Memuat Jadwal Shift...</option>';
+            
+            const shiftTersedia = dbShift.filter(s => s.outlet === outletName);
+            
+            if(shiftTersedia.length === 0) {
+                shiftSelect.innerHTML = '<option value="" disabled selected>-- Belum ada jadwal di outlet ini --</option>';
+            } else {
+                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift Tersedia</option>';
+                shiftTersedia.forEach(s => {
+                    shiftSelect.innerHTML += `<option value="${s.kode}" data-jam="${s.jamMasuk}">${s.kode} (${s.jamMasuk} - ${s.jamKeluar})</option>`;
+                });
+            }
         }
 
-        document.getElementById('input-outlet').addEventListener('change', validasiJarak);
-
-        function validasiJarak() {
-            const outName = document.getElementById('input-outlet').value;
-            const alertBox = document.getElementById('distance-alert');
+        function cekJarak() {
+            const outName = document.getElementById('sel-outlet').value;
+            const alertBox = document.getElementById('dist-alert');
             if(!outName || userLat === 0) return;
 
             const outlet = dbOutlet.find(o => o.nama === outName);
-            currentDistance = hitungJarak(userLat, userLng, outlet.lat, outlet.lng);
+            distance = hitungJarak(userLat, userLng, outlet.lat, outlet.lng);
             
-            if (currentDistance > outlet.radius) {
-                isLocationValid = false;
-                alertBox.classList.remove('hidden');
-                alertBox.innerHTML = `⚠️ Jarak Anda <b>${Math.round(currentDistance)} m</b>. Maksimal ${outlet.radius} m dari Outlet!`;
-                updateUI(currentFace !== null);
+            if (distance > outlet.radius) {
+                isLocValid = false; alertBox.classList.remove('hidden');
+                alertBox.innerHTML = `⚠️ Jarak ${Math.round(distance)}m. Maksimal ${outlet.radius}m dari Toko!`;
             } else {
-                isLocationValid = true;
-                alertBox.classList.add('hidden');
-                updateUI(currentFace !== null);
+                isLocValid = true; alertBox.classList.add('hidden');
             }
+            updateUI(currentFace !== null);
         }
 
         video.addEventListener('play', () => {
@@ -135,50 +173,74 @@
                 const resized = faceapi.resizeResults(detections, size);
                 canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
 
-                if (detections.length > 0 && faceMatcher) {
+                if (!document.getElementById('panel-absen').classList.contains('hidden') && detections.length > 0 && faceMatcher) {
                     const match = faceMatcher.findBestMatch(resized[0].descriptor);
                     if (match.label !== 'unknown') {
-                        currentFace = JSON.parse(match.label);
-                        updateUI(true);
+                        currentFace = JSON.parse(match.label); updateUI(true);
                     } else { updateUI(false); }
-                } else { updateUI(false); }
+                } else { 
+                    updateUI(false); 
+                    if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); }
+                }
             }, 800);
         });
 
         function updateUI(found) {
-            const nameEl = document.getElementById('ai-name');
-            const shfSel = document.getElementById('input-shift').value;
+            const nameEl = document.getElementById('ai-name'), shf = document.getElementById('sel-shift').value;
             const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out');
             
             if (found && currentFace) {
                 nameEl.innerText = currentFace.n; nameEl.className = "text-lg font-black text-blue-600";
-                if (isLocationValid && shfSel) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
+                if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
             } else {
                 nameEl.innerText = "Memindai..."; nameEl.className = "text-lg font-black text-slate-300 italic";
                 currentFace = null; btnIn.disabled = true; btnOut.disabled = true;
             }
         }
 
-        document.getElementById('input-shift').addEventListener('change', () => updateUI(currentFace !== null));
+        document.getElementById('sel-shift').addEventListener('change', () => updateUI(currentFace !== null));
 
         async function kirimAbsen(tipe) {
-            const out = document.getElementById('input-outlet').value;
-            const shf = document.getElementById('input-shift');
+            const out = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift');
             const shfT = shf.options[shf.selectedIndex].getAttribute('data-jam');
-
-            Swal.fire({ title: 'Merekam Log...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             
+            Swal.fire({ title: 'Merekam Log...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
-                const res = await fetch(API_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfT, tipe: tipe, jarak: currentDistance } }) 
-                });
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfT, tipe: tipe, jarak: distance } }) });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    Swal.fire('Terekam!', `<b>${currentFace.n}</b><br>Jarak Lokasi: ${Math.round(currentDistance)} m (Valid)<br>Status: ${result.statusWaktu}`, 'success');
-                    document.getElementById('input-shift').value = ""; updateUI(false);
+                    Swal.fire('Sukses!', `<b>${currentFace.n}</b> absen ${tipe}.<br>Status: ${result.statusWaktu}`, 'success');
+                    document.getElementById('sel-shift').value = ""; updateUI(false);
                 }
             } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
+        }
+
+        // FUNGSI REGISTRASI WAJAH KARYAWAN BARU DI OUTLET
+        async function daftarkan() {
+            const nama = document.getElementById('reg-nama').value;
+            const role = document.getElementById('reg-role').value;
+            const outlet = document.getElementById('reg-outlet').value;
+            if(!nama || !outlet) return Swal.fire('Error', 'Nama dan Outlet wajib diisi!', 'warning');
+
+            Swal.fire({ title: 'Kunci Biometrik...', text: 'Tahan Posisi Wajah', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+            
+            if(!detection) return Swal.fire('Gagal', 'Wajah tidak jelas. Terangkan cahaya.', 'error');
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'enroll', payload: { nama, role, outlet, descriptor: Array.from(detection.descriptor) } }) });
+                const data = await res.json();
+                if(data.status === 'success') Swal.fire('Tersimpan!', `Wajah ${nama} berhasil dikunci.`, 'success').then(() => location.reload());
+            } catch(e) { Swal.fire('Error', 'Gagal menyimpan.', 'error'); }
+        }
+
+        function switchTab(t) {
+            document.getElementById('panel-absen').classList.toggle('hidden', t === 'reg');
+            document.getElementById('panel-reg').classList.toggle('hidden', t === 'absen');
+            document.getElementById('tab-absen').classList.toggle('active', t === 'absen');
+            document.getElementById('tab-absen').classList.toggle('text-slate-400', t === 'reg');
+            document.getElementById('tab-reg').classList.toggle('active', t === 'reg');
+            document.getElementById('tab-reg').classList.toggle('text-slate-400', t === 'absen');
         }
     </script>
 </body>
