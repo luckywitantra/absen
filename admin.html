@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Aicha HC - Master Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Leaflet JS untuk Maps Gratis Standar Enterprise -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>body { font-family: sans-serif; background: #f1f5f9; } #map { height: 300px; width: 100%; border-radius: 1rem; margin-bottom: 1rem; z-index: 1; }</style>
+</head>
+<body class="p-6 md:p-10">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tighter">EXECUTIVE HQ</h1>
+                <p class="text-slate-500 font-bold text-sm">Geofencing & Kedisiplinan Outlet</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="bukaMapOutlet()" class="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-700">+ Set Lokasi Outlet</button>
+                <select id="filter-outlet" class="bg-white border-0 shadow-sm p-3 rounded-xl font-bold outline-none">
+                    <option value="Semua">Semua Outlet</option>
+                    <option value="Outlet Pusat">Outlet Pusat</option>
+                    <option value="Penajam">Penajam</option>
+                </select>
+                <button onclick="loadData()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700">Tarik Data</button>
+            </div>
+        </header>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-slate-900 text-white font-bold uppercase text-[10px] tracking-widest">
+                    <tr><th class="p-5">Tanggal</th><th class="p-5">Karyawan</th><th class="p-5">Outlet</th><th class="p-5">Jarak (GPS)</th><th class="p-5">Tipe</th><th class="p-5">Status Shift</th></tr>
+                </thead>
+                <tbody id="table-body" class="text-slate-600 font-medium divide-y divide-slate-100">
+                    <tr><td colspan="6" class="p-8 text-center text-slate-400 italic">Klik "Tarik Data"</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Form Map -->
+    <div id="map-modal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-[2rem] w-full max-w-lg shadow-2xl">
+            <h2 class="text-xl font-black mb-4">Set Koordinat Outlet Baru</h2>
+            <div id="map"></div>
+            <p class="text-xs text-slate-500 mb-4 font-bold text-center">Geser Peta / Klik untuk menentukan titik kordinat.</p>
+            <input type="text" id="out-nama" placeholder="Nama Outlet (Misal: Ai-cha Balikpapan)" class="w-full p-3 bg-slate-50 border rounded-xl mb-3 font-bold text-sm outline-none">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <input type="text" id="out-lat" readonly placeholder="Latitude" class="w-full p-3 bg-slate-100 border rounded-xl text-xs font-bold outline-none">
+                <input type="text" id="out-lng" readonly placeholder="Longitude" class="w-full p-3 bg-slate-100 border rounded-xl text-xs font-bold outline-none">
+            </div>
+            <input type="number" id="out-rad" placeholder="Radius Aman (Meter) - Contoh: 50" class="w-full p-3 bg-slate-50 border rounded-xl mb-4 font-bold text-sm outline-none">
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('map-modal').classList.add('hidden')" class="w-full py-3 bg-slate-200 text-slate-600 font-bold rounded-xl">Batal</button>
+                <button onclick="simpanOutletBaru()" class="w-full py-3 bg-slate-900 text-white font-bold rounded-xl">Simpan Kunci GPS</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "URL_WEBAPP_GAS_ANDA";
+        let map, marker;
+
+        function bukaMapOutlet() {
+            document.getElementById('map-modal').classList.remove('hidden');
+            if(!map) {
+                map = L.map('map').setView([-1.269160, 116.825264], 14); // Default Balikpapan
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                marker = L.marker([-1.269160, 116.825264]).addTo(map);
+                
+                map.on('click', function(e) {
+                    marker.setLatLng(e.latlng);
+                    document.getElementById('out-lat').value = e.latlng.lat.toFixed(6);
+                    document.getElementById('out-lng').value = e.latlng.lng.toFixed(6);
+                });
+            }
+            // Fix tile loading delay on display:none element
+            setTimeout(() => { map.invalidateSize(); }, 300);
+        }
+
+        async function simpanOutletBaru() {
+            const nama = document.getElementById('out-nama').value;
+            const lat = document.getElementById('out-lat').value;
+            const lng = document.getElementById('out-lng').value;
+            const rad = document.getElementById('out-rad').value;
+            
+            if(!nama || !lat || !rad) return Swal.fire('Error', 'Lengkapi semua data!', 'warning');
+
+            Swal.fire({ title: 'Menyimpan Master Lokasi...', didOpen: () => Swal.showLoading() });
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'simpan_outlet', payload: { nama, lat, lng, radius: rad } }) });
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                Swal.fire('Berhasil', 'Geofencing outlet baru telah aktif.', 'success');
+                document.getElementById('map-modal').classList.add('hidden');
+            }
+        }
+
+        async function loadData() {
+            const outlet = document.getElementById('filter-outlet').value;
+            Swal.fire({ title: 'Menarik Enkripsi...', didOpen: () => Swal.showLoading() });
+            
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: outlet } }) });
+                const result = await res.json();
+                
+                let html = "";
+                result.data.forEach(row => {
+                    const statusBadge = row.status.includes('TERLAMBAT') ? `<span class="text-rose-500 font-bold">${row.status}</span>` : `<span class="text-emerald-500 font-bold">ON TIME</span>`;
+                    html += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-50">
+                            <td class="p-5">${row.tanggal} <span class="font-bold ml-1">${row.jam}</span></td>
+                            <td class="p-5 font-bold text-slate-800">${row.nama}</td>
+                            <td class="p-5 text-blue-600 font-bold">${row.outlet}</td>
+                            <td class="p-5 font-bold text-slate-500">${row.jarak} m <span class="text-xs">dari titik</span></td>
+                            <td class="p-5 font-black uppercase">${row.tipe}</td>
+                            <td class="p-5">${statusBadge}</td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('table-body').innerHTML = html || `<tr><td colspan="6" class="p-8 text-center text-rose-500 font-bold">Belum ada absen terekam.</td></tr>`;
+                Swal.close();
+            } catch (e) { Swal.fire('Error', 'Server sibuk.', 'error'); }
+        }
+    </script>
+</body>
+</html>
