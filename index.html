@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aicha HC - Kiosk Absen</title>
+    <title>Aicha HC - Mesin Outlet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -18,7 +18,7 @@
 
     <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
         <div class="bg-slate-900 p-5 text-center">
-            <h1 class="text-white font-black tracking-tighter text-2xl italic">AICHA FRANCHISE</h1>
+            <h1 class="text-white font-black tracking-tighter text-2xl italic">AICHA KIOSK</h1>
             <p id="geo-status" class="text-rose-400 text-[10px] tracking-widest font-bold mt-1">📍 MENCARI GPS...</p>
         </div>
 
@@ -33,48 +33,48 @@
             <!-- PANEL ABSENSI -->
             <div id="panel-absen" class="space-y-4">
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                    <span class="text-[9px] font-black text-slate-400 uppercase">IDENTITAS AI (FACE LOCK 100%)</span>
+                    <span class="text-[9px] font-black text-slate-400 uppercase">IDENTITAS AI WAJAH</span>
                     <h2 id="ai-name" class="text-lg font-black text-slate-300 italic">Memindai...</h2>
                 </div>
 
-                <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
-                    <option value="" disabled selected>Memuat Data Outlet...</option>
-                </select>
-                
-                <select id="sel-shift" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
-                    <option value="" disabled selected>Pilih Shift (Pilih Outlet Dulu)</option>
-                </select>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                        <option value="" disabled selected>Pilih Outlet</option>
+                    </select>
+                    <select id="sel-shift" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                        <option value="" disabled selected>Pilih Shift</option>
+                    </select>
+                </div>
                 
                 <div id="dist-alert" class="hidden bg-rose-100 text-rose-600 p-2 rounded-xl text-[10px] font-bold text-center"></div>
 
-                <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="grid grid-cols-3 gap-2 pt-2">
                     <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">MASUK</button>
                     <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-slate-900 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">PULANG</button>
+                    <!-- Tombol IZIN (Aktif asal wajah dikenali, mengabaikan jarak GPS) -->
+                    <button id="btn-izin" onclick="ajukanIzin()" disabled class="bg-amber-500 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">IZIN</button>
                 </div>
             </div>
 
             <!-- PANEL REGISTRASI -->
             <div id="panel-reg" class="hidden space-y-3">
-                <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-[10px] text-blue-700 font-bold text-center mb-2">
-                    Minta Staf Senior mendampingi. Pastikan wajah terang dan tidak memakai kacamata/masker.
-                </div>
-                <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none mt-2">
                 <div class="grid grid-cols-2 gap-2">
                     <select id="reg-role" class="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none">
                         <option value="Staff">Role: Staff</option>
                         <option value="Senior">Role: Senior</option>
                     </select>
                     <select id="reg-outlet" class="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none">
-                        <option value="" disabled selected>Pilih Outlet...</option>
+                        <option value="" disabled selected>Penempatan...</option>
                     </select>
                 </div>
-                <button onclick="daftarkan()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-black shadow-lg mt-2">KUNCI BIOMETRIK</button>
+                <button onclick="daftarkan()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-black shadow-lg mt-2">KUNCI WAJAH</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwUv_KpGILxsGTlCRxpThLUsajMLA_MTUNTGVZuUeZNHqXeo8OFrMsNJiVsCMmFSuXNMQ/exec"; // <-- JANGAN LUPA UPDATE URL INI
+        const API_URL = "https://script.google.com/macros/s/AKfycby9E4RO9QWNrpejJYVVhUpT89320ChH5vwtqoCu4DcnhaRbjFgMOzOdRZM9kd5-kKxP1w/exec"; // <-- JANGAN LUPA UPDATE URL INI
         
         const video = document.getElementById('video');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
@@ -89,13 +89,12 @@
                         document.getElementById('geo-status').className = "text-emerald-400 text-[10px] tracking-widest font-bold mt-1"; 
                         cekJarak(); 
                     },
-                    err => { Swal.fire('Error GPS', 'Izin Lokasi Browser ditolak!', 'error'); }, { enableHighAccuracy: true }
+                    err => { Swal.fire('Info', 'GPS tidak diizinkan. Anda hanya bisa menggunakan fitur IZIN/SAKIT.', 'info'); }, { enableHighAccuracy: true }
                 );
             }
             setTimeout(initApp, 800);
         });
 
-        // ParseFloat fix the string bug from Google Sheets
         function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
             const lat2 = parseFloat(lat2Str), lon2 = parseFloat(lon2Str);
             const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
@@ -105,7 +104,7 @@
         }
 
         async function initApp() {
-            Swal.fire({ title: 'Sinkronisasi Server...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Sinkronisasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             await Promise.all([ faceapi.nets.tinyFaceDetector.loadFromUri(URL), faceapi.nets.faceLandmark68Net.loadFromUri(URL), faceapi.nets.faceRecognitionNet.loadFromUri(URL) ]);
 
@@ -114,15 +113,10 @@
                 const data = await res.json();
                 dbOutlet = data.dataOutlet; dbShift = data.dataShift;
 
-                let outHtml = '<option value="" disabled selected>Pilih Lokasi Outlet Saat Ini</option>';
-                let regOutHtml = '<option value="" disabled selected>Pilih Outlet Target...</option>';
-                dbOutlet.forEach(o => {
-                    outHtml += `<option value="${o.nama}">${o.nama}</option>`;
-                    regOutHtml += `<option value="${o.nama}">${o.nama}</option>`;
-                });
-                
+                let outHtml = '<option value="" disabled selected>Pilih Outlet</option>';
+                dbOutlet.forEach(o => { outHtml += `<option value="${o.nama}">${o.nama}</option>`; });
                 document.getElementById('sel-outlet').innerHTML = outHtml;
-                document.getElementById('reg-outlet').innerHTML = regOutHtml;
+                document.getElementById('reg-outlet').innerHTML = outHtml;
 
                 if (data.dataKaryawan.length > 0) {
                     const labeled = data.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role}), [new Float32Array(k.descriptor)]));
@@ -137,17 +131,13 @@
             cekJarak();
             const outletName = document.getElementById('sel-outlet').value;
             const shiftSelect = document.getElementById('sel-shift');
-            shiftSelect.innerHTML = '<option value="" disabled selected>Memuat Jadwal Shift...</option>';
-            
             const shiftTersedia = dbShift.filter(s => s.outlet === outletName);
             
             if(shiftTersedia.length === 0) {
-                shiftSelect.innerHTML = '<option value="" disabled selected>-- Belum ada jadwal di outlet ini --</option>';
+                shiftSelect.innerHTML = '<option value="" disabled selected>Belum ada jadwal</option>';
             } else {
-                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift Tersedia</option>';
-                shiftTersedia.forEach(s => {
-                    shiftSelect.innerHTML += `<option value="${s.kode}" data-jam="${s.jamMasuk}">${s.kode} (${s.jamMasuk} - ${s.jamKeluar})</option>`;
-                });
+                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift Target</option>';
+                shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}" data-jam="${s.jamMasuk}" data-tol="${s.toleransi}">${s.kode} (${s.jamMasuk})</option>`; });
             }
         }
 
@@ -161,7 +151,7 @@
             
             if (distance > outlet.radius) {
                 isLocValid = false; alertBox.classList.remove('hidden');
-                alertBox.innerHTML = `⚠️ Jarak ${Math.round(distance)}m. Maksimal ${outlet.radius}m dari Toko!`;
+                alertBox.innerHTML = `⚠️ Jarak ${Math.round(distance)}m. Maks. ${outlet.radius}m dari Toko!`;
             } else {
                 isLocValid = true; alertBox.classList.add('hidden');
             }
@@ -191,15 +181,21 @@
         });
 
         function updateUI(found) {
-            const nameEl = document.getElementById('ai-name'), shf = document.getElementById('sel-shift').value;
-            const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out');
+            const nameEl = document.getElementById('ai-name'), outSel = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift').value;
+            const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out'), btnIzin = document.getElementById('btn-izin');
             
             if (found && currentFace) {
                 nameEl.innerText = currentFace.n; nameEl.className = "text-lg font-black text-blue-600";
-                if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
+                
+                // Izin hanya butuh identitas dan outlet (tidak butuh shift/GPS)
+                if(outSel) btnIzin.disabled = false; else btnIzin.disabled = true;
+                
+                // Absen Normal (Butuh GPS & Shift)
+                if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } 
+                else { btnIn.disabled = true; btnOut.disabled = true; }
             } else {
                 nameEl.innerText = "Memindai..."; nameEl.className = "text-lg font-black text-slate-300 italic";
-                currentFace = null; btnIn.disabled = true; btnOut.disabled = true;
+                currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
             }
         }
 
@@ -208,10 +204,11 @@
         async function kirimAbsen(tipe) {
             const out = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift');
             const shfT = shf.options[shf.selectedIndex].getAttribute('data-jam');
+            const shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
             
             Swal.fire({ title: 'Merekam Log...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfT, tipe: tipe, jarak: distance } }) });
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfT, toleransi: shfTol, tipe: tipe, jarak: distance } }) });
                 const result = await res.json();
                 if (result.status === 'success') {
                     Swal.fire('Sukses!', `<b>${currentFace.n}</b> absen ${tipe}.<br>Status: ${result.statusWaktu}`, 'success');
@@ -220,17 +217,36 @@
             } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
         }
 
+        // FUNGSI IZIN / SAKIT (TIDAK BUTUH GPS)
+        async function ajukanIzin() {
+            const out = document.getElementById('sel-outlet').value;
+            const { value: alasan } = await Swal.fire({
+                title: 'Pengajuan Izin',
+                input: 'text',
+                inputLabel: 'Keterangan Izin (Misal: Sakit Demam, Urusan Keluarga)',
+                inputPlaceholder: 'Masukkan keterangan...',
+                showCancelButton: true,
+                inputValidator: (value) => { if (!value) return 'Keterangan wajib diisi!' }
+            });
+
+            if (alasan) {
+                Swal.fire({ title: 'Merekam Izin...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan } }) });
+                    const result = await res.json();
+                    if (result.status === 'success') Swal.fire('Terekam!', `Izin <b>${currentFace.n}</b> berhasil dicatat.`, 'success');
+                } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
+            }
+        }
+
         async function daftarkan() {
-            const nama = document.getElementById('reg-nama').value;
-            const role = document.getElementById('reg-role').value;
-            const outlet = document.getElementById('reg-outlet').value;
+            const nama = document.getElementById('reg-nama').value, role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
             if(!nama || !outlet) return Swal.fire('Error', 'Nama dan Outlet wajib diisi!', 'warning');
 
             Swal.fire({ title: 'Kunci Biometrik...', text: 'Tahan Posisi Wajah', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
             
             if(!detection) return Swal.fire('Gagal', 'Wajah tidak jelas. Terangkan cahaya.', 'error');
-
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'enroll', payload: { nama, role, outlet, descriptor: Array.from(detection.descriptor) } }) });
                 const data = await res.json();
