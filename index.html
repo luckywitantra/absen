@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AiMoy Absen - Kiosk</title>
+    <title>AiMoy Absen Sistem</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -99,7 +99,7 @@
         }
 
         async function initApp() {
-            Swal.fire({ title: 'Menyiapkan AI...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Please Wait...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             // Tambahan: Memuat Model Ekspresi Wajah (Liveness Detection)
             await Promise.all([ 
