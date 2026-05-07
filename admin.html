@@ -22,7 +22,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AICHA HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V11.0 (Ultimate)</p>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V12.0</p>
             
             <div class="flex gap-6 mt-4 overflow-x-auto">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Analitik & Riwayat</button>
@@ -31,6 +31,7 @@
             </div>
         </header>
 
+        <!-- TAB 1: SUPER ANALYTICS -->
         <div id="tab-laporan" class="tab-content active space-y-4">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-end">
                 <div class="flex-1 min-w-[150px]">
@@ -50,27 +51,32 @@
                     <input type="date" id="filter-end" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none">
                 </div>
                 <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis Data</button>
-                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700">PDF</button>
+                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700" title="Export PDF">PDF</button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-emerald-500 uppercase">🌟 Rajin (On Time)</h3><div id="box-rajin" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang...</div></div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-rose-500 uppercase">⏰ Terlambat</h3><div id="box-telat" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang...</div></div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-blue-500 uppercase">⏱️ Total Jam Lembur</h3><div id="box-lembur" class="mt-3 text-3xl font-black text-blue-600">0 <span class="text-sm text-slate-400 font-bold">Menit</span></div></div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-slate-400 uppercase">❓ Alpa (Tanpa Log)</h3><div id="box-alpa" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang...</div></div>
+            <!-- BUG FIX: 5 KOTAK UTUH AGAR TIDAK ERROR NULL INNERHTML -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-emerald-500 uppercase">🌟 Rajin (On Time)</h3><div id="box-rajin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-rose-500 uppercase">⏰ Telat</h3><div id="box-telat" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-amber-500 uppercase">📝 Izin/Sakit</h3><div id="box-izin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-slate-400 uppercase">❓ Alpa</h3><div id="box-alpa" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-blue-500 uppercase">⏱️ Lembur Total</h3><div id="box-lembur" class="mt-2 text-2xl font-black text-blue-600">0 <span class="text-[10px] text-slate-400 font-bold">Menit</span></div></div>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest flex justify-between"><span>📋 Log Absensi Rinci</span><span id="log-count" class="text-xs text-slate-400">0 Data</span></div>
+                <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest flex justify-between">
+                    <span>📋 Log Absensi Rinci</span><span id="log-count" class="text-xs text-slate-400">0 Data</span>
+                </div>
                 <div class="overflow-x-auto max-h-[500px]">
                     <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] sticky top-0"><tr><th class="p-4">Tgl & Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Lembur</th></tr></thead>
-                        <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="5" class="p-6 text-center italic text-slate-400">Klik "Analisis Data"</td></tr></tbody>
+                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] sticky top-0"><tr><th class="p-4">Tgl & Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status</th><th class="p-4">Foto Absen</th></tr></thead>
+                        <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="6" class="p-6 text-center italic text-slate-400">Klik "Analisis Data"</td></tr></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- TAB 2 & 3: Master Outlet dan Master Shift -->
         <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <button onclick="bukaModalOutlet()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md mb-4">+ Tambah Outlet Baru</button>
             <table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Nama Outlet</th><th class="p-4">Titik GPS & Radius</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table>
@@ -81,7 +87,7 @@
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- MODALS FORM -->
     <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-screen">
             <h2 class="text-lg font-black mb-2">Form Outlet</h2><div id="map"></div>
@@ -91,7 +97,6 @@
             <div class="flex gap-2"><button onclick="document.getElementById('modal-outlet').classList.add('hidden')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button><button onclick="simpanData('tambah_outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Simpan</button></div>
         </div>
     </div>
-
     <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl">
             <h2 class="text-lg font-black mb-4">Form Shift</h2>
@@ -104,9 +109,10 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwRY0rTXYTfG-6jxe7DZHpcbcowhth9mtUtypz9Y1j3XdRc8hHKHblZgqvCvhDrVRMpvw/exec"; // <--- JANGAN LUPA UPDATE
+        const API_URL = "https://script.google.com/macros/s/AKfycby8nko8orx8R8Bs0XPkkMfiH1NsHFg6xtORF88IbRPpTv0KUI7NvvXc43nvoUvAXdv8Jw/exec"; // <--- JANGAN LUPA UPDATE
         
         let map, marker, gOutlet = [], gShift = [], gKaryawan = [], gLaporan = [];
+        let analyticsSummary = { rajin: [], telat: [], izin: [], alpa: [] };
 
         window.addEventListener('load', () => {
             const today = new Date().toISOString().split('T')[0];
@@ -126,8 +132,7 @@
         }
 
         function renderMasterTables() {
-            let outFilter = '<option value="Semua">Semua Outlet</option>', outForm = '<option value="" disabled selected>Pilih Outlet...</option>';
-            let karFilter = '<option value="Semua">Semua Karyawan</option>';
+            let outFilter = '<option value="Semua">Semua Outlet</option>', outForm = '<option value="" disabled selected>Pilih Outlet...</option>', karFilter = '<option value="Semua">Semua Karyawan</option>';
             let tableOut = '', tableShf = '';
             
             gOutlet.forEach(o => { outFilter += `<option value="${o.nama}">${o.nama}</option>`; outForm += `<option value="${o.nama}">${o.nama}</option>`; 
@@ -148,6 +153,7 @@
         function simpanData(action) { let p = {}; if(action.includes('outlet')) { p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; } else { p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; } runAPI(action, p); }
         function deleteRow(action, payload) { Swal.fire({ title: 'Hapus?', icon: 'warning', showCancelButton: true }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
+        // --- SUPER ANALYTICS LOGIC ---
         async function generateAnalytics() {
             const outlet = document.getElementById('filter-outlet').value, karyawan = document.getElementById('filter-karyawan').value;
             const tglStart = document.getElementById('filter-start').value, tglEnd = document.getElementById('filter-end').value;
@@ -165,7 +171,6 @@
             
             logsRange.forEach(r => {
                 const isIzin = r.tipe === 'Izin', isTelat = r.status.includes('TERLAMBAT'), isMasuk = r.tipe === 'Masuk', isLembur = r.status.includes('LEMBUR');
-                
                 let badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[10px]">ON TIME</span>';
                 if(isTelat) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
                 if(isIzin) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[10px]">IZIN / SAKIT</span>`;
@@ -174,10 +179,12 @@
                 if(isMasuk && !isTelat) rajinList.push(r.nama); if(isMasuk && isTelat) telatList.push(r.nama); if(isIzin) izinList.push(r.nama);
                 if(r.lembur && !isNaN(r.lembur)) totalLemburMnt += parseInt(r.lembur);
 
-                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.tanggal}<br><span class="text-slate-500">${r.jam}</span></td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td></tr>`;
+                const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http")) ? `<a href="${r.foto}" target="_blank" class="text-blue-600 font-bold hover:underline">Lihat Foto</a>` : `<span class="text-slate-300">Tidak ada</span>`;
+
+                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.tanggal}<br><span class="text-slate-500">${r.jam}</span></td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td><td class="p-4 text-xs">${linkFoto}</td></tr>`;
             });
 
-            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada aktivitas.</td></tr>`;
+            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada aktivitas.</td></tr>`;
             document.getElementById('log-count').innerText = `${logsRange.length} Data`;
 
             const masterRoster = gKaryawan.filter(k => (outlet === "Semua" || k.outlet === outlet) && (karyawan === "Semua" || k.nama === karyawan)).map(k => k.nama);
@@ -203,10 +210,10 @@
             doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.text("LAPORAN HUMAN CAPITAL - AICHA", 14, 22);
             doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); doc.text(`Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
             
-            const headers = [["Tanggal", "Jam", "Nama Karyawan", "Outlet", "Shift", "Tipe", "Status", "Lembur (Mnt)"]];
-            const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur]);
+            const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur", "Link Foto"]];
+            const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, r.foto]);
 
-            doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 8 } });
+            doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 7 } });
             doc.save(`Laporan_HC_${dStart}_${dEnd}.pdf`);
         }
     </script>
