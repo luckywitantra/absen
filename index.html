@@ -53,10 +53,10 @@
                 </div>
             </div>
 
-            <!-- PANEL REGISTRASI (Dikembalikan ke Mesin Outlet) -->
+            <!-- PANEL REGISTRASI -->
             <div id="panel-reg" class="hidden space-y-3">
                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-[10px] text-blue-700 font-bold text-center mb-2">
-                    Minta Staf Senior/Manager mendampingi proses registrasi. Pastikan wajah terang dan tidak memakai masker/kacamata gelap.
+                    Minta Staf Senior/Manager mendampingi proses registrasi. Pastikan wajah terang dan tidak memakai masker.
                 </div>
                 <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none">
                 <div class="grid grid-cols-2 gap-2">
@@ -74,7 +74,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwJn-Y5QkYLgcpwPhEae06BUY0mgXYAZP2oLw6Tr71i4PCX2cw-b3gKcRHum2NZb26nPA/exec"; // Masukkan URL Deploy GAS Anda
+        const API_URL = "https://script.google.com/macros/s/AKfycbwrPSvT8aR0OpiJryLKfHRi5K-b3xBqjkMhE0vXRV4-owXoZY_RS_weFUiNnJK7puenOQ/exec"; // <-- PASTIKAN URL GAS ANDA DI SINI
         
         const video = document.getElementById('video');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
@@ -112,11 +112,15 @@
                 const data = await res.json();
                 dbOutlet = data.dataOutlet; dbShift = data.dataShift;
 
-                // Isi Dropdown Outlet
-                let outHtml = '<option value="" disabled selected>Pilih Lokasi Outlet</option>';
-                dbOutlet.forEach(o => outHtml += `<option value="${o.nama}">${o.nama}</option>`);
+                let outHtml = '<option value="" disabled selected>Pilih Lokasi Outlet Saat Ini</option>';
+                let regOutHtml = '<option value="" disabled selected>Pilih Outlet Target...</option>';
+                dbOutlet.forEach(o => {
+                    outHtml += `<option value="${o.nama}">${o.nama}</option>`;
+                    regOutHtml += `<option value="${o.nama}">${o.nama}</option>`;
+                });
+                
                 document.getElementById('sel-outlet').innerHTML = outHtml;
-                document.getElementById('reg-outlet').innerHTML = outHtml;
+                document.getElementById('reg-outlet').innerHTML = regOutHtml;
 
                 if (data.dataKaryawan.length > 0) {
                     const labeled = data.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role}), [new Float32Array(k.descriptor)]));
@@ -127,7 +131,6 @@
             } catch (e) { Swal.fire('Error', 'Gagal memuat database.', 'error'); }
         }
 
-        // FUNGSI BARU: Filter Shift berdasarkan Outlet yang dipilih
         function loadShiftDropdown() {
             cekJarak();
             const outletName = document.getElementById('sel-outlet').value;
@@ -215,7 +218,6 @@
             } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
         }
 
-        // FUNGSI REGISTRASI WAJAH KARYAWAN BARU DI OUTLET
         async function daftarkan() {
             const nama = document.getElementById('reg-nama').value;
             const role = document.getElementById('reg-role').value;
