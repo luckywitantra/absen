@@ -9,9 +9,13 @@
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         body { background: #0f172a; font-family: sans-serif; }
-        .camera-box { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 1rem; overflow: hidden; border: 4px solid #334155; }
+        .camera-container { position: relative; width: 100%; aspect-ratio: 3/4; background: #000; border-radius: 1.5rem; overflow: hidden; border: 4px solid #334155; }
+        /* Sync Kunci: Objek-fit harus sama agar koordinat tidak meleset */
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         .tab-btn.active { color: #2563eb; border-bottom: 3px solid #2563eb; background: #eff6ff; }
+        /* Animasi Frame Pemindai */
+        @keyframes pulse-border { 0% { border-color: rgba(255,255,255,0.4); } 50% { border-color: rgba(255,255,255,0.8); } 100% { border-color: rgba(255,255,255,0.4); } }
+        .face-guide { animation: pulse-border 2s infinite; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -28,12 +32,23 @@
         </div>
 
         <div class="p-6 space-y-4">
-            <div class="camera-box"><video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas></div>
+            
+            <!-- AREA KAMERA DENGAN FRAME PANDUAN -->
+            <div class="camera-container">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="overlay" class="z-10"></canvas>
+                <!-- UI Guide Wajah -->
+                <div class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
+                    <div class="w-[180px] h-[240px] border-[3px] border-dashed rounded-[50%] face-guide shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"></div>
+                    <div class="mt-4 bg-slate-900/70 backdrop-blur px-4 py-1.5 rounded-full text-white text-[9px] font-black tracking-widest">
+                        SEJAJARKAN WAJAH DI SINI
+                    </div>
+                </div>
+            </div>
 
             <div id="panel-absen" class="space-y-4">
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                    <span class="text-[9px] font-black text-slate-400 uppercase">IDENTITAS AI WAJAH</span>
-                    <h2 id="ai-name" class="text-lg font-black text-slate-300 italic">Memindai...</h2>
+                    <h2 id="ai-name" class="text-lg font-black text-slate-300 italic">Mencari Wajah...</h2>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -62,9 +77,10 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbypohuCa64p9rltmLaybs_MilqqU3xJf6m00Jee73ovmdeOtxup3f-9D2f37VigdqLbQw/exec"; // <--- UPDATE URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRY0rTXYTfG-6jxe7DZHpcbcowhth9mtUtypz9Y1j3XdRc8hHKHblZgqvCvhDrVRMpvw/exec"; // <--- UPDATE URL GAS ANDA
         
         const video = document.getElementById('video');
+        const canvas = document.getElementById('overlay');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
         let userLat = 0, userLng = 0, distance = 0, isLocValid = false, lastRecognizedName = null;
 
@@ -117,7 +133,7 @@
             
             if(shiftTersedia.length === 0) { shiftSelect.innerHTML = '<option value="" disabled selected>Belum ada jadwal</option>'; } 
             else {
-                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift</option>';
+                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift Target</option>';
                 shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}" data-jamm="${s.jamMasuk}" data-jamk="${s.jamKeluar}" data-tol="${s.toleransi}">${s.kode} (${s.jamMasuk}-${s.jamKeluar})</option>`; });
             }
         }
@@ -133,11 +149,20 @@
             else { isLocValid = true; alertBox.classList.add('hidden'); } updateUI(currentFace !== null);
         }
 
+        // FUNGSI SINKRONISASI KANVAS ABSOLUT
+        video.addEventListener('loadedmetadata', () => {
+            canvas.width = video.videoWidth; 
+            canvas.height = video.videoHeight;
+        });
+
         video.addEventListener('play', () => {
-            const canvas = document.getElementById('overlay'); const size = { width: video.offsetWidth, height: video.offsetHeight }; faceapi.matchDimensions(canvas, size);
+            const size = { width: video.videoWidth, height: video.videoHeight };
+            faceapi.matchDimensions(canvas, size);
+            
             setInterval(async () => {
                 const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-                const resized = faceapi.resizeResults(detections, size); canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
+                const resized = faceapi.resizeResults(detections, size); 
+                canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
 
                 if (!document.getElementById('panel-absen').classList.contains('hidden') && detections.length > 0 && faceMatcher) {
                     const match = faceMatcher.findBestMatch(resized[0].descriptor);
@@ -146,7 +171,10 @@
                         if(lastRecognizedName !== info.n) { const outSel = document.getElementById('sel-outlet'); if(info.o) { outSel.value = info.o; loadShiftDropdown(); } lastRecognizedName = info.n; }
                         currentFace = info; updateUI(true);
                     } else { lastRecognizedName = null; updateUI(false); }
-                } else { lastRecognizedName = null; updateUI(false); if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); } }
+                } else { 
+                    lastRecognizedName = null; updateUI(false); 
+                    if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); } 
+                }
             }, 800);
         });
 
@@ -158,12 +186,11 @@
                 nameEl.innerText = currentFace.n; nameEl.className = "text-lg font-black text-blue-600";
                 if(outSel) btnIzin.disabled = false; else btnIzin.disabled = true;
                 if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
-            } else { nameEl.innerText = "Memindai..."; nameEl.className = "text-lg font-black text-slate-300 italic"; currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true; }
+            } else { nameEl.innerText = "Mencari Wajah..."; nameEl.className = "text-lg font-black text-slate-300 italic"; currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true; }
         }
 
         document.getElementById('sel-shift').addEventListener('change', () => updateUI(currentFace !== null));
 
-        // SMART SHIFT WARNING
         function validasiAbsen(tipe) {
             const shf = document.getElementById('sel-shift');
             const jamMasukShift = shf.options[shf.selectedIndex].getAttribute('data-jamm');
@@ -171,11 +198,10 @@
             const currentHour = new Date().getHours();
             const shiftHour = parseInt(jamMasukShift.split(':')[0]);
 
-            // Jika beda waktu lebih dari 3 jam dari jadwal masuk
-            if (tipe === 'Masuk' && Math.abs(currentHour - shiftHour) >= 3) {
+            if (tipe === 'Masuk' && Math.abs(currentHour - shiftHour) >= 4) {
                 Swal.fire({
-                    title: 'Peringatan Waktu!', text: `Anda memilih Shift ${shf.value} (${jamMasukShift}), padahal sekarang jam ${currentHour}:00. Apakah Anda yakin tidak salah pilih shift?`,
-                    icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Ya, Lanjutkan'
+                    title: 'Peringatan Waktu Shift!', text: `Anda memilih Shift ${shf.value} yang masuk jam ${jamMasukShift}, padahal sekarang pukul ${currentHour}:00. Apakah Anda yakin tidak salah pilih?`,
+                    icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', confirmButtonText: 'Ya, Lanjutkan', cancelButtonText: 'Batal'
                 }).then((result) => { if (result.isConfirmed) kirimAbsen(tipe); });
             } else { kirimAbsen(tipe); }
         }
@@ -192,7 +218,6 @@
                 const result = await res.json();
                 
                 if (result.status === 'success') {
-                    // FITUR WHATSAPP SHARE
                     const textWA = `*NOTIFIKASI ABSENSI AICHA*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}`;
                     const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
@@ -200,12 +225,10 @@
                         icon: 'success', title: 'Absen Berhasil!',
                         html: `<b>${currentFace.n}</b> berhasil ${tipe}.<br>Status: <b class="text-blue-600">${result.statusWaktu}</b><br><br>
                                <a href="${waLink}" target="_blank" class="bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold shadow-md block text-center uppercase tracking-widest text-sm hover:bg-emerald-600 transition-all">💬 Bagikan ke Grup WA</a>`,
-                        showConfirmButton: false, timer: 10000
+                        showConfirmButton: false, timer: 8000
                     });
                     document.getElementById('sel-shift').value = ""; updateUI(false);
-                } else {
-                    Swal.fire('Ditolak Sistem', result.message, 'error');
-                }
+                } else { Swal.fire('Ditolak Sistem', result.message, 'error'); }
             } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
         }
 
@@ -220,6 +243,29 @@
                     if (result.status === 'success') Swal.fire('Terekam!', `Izin <b>${currentFace.n}</b> dicatat.`, 'success');
                 } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
             }
+        }
+
+        async function daftarkan() {
+            const nama = document.getElementById('reg-nama').value, role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
+            if(!nama || !outlet) return Swal.fire('Error', 'Nama dan Outlet wajib diisi!', 'warning');
+
+            Swal.fire({ title: 'Menganalisis Biometrik...', text: 'Tahan Posisi Wajah di Dalam Garis', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+            if(!detection) return Swal.fire('Gagal', 'Wajah tidak jelas. Sejajarkan di dalam garis.', 'error');
+
+            if (faceMatcher) {
+                const match = faceMatcher.findBestMatch(detection.descriptor);
+                if (match.label !== 'unknown') {
+                    const existData = JSON.parse(match.label);
+                    return Swal.fire({ icon: 'error', title: 'Registrasi Ditolak', html: `Wajah ini sudah terdaftar atas nama:<br><b class="text-xl text-blue-600">${existData.n}</b><br>di ${existData.o}` });
+                }
+            }
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'enroll', payload: { nama, role, outlet, descriptor: Array.from(detection.descriptor) } }) });
+                const data = await res.json();
+                if(data.status === 'success') Swal.fire('Tersimpan!', `Wajah ${nama} dikunci.`, 'success').then(() => location.reload());
+            } catch(e) { Swal.fire('Error', 'Gagal menyimpan.', 'error'); }
         }
 
         function switchTab(t) { document.getElementById('panel-absen').classList.toggle('hidden', t === 'reg'); document.getElementById('panel-reg').classList.toggle('hidden', t === 'absen'); document.getElementById('tab-absen').classList.toggle('active', t === 'absen'); document.getElementById('tab-absen').classList.toggle('text-slate-400', t === 'reg'); document.getElementById('tab-reg').classList.toggle('active', t === 'reg'); document.getElementById('tab-reg').classList.toggle('text-slate-400', t === 'absen'); }
