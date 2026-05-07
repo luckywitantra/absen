@@ -31,7 +31,6 @@
 
         <div class="p-6 space-y-4">
             
-            <!-- AREA KAMERA -->
             <div class="camera-container">
                 <video id="video" autoplay muted playsinline></video>
                 <canvas id="overlay" class="z-10"></canvas>
@@ -72,7 +71,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- UPDATE URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- UPDATE URL GAS ANDA
         
         const video = document.getElementById('video');
         const canvas = document.getElementById('overlay');
@@ -128,7 +127,7 @@
             
             if(shiftTersedia.length === 0) { shiftSelect.innerHTML = '<option value="" disabled selected>Belum ada jadwal</option>'; } 
             else {
-                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift</option>';
+                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift Target</option>';
                 shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}" data-jamm="${s.jamMasuk}" data-jamk="${s.jamKeluar}" data-tol="${s.toleransi}">${s.kode} (${s.jamMasuk}-${s.jamKeluar})</option>`; });
             }
         }
@@ -161,7 +160,10 @@
                         if(lastRecognizedName !== info.n) { const outSel = document.getElementById('sel-outlet'); if(info.o) { outSel.value = info.o; loadShiftDropdown(); } lastRecognizedName = info.n; }
                         currentFace = info; updateUI(true);
                     } else { lastRecognizedName = null; updateUI(false); }
-                } else { lastRecognizedName = null; updateUI(false); if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); } }
+                } else { 
+                    lastRecognizedName = null; updateUI(false); 
+                    if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); } 
+                }
             }, 800);
         });
 
@@ -187,13 +189,10 @@
             } else { kirimAbsen(tipe); }
         }
 
-        // FITUR BARU: Ambil Foto Base64 untuk Drive
         function ambilFotoKamera() {
-            const tempCanvas = document.createElement('canvas');
-            const scale = 480 / video.videoWidth; // Resize ke resolusi ringan untuk mempercepat upload
+            const tempCanvas = document.createElement('canvas'); const scale = 480 / video.videoWidth; 
             tempCanvas.width = 480; tempCanvas.height = video.videoHeight * scale;
-            const ctx = tempCanvas.getContext('2d');
-            ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1); // Mirror
+            const ctx = tempCanvas.getContext('2d'); ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1); 
             ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
             return tempCanvas.toDataURL('image/jpeg', 0.6);
         }
@@ -201,22 +200,20 @@
         async function kirimAbsen(tipe) {
             const out = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift');
             const shfM = shf.options[shf.selectedIndex].getAttribute('data-jamm'), shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk'), shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
-            const fotoData = ambilFotoKamera(); // Ambil Snapshot
+            const fotoData = ambilFotoKamera();
 
-            Swal.fire({ title: 'Merekam Foto & Log...', html: 'Mengunggah ke Cloud...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Merekam Foto & Log...', html: 'Mengunggah ke Server...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, tipe: tipe, jarak: distance, foto: fotoData } }) });
                 const result = await res.json();
                 
                 if (result.status === 'success') {
-                    // LINK WA DENGAN FOTO TERLAMPIR
                     const textWA = `*NOTIFIKASI ABSENSI AICHA*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}`;
                     const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
                     Swal.fire({
                         icon: 'success', title: 'Absen Berhasil!',
-                        html: `<b>${currentFace.n}</b> berhasil ${tipe}.<br>Status: <b class="text-blue-600">${result.statusWaktu}</b><br><br>
-                               <a href="${waLink}" target="_blank" class="bg-emerald-500 text-white px-4 py-3 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all shadow-emerald-500/50">💬 LAPORKAN KE GRUP WA</a>`,
+                        html: `<b>${currentFace.n}</b> berhasil ${tipe}.<br>Status: <b class="text-blue-600">${result.statusWaktu}</b><br><br><a href="${waLink}" target="_blank" class="bg-emerald-500 text-white px-4 py-3 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all shadow-emerald-500/50">💬 LAPORKAN KE GRUP WA</a>`,
                         showConfirmButton: false, timer: 15000
                     });
                     document.getElementById('sel-shift').value = ""; updateUI(false);
