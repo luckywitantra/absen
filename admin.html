@@ -7,8 +7,11 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Tambahan Library untuk PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f1f5f9; }
+        body { font-family: sans-serif; background: #f8fafc; }
         #map { height: 250px; width: 100%; border-radius: 1rem; margin-bottom: 1rem; z-index: 1;}
         .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 900; }
         .tab-content { display: none; }
@@ -20,7 +23,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AICHA HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V7.0</p>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V8.0 (Enterprise)</p>
             
             <div class="flex gap-6 mt-4">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all" id="btn-laporan">Analitik Harian</button>
@@ -32,50 +35,33 @@
         <!-- TAB 1: SUPER ANALYTICS -->
         <div id="tab-laporan" class="tab-content active space-y-4">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-end">
-                <div class="flex-1 min-w-[200px]">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Pilih Outlet</label>
+                <div class="flex-1 min-w-[150px]">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Outlet</label>
                     <select id="filter-outlet" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"><option value="Semua">Semua Outlet</option></select>
                 </div>
                 <div class="flex-1 min-w-[150px]">
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Tanggal</label>
-                    <!-- Default to today's date format yyyy-mm-dd -->
                     <input type="date" id="filter-date" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none">
                 </div>
-                <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis Kinerja</button>
-                <button onclick="exportCSV()" class="bg-emerald-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-emerald-700">⬇ CSV</button>
+                <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis</button>
+                <button onclick="exportCSV()" class="bg-emerald-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-emerald-700">⬇ CSV</button>
+                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700">⬇ PDF</button>
             </div>
 
             <!-- Kartu Analitik Rekapitulasi -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-black text-emerald-500 uppercase">🌟 Rajin (On Time)</h3>
-                    <div id="box-rajin" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div>
-                </div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-black text-rose-500 uppercase">⏰ Terlambat</h3>
-                    <div id="box-telat" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div>
-                </div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-black text-amber-500 uppercase">📝 Izin / Sakit</h3>
-                    <div id="box-izin" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div>
-                </div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-black text-slate-400 uppercase">❓ Alpa (Tanpa Kabar)</h3>
-                    <div id="box-alpa" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div>
-                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-emerald-500 uppercase">🌟 Rajin (On Time)</h3><div id="box-rajin" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-rose-500 uppercase">⏰ Terlambat</h3><div id="box-telat" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-amber-500 uppercase">📝 Izin / Sakit</h3><div id="box-izin" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-slate-400 uppercase">❓ Alpa (Tanpa Kabar)</h3><div id="box-alpa" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div></div>
             </div>
 
-            <!-- Tabel Log Harian -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest">📋 Log Absensi Rinci</div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">
-                            <tr><th class="p-4">Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Jarak/Ket</th></tr>
-                        </thead>
-                        <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100">
-                            <tr><td colspan="5" class="p-6 text-center italic text-slate-400">Klik "Analisis Kinerja"</td></tr>
-                        </tbody>
+                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Keterangan</th></tr></thead>
+                        <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="5" class="p-6 text-center italic text-slate-400">Klik "Analisis"</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -102,10 +88,11 @@
 
     <!-- MODAL OUTLET -->
     <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <h2 class="text-lg font-black mb-2">Setup Lokasi Outlet</h2>
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-screen">
+            <h2 id="title-modal-out" class="text-lg font-black mb-2">Form Outlet</h2>
             <div id="map"></div>
-            <input type="text" id="out-nama" placeholder="Nama Outlet" class="w-full p-3 bg-slate-50 border rounded-lg mb-2 text-sm font-bold outline-none">
+            <input type="hidden" id="out-oldnama">
+            <input type="text" id="out-nama" placeholder="Nama Outlet (Cth: Penajam)" class="w-full p-3 bg-slate-50 border rounded-lg mb-2 text-sm font-bold outline-none">
             <div class="grid grid-cols-2 gap-2 mb-2">
                 <input type="text" id="out-lat" readonly placeholder="Latitude" class="w-full p-2 bg-slate-100 rounded-lg text-xs outline-none">
                 <input type="text" id="out-lng" readonly placeholder="Longitude" class="w-full p-2 bg-slate-100 rounded-lg text-xs outline-none">
@@ -113,7 +100,7 @@
             <input type="number" id="out-rad" placeholder="Radius Aman (cth: 50)" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
             <div class="flex gap-2">
                 <button onclick="tutupModal('modal-outlet')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button>
-                <button onclick="simpanData('tambah_outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Simpan</button>
+                <button onclick="simpanOutlet()" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Simpan</button>
             </div>
         </div>
     </div>
@@ -121,7 +108,8 @@
     <!-- MODAL SHIFT -->
     <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl">
-            <h2 class="text-lg font-black mb-4">Buat Jadwal Shift</h2>
+            <h2 id="title-modal-shf" class="text-lg font-black mb-4">Form Jadwal Shift</h2>
+            <input type="hidden" id="shf-oldoutlet"><input type="hidden" id="shf-oldkode">
             <select id="shf-outlet" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none"></select>
             <input type="text" id="shf-nama" placeholder="Kode (cth: Pagi)" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
             <div class="grid grid-cols-2 gap-2 mb-3">
@@ -131,15 +119,16 @@
             <input type="number" id="shf-tol" placeholder="Toleransi (menit)" value="15" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
             <div class="flex gap-2">
                 <button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button>
-                <button onclick="simpanData('tambah_shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg">Simpan</button>
+                <button onclick="simpanShift()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg">Simpan</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycby9E4RO9QWNrpejJYVVhUpT89320ChH5vwtqoCu4DcnhaRbjFgMOzOdRZM9kd5-kKxP1w/exec"; // <--- Wajib diganti URL baru
+        const API_URL = "https://script.google.com/macros/s/AKfycbzx02l2Cn2rMKGubMKYlm-E7AVTMGABcBjDZEwGxLnQygMXR1uO3aTmKfBWmFZplrqZiw/exec"; // <--- Masukkan URL GAS Anda di sini
         
         let map, marker, gOutlet = [], gShift = [], gKaryawan = [], gLaporan = [];
+        let analyticsSummary = { rajin: [], telat: [], izin: [], alpa: [] };
 
         window.addEventListener('load', () => {
             document.getElementById('filter-date').value = new Date().toISOString().split('T')[0];
@@ -173,12 +162,18 @@
                 outFilter += `<option value="${o.nama}">${o.nama}</option>`; outForm += `<option value="${o.nama}">${o.nama}</option>`;
                 tableOut += `<tr class="hover:bg-slate-50 border-b">
                     <td class="p-4 font-black">${o.nama}</td><td class="p-4">${o.lat}, ${o.lng} <br><span class="text-xs text-slate-400">Radius: ${o.radius}m</span></td>
-                    <td class="p-4 text-right"><button onclick="deleteRow('hapus_outlet', {nama: '${o.nama}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button></td></tr>`;
+                    <td class="p-4 text-right">
+                        <button onclick="editModalOutlet('${o.nama}', '${o.lat}', '${o.lng}', '${o.radius}')" class="bg-amber-100 text-amber-600 px-3 py-1 rounded text-xs font-bold mr-1">Edit</button>
+                        <button onclick="deleteRow('hapus_outlet', {nama: '${o.nama}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button>
+                    </td></tr>`;
             });
             gShift.forEach(s => {
                 tableShf += `<tr class="hover:bg-slate-50 border-b">
                     <td class="p-4 font-bold text-blue-600">${s.outlet}</td><td class="p-4 font-black">${s.kode}</td><td class="p-4">${s.jamMasuk} - ${s.jamKeluar} <span class="text-xs text-slate-400">(Tol: ${s.toleransi}m)</span></td>
-                    <td class="p-4 text-right"><button onclick="deleteRow('hapus_shift', {kode: '${s.kode}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button></td></tr>`;
+                    <td class="p-4 text-right">
+                        <button onclick="editModalShift('${s.outlet}', '${s.kode}', '${s.jamMasuk}', '${s.jamKeluar}', '${s.toleransi}')" class="bg-amber-100 text-amber-600 px-3 py-1 rounded text-xs font-bold mr-1">Edit</button>
+                        <button onclick="deleteRow('hapus_shift', {outlet: '${s.outlet}', kode: '${s.kode}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button>
+                    </td></tr>`;
             });
 
             document.getElementById('filter-outlet').innerHTML = outFilter; document.getElementById('shf-outlet').innerHTML = outForm;
@@ -187,17 +182,46 @@
         }
 
         // --- MAP & MODAL LOGIC ---
-        function bukaModalOutlet() {
-            document.getElementById('modal-outlet').classList.remove('hidden');
+        function initMap(lat, lng) {
             if(!map) {
-                map = L.map('map').setView([-1.269160, 116.825264], 14);
+                map = L.map('map').setView([lat, lng], 14);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                marker = L.marker([-1.269160, 116.825264]).addTo(map);
+                marker = L.marker([lat, lng]).addTo(map);
                 map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); });
-            }
+            } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); }
             setTimeout(() => map.invalidateSize(), 300);
         }
-        function bukaModalShift() { document.getElementById('modal-shift').classList.remove('hidden'); }
+
+        function bukaModalOutlet() {
+            document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru";
+            document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = "";
+            document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = "";
+            document.getElementById('modal-outlet').classList.remove('hidden'); initMap(-1.269160, 116.825264);
+        }
+
+        function editModalOutlet(nama, lat, lng, rad) {
+            document.getElementById('title-modal-out').innerText = "Edit Data Outlet";
+            document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama;
+            document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad;
+            document.getElementById('modal-outlet').classList.remove('hidden'); initMap(parseFloat(lat), parseFloat(lng));
+        }
+
+        function bukaModalShift() {
+            document.getElementById('title-modal-shf').innerText = "Tambah Jadwal Shift";
+            document.getElementById('shf-oldoutlet').value = ""; document.getElementById('shf-oldkode').value = "";
+            document.getElementById('shf-outlet').value = ""; document.getElementById('shf-nama').value = "";
+            document.getElementById('shf-masuk').value = ""; document.getElementById('shf-keluar').value = ""; document.getElementById('shf-tol').value = "15";
+            document.getElementById('modal-shift').classList.remove('hidden');
+        }
+
+        function editModalShift(outlet, kode, jamM, jamK, tol) {
+            document.getElementById('title-modal-shf').innerText = "Edit Jadwal Shift";
+            document.getElementById('shf-oldoutlet').value = outlet; document.getElementById('shf-oldkode').value = kode;
+            document.getElementById('shf-outlet').value = outlet; document.getElementById('shf-nama').value = kode;
+            document.getElementById('shf-masuk').value = jamM; document.getElementById('shf-keluar').value = jamK; document.getElementById('shf-tol').value = tol;
+            document.getElementById('modal-shift').classList.remove('hidden');
+        }
+
         function tutupModal(id) { document.getElementById(id).classList.add('hidden'); }
 
         // --- CRUD LOGIC ---
@@ -209,16 +233,18 @@
             else { Swal.fire('Gagal', data.message || 'Kesalahan server.', 'error'); }
         }
 
-        function simpanData(action) {
-            let p = {};
-            if(action === 'tambah_outlet') {
-                p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value };
-                if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Lengkapi form Peta!', 'warning');
-            } else {
-                p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value };
-                if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Lengkapi Shift!', 'warning');
-            }
-            runAPI(action, p);
+        function simpanOutlet() {
+            const oldNama = document.getElementById('out-oldnama').value;
+            const p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value };
+            if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning');
+            if(oldNama) { p.oldNama = oldNama; runAPI('edit_outlet', p); } else { runAPI('tambah_outlet', p); }
+        }
+
+        function simpanShift() {
+            const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value;
+            const p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value };
+            if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning');
+            if(oldOut) { p.oldOutlet = oldOut; p.oldKode = oldKode; runAPI('edit_shift', p); } else { runAPI('tambah_shift', p); }
         }
 
         function deleteRow(action, payload) {
@@ -228,23 +254,19 @@
         // --- SUPER ANALYTICS LOGIC ---
         async function generateAnalytics() {
             const outlet = document.getElementById('filter-outlet').value;
-            const tgl = document.getElementById('filter-date').value; // Format: yyyy-mm-dd
+            const tgl = document.getElementById('filter-date').value; 
             
-            Swal.fire({ title: 'Menganalisis Data AI...', didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Menganalisis Data...', didOpen: () => Swal.showLoading() });
             const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: outlet } }) });
             const result = await res.json();
             
-            // Filter logs strictly for the selected date
             const logsToday = result.data.filter(r => r.tanggal === tgl);
-            gLaporan = logsToday; // Untuk CSV
+            gLaporan = logsToday; // Untuk CSV/PDF
             
             let htmlLog = "", rajinList = [], telatList = [], izinList = [];
             
-            // Render Table & Categorize Attendance
             logsToday.forEach(r => {
-                const isIzin = r.tipe === 'Izin';
-                const isTelat = r.status.includes('TERLAMBAT');
-                const isMasuk = r.tipe === 'Masuk';
+                const isIzin = r.tipe === 'Izin'; const isTelat = r.status.includes('TERLAMBAT'); const isMasuk = r.tipe === 'Masuk';
                 
                 let badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[10px]">ON TIME</span>';
                 if(isTelat) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
@@ -254,28 +276,18 @@
                 if(isMasuk && isTelat) telatList.push(r.nama);
                 if(isIzin) izinList.push(r.nama);
 
-                htmlLog += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-50">
-                        <td class="p-4 font-black">${r.jam}</td>
-                        <td class="p-4 font-bold">${r.nama}</td>
-                        <td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td>
-                        <td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td>
-                        <td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td>
-                    </tr>`;
+                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.jam}</td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td></tr>`;
             });
 
-            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada aktivitas pada tanggal ini.</td></tr>`;
+            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada aktivitas.</td></tr>`;
 
-            // Calculate "Alpa" (Tidak Masuk)
-            // Master roster for selected outlet (if "Semua", get everyone)
             const masterRoster = gKaryawan.filter(k => outlet === "Semua" || k.outlet === outlet).map(k => k.nama);
-            
-            // Unique names that have logged any activity today
             const loggedNames = [...new Set([...rajinList, ...telatList, ...izinList])];
             const alpaList = masterRoster.filter(name => !loggedNames.includes(name));
 
-            // Remove duplicates for display
             const uniqRajin = [...new Set(rajinList)], uniqTelat = [...new Set(telatList)], uniqIzin = [...new Set(izinList)];
+
+            analyticsSummary = { rajin: uniqRajin, telat: uniqTelat, izin: uniqIzin, alpa: alpaList };
 
             const renderPill = (arr, color) => arr.length > 0 ? arr.map(n => `<span class="karyawan-pill bg-${color}-100 text-${color}-700">${n}</span>`).join('') : '<span class="text-slate-300 italic text-xs">Kosong</span>';
 
@@ -287,12 +299,55 @@
             Swal.close();
         }
 
+        // --- EXPORT PDF & CSV ---
         function exportCSV() {
             if(gLaporan.length === 0) return Swal.fire('Kosong', 'Tarik data terlebih dahulu.', 'warning');
             let csv = "data:text/csv;charset=utf-8,Tanggal,Jam,Nama Karyawan,Outlet,Shift,Tipe Absen,Status Kehadiran,Informasi Tambahan\n";
             gLaporan.forEach(r => { csv += `"${r.tanggal}","${r.jam}","${r.nama}","${r.outlet}","${r.shift}","${r.tipe}","${r.status}","${r.info}"\n`; });
-            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `Laporan_Aicha_${document.getElementById('filter-date').value}.csv`);
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `Aicha_HC_${document.getElementById('filter-date').value}.csv`);
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function exportPDF() {
+            if(gLaporan.length === 0) return Swal.fire('Kosong', 'Tarik data (Analisis) terlebih dahulu.', 'warning');
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            const dateStr = document.getElementById('filter-date').value;
+            const outStr = document.getElementById('filter-outlet').value;
+
+            // Header Dokumen Profesional
+            doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold");
+            doc.text("LAPORAN HUMAN CAPITAL - AICHA", 14, 22);
+            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
+            doc.text(`Tanggal Cetak: ${dateStr} | Filter Outlet: ${outStr}`, 14, 28);
+            
+            // Rekapitulasi Baris
+            doc.setFontSize(9); doc.setTextColor(0, 0, 0);
+            doc.text(`Rekapitulasi: Rajin (${analyticsSummary.rajin.length}) | Telat (${analyticsSummary.telat.length}) | Izin (${analyticsSummary.izin.length}) | Alpa (${analyticsSummary.alpa.length})`, 14, 36);
+
+            // Tabel Data
+            const headers = [["Jam", "Nama Karyawan", "Outlet", "Shift", "Tipe", "Status", "Keterangan"]];
+            const dataRow = gLaporan.map(r => [r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.info]);
+
+            doc.autoTable({
+                head: headers,
+                body: dataRow,
+                startY: 42,
+                theme: 'grid',
+                headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] },
+                styles: { fontSize: 8, font: 'helvetica' },
+                alternateRowStyles: { fillColor: [248, 250, 252] }
+            });
+
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150);
+                doc.text(`Aicha Super App HC - Halaman ${i} dari ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+            }
+
+            doc.save(`Laporan_HC_Aicha_${dateStr}.pdf`);
         }
     </script>
 </body>
