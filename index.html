@@ -30,7 +30,6 @@
         <div class="p-6 space-y-4">
             <div class="camera-box"><video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas></div>
 
-            <!-- PANEL ABSENSI -->
             <div id="panel-absen" class="space-y-4">
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
                     <span class="text-[9px] font-black text-slate-400 uppercase">IDENTITAS AI WAJAH</span>
@@ -51,12 +50,10 @@
                 <div class="grid grid-cols-3 gap-2 pt-2">
                     <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">MASUK</button>
                     <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-slate-900 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">PULANG</button>
-                    <!-- Tombol IZIN (Aktif asal wajah dikenali, mengabaikan jarak GPS) -->
                     <button id="btn-izin" onclick="ajukanIzin()" disabled class="bg-amber-500 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">IZIN</button>
                 </div>
             </div>
 
-            <!-- PANEL REGISTRASI -->
             <div id="panel-reg" class="hidden space-y-3">
                 <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none mt-2">
                 <div class="grid grid-cols-2 gap-2">
@@ -74,7 +71,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycby9E4RO9QWNrpejJYVVhUpT89320ChH5vwtqoCu4DcnhaRbjFgMOzOdRZM9kd5-kKxP1w/exec"; // <-- JANGAN LUPA UPDATE URL INI
+        const API_URL = "https://script.google.com/macros/s/AKfycbzx02l2Cn2rMKGubMKYlm-E7AVTMGABcBjDZEwGxLnQygMXR1uO3aTmKfBWmFZplrqZiw/exec"; // <-- JANGAN LUPA UPDATE URL INI
         
         const video = document.getElementById('video');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
@@ -186,13 +183,8 @@
             
             if (found && currentFace) {
                 nameEl.innerText = currentFace.n; nameEl.className = "text-lg font-black text-blue-600";
-                
-                // Izin hanya butuh identitas dan outlet (tidak butuh shift/GPS)
                 if(outSel) btnIzin.disabled = false; else btnIzin.disabled = true;
-                
-                // Absen Normal (Butuh GPS & Shift)
-                if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } 
-                else { btnIn.disabled = true; btnOut.disabled = true; }
+                if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
             } else {
                 nameEl.innerText = "Memindai..."; nameEl.className = "text-lg font-black text-slate-300 italic";
                 currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
@@ -217,16 +209,11 @@
             } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
         }
 
-        // FUNGSI IZIN / SAKIT (TIDAK BUTUH GPS)
         async function ajukanIzin() {
             const out = document.getElementById('sel-outlet').value;
             const { value: alasan } = await Swal.fire({
-                title: 'Pengajuan Izin',
-                input: 'text',
-                inputLabel: 'Keterangan Izin (Misal: Sakit Demam, Urusan Keluarga)',
-                inputPlaceholder: 'Masukkan keterangan...',
-                showCancelButton: true,
-                inputValidator: (value) => { if (!value) return 'Keterangan wajib diisi!' }
+                title: 'Pengajuan Izin', input: 'text', inputLabel: 'Keterangan Izin (Misal: Sakit Demam, Urusan Keluarga)',
+                inputPlaceholder: 'Masukkan keterangan...', showCancelButton: true, inputValidator: (value) => { if (!value) return 'Keterangan wajib diisi!' }
             });
 
             if (alasan) {
