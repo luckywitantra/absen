@@ -22,7 +22,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AIMOY HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V17.2 (Date Auto-Normalize Fix)</p>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V18.0 (Advanced Reporting Filter)</p>
             
             <div class="flex gap-6 mt-4 overflow-x-auto">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Laporan & Riwayat</button>
@@ -33,18 +33,39 @@
         </header>
 
         <div id="tab-laporan" class="tab-content active space-y-4">
+            <!-- PANEL FILTER ADVANCED -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-end">
-                <div class="flex-1 min-w-[130px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Outlet</label><select id="filter-outlet" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"><option value="Semua">Semua Outlet</option></select></div>
-                <div class="flex-1 min-w-[130px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Karyawan</label><select id="filter-karyawan" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"><option value="Semua">Semua Karyawan</option></select></div>
-                <div class="flex-1 min-w-[110px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Dari Tanggal</label><input type="date" id="filter-start" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"></div>
-                <div class="flex-1 min-w-[110px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Sampai</label><input type="date" id="filter-end" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"></div>
-                <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis</button>
-                <button onclick="exportPDF()" class="bg-rose-600 text-white px-3 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700">PDF</button>
-                <button onclick="bukaModalManual()" class="bg-amber-500 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-amber-600" title="Input Manual Satu-Satu">✍️ Input 1 Data</button>
-                <button onclick="bukaModalImport()" class="bg-indigo-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-indigo-700" title="Upload dari Excel/CSV">📥 Import Data</button>
+                <div class="flex-1 min-w-[120px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Outlet</label><select id="filter-outlet" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Outlet</option></select></div>
+                <div class="flex-1 min-w-[120px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Karyawan</label><select id="filter-karyawan" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Karyawan</option></select></div>
+                
+                <!-- FITUR BARU: FILTER KATEGORI -->
+                <div class="flex-1 min-w-[120px]">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Kategori</label>
+                    <select id="filter-kategori" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none text-xs">
+                        <option value="Semua">Semua Data</option>
+                        <option value="Rajin">Hadir / Rajin</option>
+                        <option value="Telat">Terlambat</option>
+                        <option value="Izin">Izin / Sakit</option>
+                        <option value="Libur">Libur (Day Off)</option>
+                        <option value="Lembur">Data Lembur</option>
+                        <option value="Alpa">Alpa (Tanpa Log)</option>
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-[110px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Dari Tanggal</label><input type="date" id="filter-start" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none text-xs"></div>
+                <div class="flex-1 min-w-[110px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Sampai</label><input type="date" id="filter-end" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none text-xs"></div>
+                
+                <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700 text-xs">Analisis</button>
+                <button onclick="exportPDF()" class="bg-rose-600 text-white px-3 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700 text-xs">PDF</button>
+            </div>
+            
+            <div class="flex flex-wrap gap-2">
+                <button onclick="bukaModalManual()" class="bg-amber-500 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-amber-600 text-xs" title="Input Manual Satu-Satu">✍️ Input 1 Data</button>
+                <button onclick="bukaModalImport()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-indigo-700 text-xs" title="Upload dari Excel/CSV">📥 Import Data Excel</button>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <!-- KOTAK SUMMARY -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-2">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-emerald-500 uppercase">🌟 Hadir / Rajin</h3><div id="box-rajin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-rose-500 uppercase">⏰ Telat</h3><div id="box-telat" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-amber-500 uppercase">📝 Izin/Sakit</h3><div id="box-izin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
@@ -54,11 +75,11 @@
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest flex justify-between"><span>📋 Log Absensi Rinci</span><span id="log-count" class="text-xs text-slate-400">0 Data</span></div>
+                <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest flex justify-between"><span>📋 Log Absensi Tersaring</span><span id="log-count" class="text-xs text-slate-400">0 Data</span></div>
                 <div class="overflow-x-auto max-h-[500px]">
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] sticky top-0"><tr><th class="p-4">Tgl & Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Keterangan</th><th class="p-4">Validasi & Aksi</th></tr></thead>
-                        <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="6" class="p-6 text-center italic text-slate-400">Klik "Analisis Data"</td></tr></tbody>
+                        <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="6" class="p-6 text-center italic text-slate-400">Klik "Analisis" untuk memuat data.</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -152,8 +173,15 @@
         let map, marker, gOutlet = [], gShift = [], gKaryawan = [], gLaporan = [];
 
         window.addEventListener('load', () => {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('filter-start').value = today; document.getElementById('filter-end').value = today;
+            // FITUR BARU: Default Range Tanggal (Tgl 1 s/d Hari ini)
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            
+            document.getElementById('filter-start').value = `${yyyy}-${mm}-01`;
+            document.getElementById('filter-end').value = `${yyyy}-${mm}-${dd}`;
+            
             syncDatabase();
         });
 
@@ -209,11 +237,9 @@
             
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Membaca baris CSV agar mendukung Windows dan Mac
                 const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r);
                 if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error');
                 
-                // MENDETEKSI PENGGUNAAN TITIK KOMA (;) ATAU KOMA (,)
                 const delimiter = rows[0].includes(';') ? ';' : ',';
                 
                 const dataToImport = [];
@@ -223,7 +249,6 @@
                         const rawDate = cols[0].trim();
                         let safeDate = rawDate;
                         
-                        // AUTO-FORMAT TANGGAL: Mengubah DD/MM/YYYY atau DD-MM-YYYY menjadi YYYY-MM-DD
                         if (rawDate.includes('/')) {
                             let p = rawDate.split('/');
                             if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
@@ -271,35 +296,27 @@
         function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
         function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
-        // --- SUPER ANALYTICS FIX LOGIC ---
+        // --- SUPER ANALYTICS FIX LOGIC DENGAN FILTER KATEGORI ---
         async function generateAnalytics() {
             const outlet = document.getElementById('filter-outlet').value, karyawan = document.getElementById('filter-karyawan').value;
             const tglStart = document.getElementById('filter-start').value, tglEnd = document.getElementById('filter-end').value;
+            const kategori = document.getElementById('filter-kategori').value; // Ambil filter kategori
+
             if(tglStart > tglEnd) return Swal.fire('Error', 'Tanggal mulai tidak boleh lebih dari tanggal akhir.', 'error');
 
             Swal.fire({ title: 'Menganalisis Data...', didOpen: () => Swal.showLoading() });
             const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: 'Semua' } }) }); 
             const result = await res.json();
             
+            // Filter Dasar (Tanggal, Outlet, Karyawan)
             const logsRange = result.data.filter(r => r.tanggal >= tglStart && r.tanggal <= tglEnd && (outlet === 'Semua' || r.outlet === outlet) && (karyawan === 'Semua' || r.nama === karyawan) );
-            gLaporan = logsRange; 
             
             let htmlLog = "", rajinList = [], telatList = [], izinList = [], liburList = [], totalLemburMnt = 0;
+            let tableLogsToRender = []; // Array terpisah untuk rendering tabel dan PDF
             
+            // 1. Kalkulasi Summary Box (Ini selalu menampilkan rangkuman penuh dari tanggal tsb)
             logsRange.forEach(r => {
-                const isIzin = r.tipe === 'Izin';
-                const isLibur = r.tipe === 'Libur';
-                const isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang';
-                const isTelat = r.status.includes('TERLAMBAT');
-                const isLembur = r.status.includes('LEMBUR');
-                const isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
-
-                let badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[10px]">ON TIME</span>';
-                if(isTelat) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
-                if(isIzin) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[10px]">IZIN / SAKIT</span>`;
-                if(isLibur) badge = `<span class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold text-[10px]">DAY OFF</span>`;
-                if(isLembur) badge = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
-                if(r.status.includes('MANUAL')) badge = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
+                const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isLembur = r.status.includes('LEMBUR'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
 
                 if(isIzin) izinList.push(r.nama);
                 else if(isLibur) liburList.push(r.nama);
@@ -307,23 +324,57 @@
                     if(isTelat && !isManual) telatList.push(r.nama);
                     else rajinList.push(r.nama); 
                 }
-                
                 if(r.lembur && !isNaN(r.lembur)) totalLemburMnt += parseInt(r.lembur);
-
-                const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http") && r.foto !== "Bypass HRD") ? `<a href="${r.foto}" target="_blank" class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-200 transition-all text-[10px]">Lihat Foto</a>` : `<span class="text-[10px] text-slate-400 font-bold italic">${r.foto}</span>`;
-
-                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.tanggal}<br><span class="text-slate-500">${r.jam}</span></td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td><td class="p-4">${linkFoto} <button onclick="deleteRow('hapus_absen', {ts: '${r.ts}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[10px] font-bold ml-1 hover:bg-rose-200" title="Hapus Log">Hapus</button></td></tr>`;
             });
-
-            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada aktivitas.</td></tr>`;
-            document.getElementById('log-count').innerText = `${logsRange.length} Data`;
 
             const masterRoster = gKaryawan.filter(k => (outlet === "Semua" || k.outlet === outlet) && (karyawan === "Semua" || k.nama === karyawan)).map(k => k.nama);
             const loggedNames = [...new Set([...rajinList, ...telatList, ...izinList, ...liburList])];
             const alpaList = masterRoster.filter(name => !loggedNames.includes(name));
 
-            const renderPill = (arr, color) => arr.length > 0 ? arr.map(n => `<span class="karyawan-pill bg-${color}-100 text-${color}-700">${n}</span>`).join('') : '<span class="text-slate-300 italic text-xs">Kosong</span>';
+            // 2. Filter Tabel Berdasarkan Kategori yang Dipilih
+            if (kategori === 'Semua') {
+                tableLogsToRender = logsRange;
+            } else if (kategori === 'Alpa') {
+                // Generate baris buatan (dummy) khusus untuk Alpa agar bisa di-export
+                tableLogsToRender = alpaList.map(nama => ({ ts: '-', tanggal: `${tglStart} s/d ${tglEnd}`, jam: '-', nama: nama, outlet: outlet, shift: '-', tipe: '-', status: 'ALPA', info: 'Tidak ada log / Bolos', lembur: 0, foto: '-' }));
+            } else {
+                tableLogsToRender = logsRange.filter(r => {
+                    const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isLembur = r.status.includes('LEMBUR'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
+                    
+                    if(kategori === 'Rajin') return isMasuk && !isTelat;
+                    if(kategori === 'Telat') return isTelat;
+                    if(kategori === 'Izin') return isIzin || (isManual && r.tipe === 'Izin');
+                    if(kategori === 'Libur') return isLibur || (isManual && r.tipe === 'Libur');
+                    if(kategori === 'Lembur') return r.lembur > 0;
+                    return true;
+                });
+            }
 
+            // Simpan ke Global untuk diekspor PDF sesuai filter yang dipilih
+            gLaporan = tableLogsToRender; 
+
+            // 3. Render HTML Tabel dari data yang sudah difilter
+            tableLogsToRender.forEach(r => {
+                let badge = '<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold text-[10px]">TIDAK DIKETAHUI</span>';
+                if(r.status === 'ALPA') badge = `<span class="bg-slate-800 text-white px-2 py-1 rounded font-bold text-[10px]">ALPA</span>`;
+                else if(r.status.includes('TERLAMBAT')) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
+                else if(r.status.includes('IZIN')) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[10px]">IZIN / SAKIT</span>`;
+                else if(r.status.includes('DAY OFF')) badge = `<span class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold text-[10px]">DAY OFF</span>`;
+                else if(r.status.includes('LEMBUR')) badge = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
+                else if(r.status.includes('MANUAL')) badge = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
+                else if(r.status.includes('ON TIME')) badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[10px]">ON TIME</span>';
+
+                const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http") && r.foto !== "Bypass HRD") ? `<a href="${r.foto}" target="_blank" class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-200 transition-all text-[10px]">Lihat Foto</a>` : `<span class="text-[10px] text-slate-400 font-bold italic">${r.foto}</span>`;
+                const btnHapus = r.status === 'ALPA' ? '' : `<button onclick="deleteRow('hapus_absen', {ts: '${r.ts}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[10px] font-bold ml-1 hover:bg-rose-200" title="Hapus Log">Hapus</button>`;
+
+                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.tanggal}<br><span class="text-slate-500">${r.jam}</span></td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td><td class="p-4">${linkFoto} ${btnHapus}</td></tr>`;
+            });
+
+            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada data untuk kategori ini.</td></tr>`;
+            document.getElementById('log-count').innerText = `${tableLogsToRender.length} Data Tersaring`;
+
+            // Update UI Summary Pill Boxes
+            const renderPill = (arr, color) => arr.length > 0 ? arr.map(n => `<span class="karyawan-pill bg-${color}-100 text-${color}-700">${n}</span>`).join('') : '<span class="text-slate-300 italic text-xs">Kosong</span>';
             document.getElementById('box-rajin').innerHTML = renderPill([...new Set(rajinList)], 'emerald'); document.getElementById('box-telat').innerHTML = renderPill([...new Set(telatList)], 'rose');
             document.getElementById('box-izin').innerHTML = renderPill([...new Set(izinList)], 'amber'); document.getElementById('box-libur').innerHTML = renderPill([...new Set(liburList)], 'indigo');
             document.getElementById('box-alpa').innerHTML = renderPill(alpaList, 'slate'); document.getElementById('box-lembur').innerHTML = `${totalLemburMnt} <span class="text-[10px] text-slate-400 font-bold">Menit</span>`;
@@ -334,16 +385,18 @@
         function exportPDF() {
             if(gLaporan.length === 0) return Swal.fire('Kosong', 'Analisis data terlebih dahulu.', 'warning');
             const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
+            
             const dStart = document.getElementById('filter-start').value, dEnd = document.getElementById('filter-end').value, empStr = document.getElementById('filter-karyawan').value;
+            const katStr = document.getElementById('filter-kategori').options[document.getElementById('filter-kategori').selectedIndex].text;
 
             doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.text("LAPORAN HUMAN CAPITAL - AIMOY", 14, 22);
-            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); doc.text(`Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
+            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); doc.text(`Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr} | Kategori: ${katStr}`, 14, 28);
             
             const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur", "Keterangan"]];
-            const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, (r.foto==="Bypass HRD" ? r.foto : "Terdapat Foto")]);
+            const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, (r.foto==="Bypass HRD" || r.status==="ALPA" ? r.foto : "Terdapat Foto")]);
 
             doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 7 } });
-            doc.save(`Laporan_HC_${dStart}_${dEnd}.pdf`);
+            doc.save(`Laporan_HC_${katStr}_${dStart}_to_${dEnd}.pdf`);
         }
     </script>
 </body>
