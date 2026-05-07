@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aicha HC - Mesin Outlet</title>
+    <title>Aicha HC - Kiosk Absen</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -30,6 +30,7 @@
         <div class="p-6 space-y-4">
             <div class="camera-box"><video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas></div>
 
+            <!-- PANEL ABSENSI -->
             <div id="panel-absen" class="space-y-4">
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
                     <span class="text-[9px] font-black text-slate-400 uppercase">IDENTITAS AI WAJAH</span>
@@ -54,6 +55,7 @@
                 </div>
             </div>
 
+            <!-- PANEL REGISTRASI -->
             <div id="panel-reg" class="hidden space-y-3">
                 <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none mt-2">
                 <div class="grid grid-cols-2 gap-2">
@@ -71,11 +73,12 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzx02l2Cn2rMKGubMKYlm-E7AVTMGABcBjDZEwGxLnQygMXR1uO3aTmKfBWmFZplrqZiw/exec"; // <-- JANGAN LUPA UPDATE URL INI
+        const API_URL = "https://script.google.com/macros/s/AKfycbwrXg2l06BypRF7bTSGqSwYm37G4qs4NmATDcyNiGLKG1JMtjU7kw6Ga1liA8jS8rWmbg/exec"; // <-- JANGAN LUPA UPDATE
         
         const video = document.getElementById('video');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
         let userLat = 0, userLng = 0, distance = 0, isLocValid = false;
+        let lastRecognizedName = null; // Mencegah dropdown terganti berulang kali
 
         window.addEventListener('load', () => {
             if(navigator.geolocation) {
@@ -116,7 +119,8 @@
                 document.getElementById('reg-outlet').innerHTML = outHtml;
 
                 if (data.dataKaryawan.length > 0) {
-                    const labeled = data.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role}), [new Float32Array(k.descriptor)]));
+                    // Update: Kita memasukkan data OUTLET (o) ke dalam Descriptor agar bisa ditarik oleh Auto-Fill
+                    const labeled = data.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
                     faceMatcher = new faceapi.FaceMatcher(labeled, 0.40);
                 }
                 
@@ -144,6 +148,7 @@
             if(!outName || userLat === 0) return;
 
             const outlet = dbOutlet.find(o => o.nama === outName);
+            if(!outlet) return;
             distance = hitungJarak(userLat, userLng, outlet.lat, outlet.lng);
             
             if (distance > outlet.radius) {
@@ -168,10 +173,21 @@
                 if (!document.getElementById('panel-absen').classList.contains('hidden') && detections.length > 0 && faceMatcher) {
                     const match = faceMatcher.findBestMatch(resized[0].descriptor);
                     if (match.label !== 'unknown') {
-                        currentFace = JSON.parse(match.label); updateUI(true);
-                    } else { updateUI(false); }
+                        const info = JSON.parse(match.label);
+                        
+                        // FITUR AUTO-FILL OUTLET: Ganti outlet otomatis hanya jika orangnya berganti
+                        if(lastRecognizedName !== info.n) {
+                            const outSel = document.getElementById('sel-outlet');
+                            if(info.o && info.o !== "") { outSel.value = info.o; loadShiftDropdown(); }
+                            lastRecognizedName = info.n;
+                        }
+                        
+                        currentFace = info; updateUI(true);
+                    } else { 
+                        lastRecognizedName = null; updateUI(false); 
+                    }
                 } else { 
-                    updateUI(false); 
+                    lastRecognizedName = null; updateUI(false); 
                     if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); }
                 }
             }, 800);
@@ -211,17 +227,14 @@
 
         async function ajukanIzin() {
             const out = document.getElementById('sel-outlet').value;
-            const { value: alasan } = await Swal.fire({
-                title: 'Pengajuan Izin', input: 'text', inputLabel: 'Keterangan Izin (Misal: Sakit Demam, Urusan Keluarga)',
-                inputPlaceholder: 'Masukkan keterangan...', showCancelButton: true, inputValidator: (value) => { if (!value) return 'Keterangan wajib diisi!' }
-            });
+            const { value: alasan } = await Swal.fire({ title: 'Pengajuan Izin', input: 'text', inputLabel: 'Keterangan Izin', inputPlaceholder: 'Sakit / Urusan Keluarga...', showCancelButton: true, inputValidator: (value) => { if (!value) return 'Wajib diisi!' } });
 
             if (alasan) {
                 Swal.fire({ title: 'Merekam Izin...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 try {
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan } }) });
                     const result = await res.json();
-                    if (result.status === 'success') Swal.fire('Terekam!', `Izin <b>${currentFace.n}</b> berhasil dicatat.`, 'success');
+                    if (result.status === 'success') Swal.fire('Terekam!', `Izin <b>${currentFace.n}</b> dicatat.`, 'success');
                 } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
             }
         }
@@ -230,24 +243,30 @@
             const nama = document.getElementById('reg-nama').value, role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
             if(!nama || !outlet) return Swal.fire('Error', 'Nama dan Outlet wajib diisi!', 'warning');
 
-            Swal.fire({ title: 'Kunci Biometrik...', text: 'Tahan Posisi Wajah', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Menganalisis Biometrik...', text: 'Tahan Posisi Wajah', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-            
             if(!detection) return Swal.fire('Gagal', 'Wajah tidak jelas. Terangkan cahaya.', 'error');
+
+            // FITUR ANTI DUPLIKAT
+            if (faceMatcher) {
+                const match = faceMatcher.findBestMatch(detection.descriptor);
+                if (match.label !== 'unknown') {
+                    const existData = JSON.parse(match.label);
+                    return Swal.fire({ icon: 'error', title: 'Registrasi Ditolak', html: `Wajah ini sudah terdaftar atas nama:<br><b class="text-xl text-blue-600">${existData.n}</b><br>di ${existData.o}` });
+                }
+            }
+
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'enroll', payload: { nama, role, outlet, descriptor: Array.from(detection.descriptor) } }) });
                 const data = await res.json();
-                if(data.status === 'success') Swal.fire('Tersimpan!', `Wajah ${nama} berhasil dikunci.`, 'success').then(() => location.reload());
+                if(data.status === 'success') Swal.fire('Tersimpan!', `Wajah ${nama} dikunci.`, 'success').then(() => location.reload());
             } catch(e) { Swal.fire('Error', 'Gagal menyimpan.', 'error'); }
         }
 
         function switchTab(t) {
-            document.getElementById('panel-absen').classList.toggle('hidden', t === 'reg');
-            document.getElementById('panel-reg').classList.toggle('hidden', t === 'absen');
-            document.getElementById('tab-absen').classList.toggle('active', t === 'absen');
-            document.getElementById('tab-absen').classList.toggle('text-slate-400', t === 'reg');
-            document.getElementById('tab-reg').classList.toggle('active', t === 'reg');
-            document.getElementById('tab-reg').classList.toggle('text-slate-400', t === 'absen');
+            document.getElementById('panel-absen').classList.toggle('hidden', t === 'reg'); document.getElementById('panel-reg').classList.toggle('hidden', t === 'absen');
+            document.getElementById('tab-absen').classList.toggle('active', t === 'absen'); document.getElementById('tab-absen').classList.toggle('text-slate-400', t === 'reg');
+            document.getElementById('tab-reg').classList.toggle('active', t === 'reg'); document.getElementById('tab-reg').classList.toggle('text-slate-400', t === 'absen');
         }
     </script>
 </body>
