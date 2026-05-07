@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AiMoy Absen</title>
+    <title>AiMoy Absen - Kiosk</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -14,17 +14,14 @@
         .tab-btn.active { color: #2563eb; border-bottom: 3px solid #2563eb; background: #eff6ff; }
         @keyframes pulse-border { 0% { border-color: rgba(255,255,255,0.4); } 50% { border-color: rgba(255,255,255,0.8); } 100% { border-color: rgba(255,255,255,0.4); } }
         .face-guide { animation: pulse-border 2s infinite; }
-        /* Kustomisasi SweetAlert agar lebih modern */
-        div:where(.swal2-container) button:where(.swal2-styled).swal2-confirm { border-radius: 0.75rem; font-weight: 900; }
-        div:where(.swal2-container) button:where(.swal2-styled).swal2-deny { border-radius: 0.75rem; font-weight: 900; }
-        div:where(.swal2-container) button:where(.swal2-styled).swal2-cancel { border-radius: 0.75rem; font-weight: 900; }
+        div:where(.swal2-container) button:where(.swal2-styled).swal2-confirm, div:where(.swal2-container) button:where(.swal2-styled).swal2-deny, div:where(.swal2-container) button:where(.swal2-styled).swal2-cancel { border-radius: 0.75rem; font-weight: 900; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
         <div class="bg-slate-900 p-5 text-center">
-            <h1 class="text-white font-black tracking-tighter text-2xl italic">AIMOY ABSEN</h1>
+            <h1 class="text-white font-black tracking-tighter text-2xl italic">AIMOY KIOSK</h1>
             <p id="geo-status" class="text-rose-400 text-[10px] tracking-widest font-bold mt-1">📍 MENCARI GPS...</p>
         </div>
 
@@ -40,7 +37,7 @@
                 <canvas id="overlay" class="z-10"></canvas>
                 <div class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
                     <div class="w-[180px] h-[240px] border-[3px] border-dashed rounded-[50%] face-guide shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"></div>
-                    <div class="mt-4 bg-slate-900/70 backdrop-blur px-4 py-1.5 rounded-full text-white text-[9px] font-black tracking-widest">SEJAJARKAN WAJAH DI SINI</div>
+                    <div class="mt-4 bg-slate-900/70 backdrop-blur px-4 py-1.5 rounded-full text-white text-[9px] font-black tracking-widest text-center" id="cam-instruction">SEJAJARKAN WAJAH DI SINI</div>
                 </div>
             </div>
 
@@ -75,13 +72,13 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- JANGAN LUPA UPDATE
+        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- UPDATE URL GAS ANDA
         
         const video = document.getElementById('video');
         const canvas = document.getElementById('overlay');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
         let userLat = 0, userLng = 0, distance = 0, isLocValid = false, lastRecognizedName = null;
-        let isPrompting = false; // Mencegah Kamera men-scan terus menerus saat popup muncul
+        let isPrompting = false, isLivenessPassed = false;
 
         window.addEventListener('load', () => {
             if(navigator.geolocation) {
@@ -102,9 +99,15 @@
         }
 
         async function initApp() {
-            Swal.fire({ title: 'Sinkronisasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Menyiapkan AI...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-            await Promise.all([ faceapi.nets.tinyFaceDetector.loadFromUri(URL), faceapi.nets.faceLandmark68Net.loadFromUri(URL), faceapi.nets.faceRecognitionNet.loadFromUri(URL) ]);
+            // Tambahan: Memuat Model Ekspresi Wajah (Liveness Detection)
+            await Promise.all([ 
+                faceapi.nets.tinyFaceDetector.loadFromUri(URL), 
+                faceapi.nets.faceLandmark68Net.loadFromUri(URL), 
+                faceapi.nets.faceRecognitionNet.loadFromUri(URL),
+                faceapi.nets.faceExpressionNet.loadFromUri(URL) 
+            ]);
 
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
@@ -137,24 +140,17 @@
             }
         }
 
-        // ALGORITMA CERDAS PENCARI SHIFT OTOMATIS
         function cariShiftOtomatis(outletName) {
             const shifts = dbShift.filter(s => s.outlet === outletName);
             if (shifts.length === 0) return null;
             
-            const now = new Date();
-            const currentMins = now.getHours() * 60 + now.getMinutes();
-            
-            let bestShift = shifts[0];
-            let minDiff = Infinity;
+            const now = new Date(); const currentMins = now.getHours() * 60 + now.getMinutes();
+            let bestShift = shifts[0], minDiff = Infinity;
 
             shifts.forEach(s => {
                 const mMasuk = parseInt(s.jamMasuk.split(':')[0]) * 60 + parseInt(s.jamMasuk.split(':')[1]);
                 const mKeluar = parseInt(s.jamKeluar.split(':')[0]) * 60 + parseInt(s.jamKeluar.split(':')[1]);
-                // Cari mana yang paling dekat dengan jam saat ini (entah itu jam masuk atau jam keluar)
-                const diffMasuk = Math.abs(currentMins - mMasuk);
-                const diffKeluar = Math.abs(currentMins - mKeluar);
-                const closest = Math.min(diffMasuk, diffKeluar);
+                const closest = Math.min(Math.abs(currentMins - mMasuk), Math.abs(currentMins - mKeluar));
                 if(closest < minDiff) { minDiff = closest; bestShift = s; }
             });
             return bestShift;
@@ -178,10 +174,10 @@
             faceapi.matchDimensions(canvas, size);
             
             setInterval(async () => {
-                // Jeda deteksi kamera saat Pop-Up SweetAlert sedang terbuka
                 if(isPrompting) return;
 
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+                // Memanggil deteksi ekspresi (Senyum)
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
                 const resized = faceapi.resizeResults(detections, size); canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
 
                 if (!document.getElementById('panel-absen').classList.contains('hidden') && detections.length > 0 && faceMatcher) {
@@ -189,76 +185,81 @@
                     if (match.label !== 'unknown') {
                         const info = JSON.parse(match.label);
                         
+                        // FITUR LIVENESS DETECTION: Wajib Tersenyum!
+                        const expressions = resized[0].expressions;
+                        if (expressions.happy > 0.6) { // Jika tingkat senyum > 60%, Liveness Lolos
+                            isLivenessPassed = true;
+                        }
+
+                        if (!isLivenessPassed) {
+                            currentFace = info;
+                            updateUI(true, "LIVENESS_WAIT");
+                            return; // Hentikan eksekusi sampai ia tersenyum
+                        }
+                        
+                        // Jika Lolos Liveness & Wajah Baru Dikenali
                         if(lastRecognizedName !== info.n) { 
                             lastRecognizedName = info.n;
                             currentFace = info; 
-                            
-                            // 1. Auto Fill Outlet
                             const outSel = document.getElementById('sel-outlet'); 
                             if(info.o) { outSel.value = info.o; loadShiftDropdown(); } 
                             
-                            // 2. Auto Fill Shift (Cerdas)
                             const autoShift = cariShiftOtomatis(info.o);
                             if(autoShift) {
                                 document.getElementById('sel-shift').value = autoShift.kode;
                                 updateUI(true);
-                                // Panggil Pop-Up One-Click!
                                 munculkanPopupAutoAbsen(info, autoShift);
-                            } else {
-                                updateUI(true);
-                            }
-                        } else {
-                            currentFace = info; updateUI(true);
-                        }
-                    } else { lastRecognizedName = null; updateUI(false); }
-                } else { 
-                    lastRecognizedName = null; updateUI(false); 
-                    if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); } 
-                }
+                            } else { updateUI(true); }
+                        } else { currentFace = info; updateUI(true); }
+                    } else { lastRecognizedName = null; isLivenessPassed = false; updateUI(false); }
+                } else { lastRecognizedName = null; isLivenessPassed = false; updateUI(false); if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); } }
             }, 800);
         });
 
-        function updateUI(found) {
+        function updateUI(found, state = "READY") {
             const nameEl = document.getElementById('ai-name'), outSel = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift').value;
             const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out'), btnIzin = document.getElementById('btn-izin');
+            const camInstruction = document.getElementById('cam-instruction');
             
             if (found && currentFace) {
-                nameEl.innerText = currentFace.n; nameEl.className = "text-lg font-black text-blue-600";
-                if(outSel) btnIzin.disabled = false; else btnIzin.disabled = true;
-                if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
-            } else { nameEl.innerText = "Mencari Wajah..."; nameEl.className = "text-lg font-black text-slate-300 italic"; currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true; }
+                if (state === "LIVENESS_WAIT") {
+                    nameEl.innerHTML = `${currentFace.n} <br><span class="text-amber-500 text-sm animate-pulse">😊 SILAKAN TERSENYUM UNTUK VERIFIKASI!</span>`;
+                    nameEl.className = "text-lg font-black text-slate-800";
+                    camInstruction.innerText = "TERSENYUMLAH KE KAMERA"; camInstruction.className = "mt-4 bg-amber-500 px-4 py-1.5 rounded-full text-white text-[10px] font-black tracking-widest text-center animate-bounce";
+                    btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
+                } else {
+                    nameEl.innerHTML = `${currentFace.n} <span class="text-emerald-500">✅</span>`;
+                    nameEl.className = "text-lg font-black text-emerald-600";
+                    camInstruction.innerText = "VERIFIKASI SUKSES"; camInstruction.className = "mt-4 bg-emerald-600 px-4 py-1.5 rounded-full text-white text-[10px] font-black tracking-widest text-center";
+                    
+                    if(outSel) btnIzin.disabled = false; else btnIzin.disabled = true;
+                    if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
+                }
+            } else { 
+                nameEl.innerText = "Mencari Wajah..."; nameEl.className = "text-lg font-black text-slate-300 italic"; 
+                camInstruction.innerText = "SEJAJARKAN WAJAH DI SINI"; camInstruction.className = "mt-4 bg-slate-900/70 backdrop-blur px-4 py-1.5 rounded-full text-white text-[9px] font-black tracking-widest text-center";
+                currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true; 
+            }
         }
 
         document.getElementById('sel-shift').addEventListener('change', () => updateUI(currentFace !== null));
 
-        // ONE-CLICK AUTO POPUP
         function munculkanPopupAutoAbsen(faceInfo, shift) {
-            isPrompting = true; // Hentikan kamera di belakang layar
-            cekJarak();
-            
+            isPrompting = true; cekJarak();
             if(!isLocValid) {
-                Swal.fire({
-                    icon: 'warning', title: 'Di Luar Radius Outlet!',
-                    text: 'Sistem mengenali Anda, tapi GPS HP Anda tidak berada di dalam radius toko.',
-                    showConfirmButton: true, confirmButtonText: 'Tutup'
-                }).then(() => { isPrompting = false; });
-                return;
+                Swal.fire({ icon: 'warning', title: 'Di Luar Radius!', text: 'Sistem mengenali Anda, tapi GPS HP Anda di luar radius toko.', confirmButtonText: 'Tutup' }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); return;
             }
-
             Swal.fire({
                 title: `Halo, ${faceInfo.n}! 👋`,
-                html: `Sistem mendeteksi Anda di <b>${faceInfo.o}</b>.<br><br>
-                       Shift berjalan saat ini:<br>
-                       <b class="text-xl text-blue-600">${shift.kode} (${shift.jamMasuk} - ${shift.jamKeluar})</b><br><br>
-                       Pilih aksi cepat Anda:`,
+                html: `Anda berada di <b>${faceInfo.o}</b>.<br><br>Shift saat ini:<br><b class="text-xl text-blue-600">${shift.kode} (${shift.jamMasuk} - ${shift.jamKeluar})</b><br><br>Pilih aksi cepat:`,
                 showDenyButton: true, showCancelButton: true,
                 confirmButtonText: '✅ MASUK', confirmButtonColor: '#2563eb',
                 denyButtonText: '🛑 PULANG', denyButtonColor: '#0f172a',
-                cancelButtonText: '⚙️ Manual / Izin', allowOutsideClick: false
+                cancelButtonText: '⚙️ Manual', allowOutsideClick: false
             }).then((result) => {
                 if (result.isConfirmed) { kirimAbsen('Masuk'); } 
                 else if (result.isDenied) { kirimAbsen('Pulang'); } 
-                else { isPrompting = false; } // Kembali ke layar utama jika pilih manual
+                else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; } 
             });
         }
 
@@ -271,7 +272,7 @@
         }
 
         async function kirimAbsen(tipe) {
-            isPrompting = true; // Kunci layar agar aman
+            isPrompting = true; 
             const out = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift');
             const shfM = shf.options[shf.selectedIndex].getAttribute('data-jamm'), shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk'), shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
             const fotoData = ambilFotoKamera();
@@ -289,12 +290,9 @@
                         icon: 'success', title: 'Absen Berhasil!',
                         html: `<b>${currentFace.n}</b> berhasil ${tipe}.<br>Status: <b class="text-blue-600">${result.statusWaktu}</b><br><br><a href="${waLink}" target="_blank" class="bg-emerald-500 text-white px-4 py-3 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all shadow-emerald-500/50">💬 LAPORKAN KE GRUP WA</a>`,
                         showConfirmButton: false, timer: 15000
-                    }).then(() => {
-                        isPrompting = false; lastRecognizedName = null; // Reset agar siap untuk scan ulang jika perlu
-                        document.getElementById('sel-shift').value = ""; updateUI(false);
-                    });
-                } else { Swal.fire('Ditolak Sistem', result.message, 'error').then(() => { isPrompting = false; lastRecognizedName = null; }); }
-            } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error').then(() => { isPrompting = false; lastRecognizedName = null; }); }
+                    }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
+                } else { Swal.fire('Ditolak Sistem', result.message, 'error').then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+            } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error').then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
         }
 
         async function ajukanIzin() {
@@ -307,9 +305,7 @@
                 try {
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
                     const result = await res.json();
-                    if (result.status === 'success') {
-                        Swal.fire('Terekam!', `Izin <b>${currentFace.n}</b> dicatat.`, 'success').then(() => { isPrompting = false; lastRecognizedName = null; });
-                    }
+                    if (result.status === 'success') Swal.fire('Terekam!', `Izin <b>${currentFace.n}</b> dicatat.`, 'success').then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
                 } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error').then(() => { isPrompting = false; }); }
             } else { isPrompting = false; }
         }
@@ -327,8 +323,7 @@
                 const match = faceMatcher.findBestMatch(detection.descriptor);
                 if (match.label !== 'unknown') {
                     const existData = JSON.parse(match.label);
-                    isPrompting = false;
-                    return Swal.fire({ icon: 'error', title: 'Registrasi Ditolak', html: `Wajah ini sudah terdaftar atas nama:<br><b class="text-xl text-blue-600">${existData.n}</b><br>di ${existData.o}` });
+                    isPrompting = false; return Swal.fire({ icon: 'error', title: 'Registrasi Ditolak', html: `Wajah ini sudah terdaftar atas nama:<br><b class="text-xl text-blue-600">${existData.n}</b><br>di ${existData.o}` });
                 }
             }
 
