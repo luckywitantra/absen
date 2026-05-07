@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aicha HC - Mesin Outlet</title>
+    <title>Aicha HC - Kiosk Absen</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -37,26 +37,26 @@
                     <h2 id="ai-name" class="text-lg font-black text-slate-300 italic">Memindai...</h2>
                 </div>
 
-                <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="" disabled selected>Pilih Lokasi Outlet Saat Ini</option>
+                <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                    <option value="" disabled selected>Memuat Data Outlet...</option>
                 </select>
                 
-                <select id="sel-shift" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="sel-shift" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none">
                     <option value="" disabled selected>Pilih Shift (Pilih Outlet Dulu)</option>
                 </select>
                 
                 <div id="dist-alert" class="hidden bg-rose-100 text-rose-600 p-2 rounded-xl text-[10px] font-bold text-center"></div>
 
                 <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 text-white py-3 rounded-xl font-black shadow-lg shadow-blue-200 disabled:opacity-30 transition-all">MASUK</button>
-                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-slate-900 text-white py-3 rounded-xl font-black shadow-lg shadow-slate-200 disabled:opacity-30 transition-all">PULANG</button>
+                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">MASUK</button>
+                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-slate-900 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">PULANG</button>
                 </div>
             </div>
 
             <!-- PANEL REGISTRASI -->
             <div id="panel-reg" class="hidden space-y-3">
                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-[10px] text-blue-700 font-bold text-center mb-2">
-                    Minta Staf Senior/Manager mendampingi proses registrasi. Pastikan wajah terang dan tidak memakai masker.
+                    Minta Staf Senior mendampingi. Pastikan wajah terang dan tidak memakai kacamata/masker.
                 </div>
                 <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none">
                 <div class="grid grid-cols-2 gap-2">
@@ -74,7 +74,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwrPSvT8aR0OpiJryLKfHRi5K-b3xBqjkMhE0vXRV4-owXoZY_RS_weFUiNnJK7puenOQ/exec"; // <-- PASTIKAN URL GAS ANDA DI SINI
+        const API_URL = "https://script.google.com/macros/s/AKfycbwUv_KpGILxsGTlCRxpThLUsajMLA_MTUNTGVZuUeZNHqXeo8OFrMsNJiVsCMmFSuXNMQ/exec"; // <-- JANGAN LUPA UPDATE URL INI
         
         const video = document.getElementById('video');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
@@ -95,7 +95,9 @@
             setTimeout(initApp, 800);
         });
 
-        function hitungJarak(lat1, lon1, lat2, lon2) {
+        // ParseFloat fix the string bug from Google Sheets
+        function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
+            const lat2 = parseFloat(lat2Str), lon2 = parseFloat(lon2Str);
             const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
             const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2) * Math.sin(Δλ/2)*Math.sin(Δλ/2);
