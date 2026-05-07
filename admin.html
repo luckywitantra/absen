@@ -22,7 +22,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AICHA HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V10.0 (Ultimate)</p>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V11.0 (Ultimate)</p>
             
             <div class="flex gap-6 mt-4 overflow-x-auto">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Analitik & Riwayat</button>
@@ -31,14 +31,12 @@
             </div>
         </header>
 
-        <!-- TAB 1: SUPER ANALYTICS -->
         <div id="tab-laporan" class="tab-content active space-y-4">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-end">
                 <div class="flex-1 min-w-[150px]">
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Outlet</label>
                     <select id="filter-outlet" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"><option value="Semua">Semua Outlet</option></select>
                 </div>
-                <!-- FITUR BARU: FILTER KARYAWAN -->
                 <div class="flex-1 min-w-[150px]">
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Karyawan</label>
                     <select id="filter-karyawan" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"><option value="Semua">Semua Karyawan</option></select>
@@ -52,30 +50,27 @@
                     <input type="date" id="filter-end" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none">
                 </div>
                 <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis Data</button>
-                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700" title="Export PDF">PDF</button>
+                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700">PDF</button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-emerald-500 uppercase">🌟 Rajin (Pernah On Time)</h3><div id="box-rajin" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang waktu...</div></div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-rose-500 uppercase">⏰ Pernah Terlambat</h3><div id="box-telat" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang waktu...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-emerald-500 uppercase">🌟 Rajin (On Time)</h3><div id="box-rajin" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-rose-500 uppercase">⏰ Terlambat</h3><div id="box-telat" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-blue-500 uppercase">⏱️ Total Jam Lembur</h3><div id="box-lembur" class="mt-3 text-3xl font-black text-blue-600">0 <span class="text-sm text-slate-400 font-bold">Menit</span></div></div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-slate-400 uppercase">❓ Alpa (Tanpa Log)</h3><div id="box-alpa" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang waktu...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-slate-400 uppercase">❓ Alpa (Tanpa Log)</h3><div id="box-alpa" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang...</div></div>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest flex justify-between">
-                    <span>📋 Log Absensi Rinci</span><span id="log-count" class="text-xs text-slate-400">0 Data</span>
-                </div>
+                <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest flex justify-between"><span>📋 Log Absensi Rinci</span><span id="log-count" class="text-xs text-slate-400">0 Data</span></div>
                 <div class="overflow-x-auto max-h-[500px]">
                     <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] sticky top-0"><tr><th class="p-4">Tgl & Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Waktu Extra</th></tr></thead>
+                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] sticky top-0"><tr><th class="p-4">Tgl & Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Lembur</th></tr></thead>
                         <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="5" class="p-6 text-center italic text-slate-400">Klik "Analisis Data"</td></tr></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 2 & 3: Master (Tidak berubah UI-nya, namun tetap lengkap) -->
         <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <button onclick="bukaModalOutlet()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md mb-4">+ Tambah Outlet Baru</button>
             <table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Nama Outlet</th><th class="p-4">Titik GPS & Radius</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table>
@@ -86,7 +81,7 @@
         </div>
     </div>
 
-    <!-- MODALS (Disembunyikan agar efisien, struktur sama dengan V9.0) -->
+    <!-- MODALS -->
     <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-screen">
             <h2 class="text-lg font-black mb-2">Form Outlet</h2><div id="map"></div>
@@ -109,34 +104,24 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbypohuCa64p9rltmLaybs_MilqqU3xJf6m00Jee73ovmdeOtxup3f-9D2f37VigdqLbQw/exec"; // <--- UPDATE URL
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRY0rTXYTfG-6jxe7DZHpcbcowhth9mtUtypz9Y1j3XdRc8hHKHblZgqvCvhDrVRMpvw/exec"; // <--- JANGAN LUPA UPDATE
         
         let map, marker, gOutlet = [], gShift = [], gKaryawan = [], gLaporan = [];
-        let analyticsSummary = { rajin: [], telat: [], izin: [], alpa: [] };
 
         window.addEventListener('load', () => {
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('filter-start').value = today;
-            document.getElementById('filter-end').value = today;
+            document.getElementById('filter-start').value = today; document.getElementById('filter-end').value = today;
             syncDatabase();
         });
 
-        function changeTab(tabId) {
-            document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active');
-        }
+        function changeTab(tabId) { document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active'); }
 
         async function syncDatabase(silent = false) {
             if(!silent) Swal.fire({ title: 'Sinkronisasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                 const data = await res.json();
-                if (data.status === 'ready') {
-                    gOutlet = data.dataOutlet; gShift = data.dataShift; gKaryawan = data.dataKaryawan;
-                    renderMasterTables();
-                    if(!silent) Swal.close();
-                }
+                if (data.status === 'ready') { gOutlet = data.dataOutlet; gShift = data.dataShift; gKaryawan = data.dataKaryawan; renderMasterTables(); if(!silent) Swal.close(); }
             } catch (e) { Swal.fire('Error', 'Gagal memuat database', 'error'); }
         }
 
@@ -148,9 +133,7 @@
             gOutlet.forEach(o => { outFilter += `<option value="${o.nama}">${o.nama}</option>`; outForm += `<option value="${o.nama}">${o.nama}</option>`; 
                 tableOut += `<tr class="border-b"><td class="p-4 font-black">${o.nama}</td><td class="p-4">${o.lat}, ${o.lng} <br>Radius: ${o.radius}m</td><td class="p-4 text-right"><button onclick="deleteRow('hapus_outlet', {nama: '${o.nama}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button></td></tr>`;
             });
-            gShift.forEach(s => {
-                tableShf += `<tr class="border-b"><td class="p-4 font-bold text-blue-600">${s.outlet}</td><td class="p-4 font-black">${s.kode}</td><td class="p-4">${s.jamMasuk} - ${s.jamKeluar}</td><td class="p-4 text-right"><button onclick="deleteRow('hapus_shift', {kode: '${s.kode}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button></td></tr>`;
-            });
+            gShift.forEach(s => { tableShf += `<tr class="border-b"><td class="p-4 font-bold text-blue-600">${s.outlet}</td><td class="p-4 font-black">${s.kode}</td><td class="p-4">${s.jamMasuk} - ${s.jamKeluar}</td><td class="p-4 text-right"><button onclick="deleteRow('hapus_shift', {kode: '${s.kode}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button></td></tr>`; });
             gKaryawan.forEach(k => { karFilter += `<option value="${k.nama}">${k.nama} (${k.outlet})</option>`; });
 
             document.getElementById('filter-outlet').innerHTML = outFilter; document.getElementById('shf-outlet').innerHTML = outForm;
@@ -165,25 +148,17 @@
         function simpanData(action) { let p = {}; if(action.includes('outlet')) { p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; } else { p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; } runAPI(action, p); }
         function deleteRow(action, payload) { Swal.fire({ title: 'Hapus?', icon: 'warning', showCancelButton: true }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
-        // --- SUPER ANALYTICS LOGIC ---
         async function generateAnalytics() {
-            const outlet = document.getElementById('filter-outlet').value;
-            const karyawan = document.getElementById('filter-karyawan').value;
-            const tglStart = document.getElementById('filter-start').value;
-            const tglEnd = document.getElementById('filter-end').value;
+            const outlet = document.getElementById('filter-outlet').value, karyawan = document.getElementById('filter-karyawan').value;
+            const tglStart = document.getElementById('filter-start').value, tglEnd = document.getElementById('filter-end').value;
             
             if(tglStart > tglEnd) return Swal.fire('Error', 'Tanggal mulai tidak boleh lebih dari tanggal akhir.', 'error');
 
             Swal.fire({ title: 'Menganalisis Data...', didOpen: () => Swal.showLoading() });
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: 'Semua' } }) }); // Tarik semua dulu untuk di filter JS
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: 'Semua' } }) }); 
             const result = await res.json();
             
-            // Filter Range, Outlet & Karyawan
-            const logsRange = result.data.filter(r => 
-                r.tanggal >= tglStart && r.tanggal <= tglEnd &&
-                (outlet === 'Semua' || r.outlet === outlet) &&
-                (karyawan === 'Semua' || r.nama === karyawan)
-            );
+            const logsRange = result.data.filter(r => r.tanggal >= tglStart && r.tanggal <= tglEnd && (outlet === 'Semua' || r.outlet === outlet) && (karyawan === 'Semua' || r.nama === karyawan) );
             gLaporan = logsRange; 
             
             let htmlLog = "", rajinList = [], telatList = [], izinList = [], totalLemburMnt = 0;
@@ -196,11 +171,7 @@
                 if(isIzin) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[10px]">IZIN / SAKIT</span>`;
                 if(isLembur) badge = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
 
-                if(isMasuk && !isTelat) rajinList.push(r.nama);
-                if(isMasuk && isTelat) telatList.push(r.nama);
-                if(isIzin) izinList.push(r.nama);
-                
-                // Kalkulasi Total Lembur
+                if(isMasuk && !isTelat) rajinList.push(r.nama); if(isMasuk && isTelat) telatList.push(r.nama); if(isIzin) izinList.push(r.nama);
                 if(r.lembur && !isNaN(r.lembur)) totalLemburMnt += parseInt(r.lembur);
 
                 htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.tanggal}<br><span class="text-slate-500">${r.jam}</span></td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td></tr>`;
@@ -213,14 +184,11 @@
             const loggedNames = [...new Set([...rajinList, ...telatList, ...izinList])];
             const alpaList = masterRoster.filter(name => !loggedNames.includes(name));
 
-            const uniqRajin = [...new Set(rajinList)], uniqTelat = [...new Set(telatList)], uniqIzin = [...new Set(izinList)];
-            analyticsSummary = { rajin: uniqRajin, telat: uniqTelat, izin: uniqIzin, alpa: alpaList };
-
             const renderPill = (arr, color) => arr.length > 0 ? arr.map(n => `<span class="karyawan-pill bg-${color}-100 text-${color}-700">${n}</span>`).join('') : '<span class="text-slate-300 italic text-xs">Kosong</span>';
 
-            document.getElementById('box-rajin').innerHTML = renderPill(uniqRajin, 'emerald');
-            document.getElementById('box-telat').innerHTML = renderPill(uniqTelat, 'rose');
-            document.getElementById('box-izin').innerHTML = renderPill(uniqIzin, 'amber');
+            document.getElementById('box-rajin').innerHTML = renderPill([...new Set(rajinList)], 'emerald');
+            document.getElementById('box-telat').innerHTML = renderPill([...new Set(telatList)], 'rose');
+            document.getElementById('box-izin').innerHTML = renderPill([...new Set(izinList)], 'amber');
             document.getElementById('box-alpa').innerHTML = renderPill(alpaList, 'slate');
             document.getElementById('box-lembur').innerHTML = `${totalLemburMnt} <span class="text-sm text-slate-400 font-bold">Menit</span>`;
 
@@ -232,10 +200,8 @@
             const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
             const dStart = document.getElementById('filter-start').value, dEnd = document.getElementById('filter-end').value, empStr = document.getElementById('filter-karyawan').value;
 
-            doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold");
-            doc.text("LAPORAN HUMAN CAPITAL - AICHA", 14, 22);
-            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
-            doc.text(`Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
+            doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.text("LAPORAN HUMAN CAPITAL - AICHA", 14, 22);
+            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); doc.text(`Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
             
             const headers = [["Tanggal", "Jam", "Nama Karyawan", "Outlet", "Shift", "Tipe", "Status", "Lembur (Mnt)"]];
             const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur]);
