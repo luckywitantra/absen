@@ -3,244 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HC System - Ai-ice Kristal</title>
-    
+    <title>Aicha - Mesin Presensi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
     <style>
-        body { background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .hc-card { background: white; border-radius: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); }
-        .camera-box { position: relative; width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 1.5rem; overflow: hidden; border: 4px solid #f1f5f9; }
+        body { background: #0f172a; font-family: sans-serif; }
+        .camera-box { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 1.5rem; overflow: hidden; border: 4px solid #334155; }
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .tab-btn.active { color: #2563eb; border-bottom: 3px solid #2563eb; background: #eff6ff; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <div class="hc-card w-full max-w-md overflow-hidden flex flex-col">
-        <div class="bg-slate-900 p-6 text-center">
+    <div class="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
+        <div class="bg-slate-900 p-6 text-center border-b border-slate-800">
             <h1 class="text-white font-black tracking-tighter text-2xl italic">AICHA HC</h1>
-            <p id="system-status" class="text-slate-400 text-[10px] tracking-[0.3em] mt-1 font-bold">LOADING AI ENGINE...</p>
+            <p id="geo-status" class="text-rose-400 text-[10px] tracking-widest font-bold mt-1">📍 MENCARI SATELIT GPS...</p>
         </div>
 
-        <div class="flex border-b border-slate-100">
-            <button onclick="switchTab('absen')" id="nav-absen" class="tab-btn active flex-1 py-4 text-xs font-black">PRESENSI</button>
-            <button onclick="switchTab('hrd')" id="nav-hrd" class="tab-btn flex-1 py-4 text-xs font-black text-slate-400">REGISTRASI</button>
-        </div>
+        <div class="p-6 space-y-5">
+            <div class="camera-box"><video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas></div>
 
-        <div class="p-6 space-y-6">
-            <div class="camera-box">
-                <video id="video" autoplay muted playsinline></video>
-                <canvas id="overlay"></canvas>
-            </div>
-
-            <div id="panel-absen" class="space-y-4">
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[9px] font-black text-slate-400 uppercase">Status Biometrik</span>
-                        <span id="role-badge" class="hidden px-2 py-0.5 rounded-full text-[8px] font-bold text-white bg-blue-600"></span>
-                    </div>
-                    <h2 id="display-name" class="text-lg font-black text-slate-300 italic">Mengenali wajah...</h2>
-                </div>
-
-                <select id="outlet-select" class="w-full p-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="" disabled selected>PILIH LOKASI OUTLET</option>
-                    <option value="Outlet 01">Outlet 01 - Pusat</option>
-                    <option value="Outlet 02">Outlet 02 - Penajam</option>
-                    <option value="Outlet 03">Outlet 03</option>
-                    <option value="Outlet 04">Outlet 04</option>
-                    <option value="Outlet 05">Outlet 05</option>
-                </select>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <button id="btn-in" onclick="sendAttendance('Masuk')" disabled class="bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 disabled:opacity-20 transition-all">MASUK</button>
-                    <button id="btn-out" onclick="sendAttendance('Pulang')" disabled class="bg-slate-200 text-slate-500 py-4 rounded-2xl font-black disabled:opacity-20 transition-all">PULANG</button>
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
+                <div>
+                    <span class="text-[9px] font-black text-slate-400 uppercase">Biometrik AI</span>
+                    <h2 id="ai-name" class="text-lg font-black text-slate-300 italic">Memindai...</h2>
                 </div>
             </div>
 
-            <div id="panel-hrd" class="hidden space-y-4">
-                <input type="text" id="reg-name" placeholder="Nama Lengkap Sesuai KTP" class="w-full p-4 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
-                <div class="grid grid-cols-2 gap-3">
-                    <select id="reg-role" class="p-4 border border-slate-200 rounded-2xl text-sm font-bold outline-none">
-                        <option value="Staff">Role: Staff</option>
-                        <option value="Senior">Role: Senior</option>
-                    </select>
-                    <select id="reg-outlet" class="p-4 border border-slate-200 rounded-2xl text-sm font-bold outline-none">
-                        <option value="Outlet 01">Outlet 01</option>
-                        <option value="Outlet 02">Outlet 02</option>
-                    </select>
-                </div>
-                <button onclick="enroll()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black shadow-xl">KUNCI IDENTITAS WAJAH</button>
+            <div class="grid grid-cols-2 gap-3">
+                <select id="input-outlet" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"></select>
+                <select id="input-shift" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"></select>
+            </div>
+            
+            <div id="distance-alert" class="hidden bg-rose-100 text-rose-600 p-3 rounded-xl text-xs font-bold text-center"></div>
+
+            <div class="grid grid-cols-2 gap-4 pt-2">
+                <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 text-white py-4 rounded-xl font-black shadow-lg shadow-blue-200 disabled:opacity-30 transition-all">MASUK</button>
+                <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-slate-900 text-white py-4 rounded-xl font-black shadow-lg shadow-slate-200 disabled:opacity-30 transition-all">PULANG</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- KONFIGURASI ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbxAFoxRDA3MLERNMeovKgszipeF1sN74ifx2UXTKYgf82kUAFGSxurFJFvhPMxBTuCuqw/exec"; 
-        // -------------------
-
+        const API_URL = "https://script.google.com/macros/s/AKfycbxAFoxRDA3MLERNMeovKgszipeF1sN74ifx2UXTKYgf82kUAFGSxurFJFvhPMxBTuCuqw/exec";
         const video = document.getElementById('video');
-        const statusEl = document.getElementById('system-status');
-        let faceMatcher = null, currentPerson = null, canvas = null;
+        let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
+        let userLat = 0, userLng = 0, currentDistance = 0, isLocationValid = false;
 
-        // Inisialisasi Aplikasi
-        async function boot() {
-            if (typeof faceapi === 'undefined') {
-                Swal.fire('Error', 'Library AI gagal dimuat. Refresh halaman.', 'error');
-                return;
+        window.addEventListener('load', () => {
+            if(navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    pos => { userLat = pos.coords.latitude; userLng = pos.coords.longitude; document.getElementById('geo-status').innerText = "📍 GPS TERKUNCI"; document.getElementById('geo-status').className = "text-emerald-400 text-[10px] tracking-widest font-bold mt-1"; validasiJarak(); },
+                    err => { document.getElementById('geo-status').innerText = "📍 IZINKAN GPS LOKASI!"; Swal.fire('Error GPS', 'Mohon izinkan akses lokasi (GPS) pada browser.', 'error'); },
+                    { enableHighAccuracy: true }
+                );
             }
+            setTimeout(initApp, 1000);
+        });
 
-            Swal.fire({ title: 'Booting HC System...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-            try {
-                await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-                ]);
-
-                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
-                const data = await response.json();
-                
-                if (data.dataKaryawan && data.dataKaryawan.length > 0) {
-                    const labeled = data.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role}), [new Float32Array(k.descriptor)]));
-                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.4); // Threshold ketat (Face Lock 100%)
-                }
-                
-                startCamera();
-            } catch (e) {
-                console.error(e);
-                Swal.fire('Error API', 'Gagal menyambung ke Google Sheets. Cek URL API.', 'error');
-            }
+        // Rumus Haversine: Menghitung jarak bumi dalam meter
+        function hitungJarak(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2) * Math.sin(Δλ/2)*Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-                .then(stream => {
-                    video.srcObject = stream;
-                    statusEl.innerText = "SISTEM ONLINE";
-                    statusEl.className = "text-emerald-400 text-[10px] tracking-[0.3em] mt-1 font-bold";
-                    Swal.close();
-                })
-                .catch(() => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Kamera Terblokir',
-                        text: 'Pastikan buka di Chrome/Safari dan izinkan akses kamera.'
-                    });
-                });
+        async function initApp() {
+            Swal.fire({ title: 'Sinkronisasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            await Promise.all([ faceapi.nets.tinyFaceDetector.loadFromUri(URL), faceapi.nets.faceLandmark68Net.loadFromUri(URL), faceapi.nets.faceRecognitionNet.loadFromUri(URL) ]);
+
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
+                const data = await res.json();
+                
+                dbOutlet = data.dataOutlet;
+                dbShift = data.dataShift;
+
+                const outSel = document.getElementById('input-outlet');
+                outSel.innerHTML = '<option value="" disabled selected>Pilih Outlet</option>';
+                dbOutlet.forEach(o => outSel.innerHTML += `<option value="${o.nama}">${o.nama}</option>`);
+
+                const shfSel = document.getElementById('input-shift');
+                shfSel.innerHTML = '<option value="" disabled selected>Pilih Shift</option>';
+                dbShift.forEach(s => shfSel.innerHTML += `<option value="${s.kode}" data-jam="${s.jamMasuk}">${s.kode} (${s.jamMasuk})</option>`);
+
+                if (data.dataKaryawan.length > 0) {
+                    const labeled = data.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role}), [new Float32Array(k.descriptor)]));
+                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.40);
+                }
+                startCam();
+            } catch (e) { Swal.fire('Error', 'Gagal memuat database.', 'error'); }
+        }
+
+        function startCam() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(s => { video.srcObject = s; Swal.close(); }).catch(e => Swal.fire('Error', 'Izin kamera ditolak.', 'error'));
+        }
+
+        document.getElementById('input-outlet').addEventListener('change', validasiJarak);
+
+        function validasiJarak() {
+            const outName = document.getElementById('input-outlet').value;
+            const alertBox = document.getElementById('distance-alert');
+            if(!outName || userLat === 0) return;
+
+            const outlet = dbOutlet.find(o => o.nama === outName);
+            currentDistance = hitungJarak(userLat, userLng, outlet.lat, outlet.lng);
+            
+            if (currentDistance > outlet.radius) {
+                isLocationValid = false;
+                alertBox.classList.remove('hidden');
+                alertBox.innerHTML = `⚠️ Jarak Anda <b>${Math.round(currentDistance)} m</b>. Maksimal ${outlet.radius} m dari Outlet!`;
+                updateUI(currentFace !== null);
+            } else {
+                isLocationValid = true;
+                alertBox.classList.add('hidden');
+                updateUI(currentFace !== null);
+            }
         }
 
         video.addEventListener('play', () => {
-            canvas = document.getElementById('overlay');
+            const canvas = document.getElementById('overlay');
             const size = { width: video.offsetWidth, height: video.offsetHeight };
             faceapi.matchDimensions(canvas, size);
 
             setInterval(async () => {
-                const isAbsen = !document.getElementById('panel-absen').classList.contains('hidden');
                 const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
                 const resized = faceapi.resizeResults(detections, size);
                 canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
 
-                if (detections.length > 0 && faceMatcher && isAbsen) {
+                if (detections.length > 0 && faceMatcher) {
                     const match = faceMatcher.findBestMatch(resized[0].descriptor);
                     if (match.label !== 'unknown') {
-                        const info = JSON.parse(match.label);
-                        currentPerson = { nama: info.n, role: info.r, acc: (100 - (match.distance * 100)).toFixed(0) + "%" };
-                        renderUI(true);
-                    } else {
-                        currentPerson = null;
-                        renderUI(false);
-                    }
-                } else {
-                    faceapi.draw.drawFaceLandmarks(canvas, resized);
-                }
-            }, 600);
+                        currentFace = JSON.parse(match.label);
+                        updateUI(true);
+                    } else { updateUI(false); }
+                } else { updateUI(false); }
+            }, 800);
         });
 
-        function renderUI(found) {
-            const nameEl = document.getElementById('display-name');
-            const roleEl = document.getElementById('role-badge');
-            const outlet = document.getElementById('outlet-select').value;
+        function updateUI(found) {
+            const nameEl = document.getElementById('ai-name');
+            const shfSel = document.getElementById('input-shift').value;
+            const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out');
             
-            if (found && currentPerson) {
-                nameEl.innerText = currentPerson.nama;
-                nameEl.className = "text-lg font-black text-blue-600 italic";
-                roleEl.innerText = currentPerson.role;
-                roleEl.classList.remove('hidden');
-                if (outlet) { document.getElementById('btn-in').disabled = false; document.getElementById('btn-out').disabled = false; }
+            if (found && currentFace) {
+                nameEl.innerText = currentFace.n; nameEl.className = "text-lg font-black text-blue-600";
+                if (isLocationValid && shfSel) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
             } else {
-                nameEl.innerText = "Mengenali wajah...";
-                nameEl.className = "text-lg font-black text-slate-300 italic";
-                roleEl.classList.add('hidden');
-                document.getElementById('btn-in').disabled = true; document.getElementById('btn-out').disabled = true;
+                nameEl.innerText = "Memindai..."; nameEl.className = "text-lg font-black text-slate-300 italic";
+                currentFace = null; btnIn.disabled = true; btnOut.disabled = true;
             }
         }
 
-        async function sendAttendance(type) {
-            const outlet = document.getElementById('outlet-select').value;
-            Swal.fire({ title: 'Mencatat Presensi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        document.getElementById('input-shift').addEventListener('change', () => updateUI(currentFace !== null));
+
+        async function kirimAbsen(tipe) {
+            const out = document.getElementById('input-outlet').value;
+            const shf = document.getElementById('input-shift');
+            const shfT = shf.options[shf.selectedIndex].getAttribute('data-jam');
+
+            Swal.fire({ title: 'Merekam Log...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             
             try {
                 const res = await fetch(API_URL, { 
                     method: 'POST', 
-                    body: JSON.stringify({ action: 'absen', payload: { ...currentPerson, outlet: outlet, tipe: type } }) 
+                    body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfT, tipe: tipe, jarak: currentDistance } }) 
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    let seniorMsg = result.seniorStatus === "VALID" ? "Shift Valid." : "PERINGATAN: Tidak ada Senior di shift ini!";
-                    Swal.fire('Berhasil!', `${currentPerson.nama} absen ${type}. <br><br><b>${seniorMsg}</b>`, 'success');
+                    Swal.fire('Terekam!', `<b>${currentFace.n}</b><br>Jarak Lokasi: ${Math.round(currentDistance)} m (Valid)<br>Status: ${result.statusWaktu}`, 'success');
+                    document.getElementById('input-shift').value = ""; updateUI(false);
                 }
-            } catch (e) {
-                Swal.fire('Gagal', 'Terjadi kesalahan koneksi.', 'error');
-            }
+            } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error'); }
         }
-
-        async function enroll() {
-            const name = document.getElementById('reg-name').value;
-            if (!name) return Swal.fire('Error', 'Nama harus diisi', 'warning');
-
-            Swal.fire({ title: 'Scanning Biometrik...', text: 'Jangan bergerak', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-            
-            if (!detection) return Swal.fire('Gagal', 'Wajah tidak terdeteksi. Pastikan cahaya terang.', 'error');
-
-            try {
-                await fetch(API_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ 
-                        action: 'enroll', 
-                        payload: { 
-                            nama: name, 
-                            role: document.getElementById('reg-role').value, 
-                            outlet: document.getElementById('reg-outlet').value, 
-                            descriptor: Array.from(detection.descriptor) 
-                        } 
-                    }) 
-                });
-                Swal.fire('Sukses!', 'Wajah berhasil dikunci. Halaman akan dimuat ulang.', 'success').then(() => location.reload());
-            } catch (e) {
-                Swal.fire('Error', 'Gagal menyimpan ke server.', 'error');
-            }
-        }
-
-        function switchTab(t) {
-            document.getElementById('panel-absen').classList.toggle('hidden', t === 'hrd');
-            document.getElementById('panel-hrd').classList.toggle('hidden', t === 'absen');
-            document.getElementById('nav-absen').classList.toggle('active', t === 'absen');
-            document.getElementById('nav-hrd').classList.toggle('active', t === 'hrd');
-            document.getElementById('nav-absen').classList.toggle('text-slate-400', t === 'hrd');
-            document.getElementById('nav-hrd').classList.toggle('text-slate-400', t === 'absen');
-        }
-
-        // Jalankan sistem setelah halaman benar-benar siap
-        window.addEventListener('load', () => {
-            setTimeout(boot, 1000);
-        });
     </script>
 </body>
 </html>
