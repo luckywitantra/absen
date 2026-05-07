@@ -22,7 +22,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AIMOY HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V17.0 (Bulk Import & Fix)</p>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V17.1 (CSV Auto-Detect Fix)</p>
             
             <div class="flex gap-6 mt-4 overflow-x-auto">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Laporan & Riwayat</button>
@@ -141,7 +141,7 @@
             <select id="shf-outlet" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none"></select>
             <input type="text" id="shf-nama" placeholder="Kode Shift" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
             <div class="grid grid-cols-2 gap-2 mb-3"><input type="time" id="shf-masuk" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"><input type="time" id="shf-keluar" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"></div>
-            <input type="number" id="shf-tol" placeholder="Toleransi (Menit)" value="15" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
+            <input type="number" id="shf-tol" placeholder="Toleransi Telat (Menit)" value="15" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
             <div class="flex gap-2"><button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button><button onclick="simpanData('shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg">Simpan</button></div>
         </div>
     </div>
@@ -180,6 +180,7 @@
             document.getElementById('table-outlet').innerHTML = tableOut || `<tr><td colspan="3" class="text-center p-4">Kosong</td></tr>`; document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>`; document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center p-4">Kosong</td></tr>`;
         }
 
+        // --- FUNGSI MANUAL & IMPORT CSV ---
         function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; document.getElementById('modal-manual').classList.remove('hidden'); }
         function bukaModalImport() { document.getElementById('file-csv').value = ""; document.getElementById('modal-import').classList.remove('hidden'); }
         
@@ -195,7 +196,6 @@
             runAPI('absen_manual', p);
         }
 
-        // --- FUNGSI IMPORT CSV MASAL ---
         function downloadTemplateCSV() {
             let csv = "Tanggal (YYYY-MM-DD),Jam (HH:MM),Nama Karyawan,Outlet,Shift,Tipe Absen (Masuk/Pulang/Izin/Libur),Keterangan\n";
             csv += "2026-05-15,08:00,Rizky Beby Auliana,Outlet Pusat,Pagi,Masuk,Input Masal HRD\n";
@@ -209,14 +209,18 @@
             
             const reader = new FileReader();
             reader.onload = function(e) {
-                const rows = e.target.result.split('\n').map(r => r.trim()).filter(r => r);
+                // Membaca baris CSV agar mendukung Windows dan Mac
+                const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r);
                 if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error');
+                
+                // MENDETEKSI PENGGUNAAN TITIK KOMA (;) ATAU KOMA (,)
+                const delimiter = rows[0].includes(';') ? ';' : ',';
                 
                 const dataToImport = [];
                 for(let i=1; i<rows.length; i++) {
-                    const cols = rows[i].split(',');
+                    const cols = rows[i].split(delimiter);
                     if(cols.length >= 6) {
-                        const ket = cols.slice(6).join(',').replace(/"/g, ''); // Berjaga jika ada koma di dalam keterangan
+                        const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); 
                         dataToImport.push({
                             tanggal: cols[0].trim(), jam: cols[1].trim(), nama: cols[2].trim(), 
                             outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim()
@@ -225,7 +229,7 @@
                 }
                 
                 if(dataToImport.length > 0) {
-                    Swal.fire({ title: 'Mengupload Data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    Swal.fire({ title: 'Mengupload Data...', html: 'Mohon tunggu, proses ini butuh waktu.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                     fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) })
                     .then(res => res.json())
                     .then(data => {
@@ -233,7 +237,10 @@
                             Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success');
                             tutupModal('modal-import'); generateAnalytics();
                         } else { Swal.fire('Gagal', data.message, 'error'); }
-                    });
+                    })
+                    .catch(err => Swal.fire('Error', 'Gagal menghubungi server Google Apps Script.', 'error'));
+                } else {
+                    Swal.fire('Format Salah', 'Sistem tidak dapat membaca baris data. Pastikan format kolom sesuai dengan template Excel!', 'error');
                 }
             };
             reader.readAsText(fileInput.files[0]);
@@ -286,7 +293,7 @@
                 else if(isLibur) liburList.push(r.nama);
                 else if(isMasuk) {
                     if(isTelat && !isManual) telatList.push(r.nama);
-                    else rajinList.push(r.nama); // FIX: Masuk Manual / Masuk On-Time masuk ke kotak "Hadir/Rajin"
+                    else rajinList.push(r.nama); // FIX: Masuk Manual / Masuk On-Time otomatis masuk ke kotak "Hadir/Rajin"
                 }
                 
                 if(r.lembur && !isNaN(r.lembur)) totalLemburMnt += parseInt(r.lembur);
