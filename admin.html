@@ -10,7 +10,6 @@
     <style>
         body { font-family: sans-serif; background: #f1f5f9; }
         #map { height: 250px; width: 100%; border-radius: 1rem; margin-bottom: 1rem; z-index: 1;}
-        .tab-btn.active { color: #fff; background: #0f172a; border-color: #0f172a; }
     </style>
 </head>
 <body class="p-6 md:p-10">
@@ -26,15 +25,12 @@
             </div>
         </header>
 
-        <!-- PANEL LAPORAN -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6 p-4">
             <div class="flex gap-3 mb-4">
                 <select id="filter-outlet" class="bg-slate-50 border p-3 rounded-lg font-bold outline-none flex-1">
-                    <option value="Semua">Semua Outlet</option>
-                    <option value="Outlet Pusat">Outlet Pusat</option>
-                    <option value="Penajam">Penajam</option>
+                    <option value="Semua">Memuat Outlet...</option>
                 </select>
-                <button onclick="loadData()" class="bg-slate-900 text-white px-6 py-3 rounded-lg font-bold">Tarik Data Absen</button>
+                <button onclick="loadData()" class="bg-slate-900 text-white px-6 py-3 rounded-lg font-bold shadow-md">Tarik Data Absen</button>
             </div>
             
             <div class="overflow-x-auto">
@@ -74,9 +70,7 @@
         <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl">
             <h2 class="text-lg font-black mb-4">Buat Jadwal Shift Baru</h2>
             <select id="shf-outlet" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
-                <!-- Dropdown ini harus Anda sesuaikan/bisa dibuat dinamis baca DB -->
-                <option value="Outlet Pusat">Outlet Pusat</option>
-                <option value="Penajam">Penajam</option>
+                <option value="" disabled selected>Memuat Data Outlet...</option>
             </select>
             <input type="text" id="shf-nama" placeholder="Nama Shift (Misal: Pagi / Middle)" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
             <div class="grid grid-cols-2 gap-2 mb-3">
@@ -98,8 +92,38 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwJn-Y5QkYLgcpwPhEae06BUY0mgXYAZP2oLw6Tr71i4PCX2cw-b3gKcRHum2NZb26nPA/exec"; // Masukkan URL Deploy GAS Anda
-        let map, marker;
+        const API_URL = "https://script.google.com/macros/s/AKfycbwrPSvT8aR0OpiJryLKfHRi5K-b3xBqjkMhE0vXRV4-owXoZY_RS_weFUiNnJK7puenOQ/exec"; // <-- PASTIKAN URL GAS ANDA DI SINI
+        let map, marker, dataOutletGlobal = [];
+
+        // FUNGSI BARU: Inisialisasi Dinamis Data Outlet saat Admin dibuka
+        window.addEventListener('load', initAdmin);
+
+        async function initAdmin() {
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
+                const data = await res.json();
+                
+                if (data.status === 'ready') {
+                    dataOutletGlobal = data.dataOutlet;
+                    renderDropdownOutlet();
+                }
+            } catch (e) {
+                console.error("Gagal sinkronisasi data outlet awal.");
+            }
+        }
+
+        function renderDropdownOutlet() {
+            const filterEl = document.getElementById('filter-outlet');
+            const shiftEl = document.getElementById('shf-outlet');
+            
+            filterEl.innerHTML = '<option value="Semua">Semua Outlet</option>';
+            shiftEl.innerHTML = '<option value="" disabled selected>Pilih Outlet Target...</option>';
+            
+            dataOutletGlobal.forEach(o => {
+                filterEl.innerHTML += `<option value="${o.nama}">${o.nama}</option>`;
+                shiftEl.innerHTML += `<option value="${o.nama}">${o.nama}</option>`;
+            });
+        }
 
         function bukaModal(id) {
             document.getElementById(id).classList.remove('hidden');
@@ -126,18 +150,33 @@
             if(!nama || !lat || !rad) return Swal.fire('Gagal', 'Lengkapi Form Outlet', 'warning');
 
             Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading() });
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tambah_outlet', payload: { nama, lat, lng, radius: rad } }) });
-            Swal.fire('Sukses', 'Outlet baru berhasil ditambahkan.', 'success'); tutupModal('modal-outlet');
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tambah_outlet', payload: { nama, lat, lng, radius: rad } }) });
+            const result = await res.json();
+            
+            if (result.status === 'success') {
+                Swal.fire('Sukses', 'Outlet baru berhasil ditambahkan.', 'success'); 
+                tutupModal('modal-outlet');
+                initAdmin(); // Refresh dropdown otomatis
+            }
         }
 
         async function simpanShift() {
             const outlet = document.getElementById('shf-outlet').value, kode = document.getElementById('shf-nama').value;
             const jamM = document.getElementById('shf-masuk').value, jamK = document.getElementById('shf-keluar').value, tol = document.getElementById('shf-tol').value;
-            if(!kode || !jamM || !jamK) return Swal.fire('Gagal', 'Lengkapi Jam Shift', 'warning');
+            if(!outlet || !kode || !jamM || !jamK) return Swal.fire('Gagal', 'Lengkapi Form & Pilih Outletnya!', 'warning');
 
             Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading() });
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tambah_shift', payload: { outlet, kode, jamMasuk: jamM, jamKeluar: jamK, toleransi: tol } }) });
-            Swal.fire('Sukses', `Jadwal shift ${kode} untuk ${outlet} berhasil dibuat!`, 'success'); tutupModal('modal-shift');
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tambah_shift', payload: { outlet, kode, jamMasuk: jamM, jamKeluar: jamK, toleransi: tol } }) });
+            const result = await res.json();
+
+            if (result.status === 'success') {
+                Swal.fire('Sukses', `Jadwal shift ${kode} untuk ${outlet} berhasil dibuat!`, 'success'); 
+                tutupModal('modal-shift');
+                // Reset form
+                document.getElementById('shf-nama').value = "";
+                document.getElementById('shf-masuk').value = "";
+                document.getElementById('shf-keluar').value = "";
+            }
         }
 
         async function loadData() {
@@ -150,7 +189,7 @@
             result.data.forEach(row => {
                 const badge = row.status.includes('TERLAMBAT') ? `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold">${row.status}</span>` : `<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold">ON TIME</span>`;
                 html += `
-                    <tr class="hover:bg-slate-50">
+                    <tr class="hover:bg-slate-50 border-b border-slate-50">
                         <td class="p-4">${row.tanggal} <b class="ml-1 text-slate-900">${row.jam}</b></td>
                         <td class="p-4 font-black">${row.nama}</td>
                         <td class="p-4 font-bold text-blue-600">${row.outlet} <span class="text-xs text-slate-400">(${row.shift})</span></td>
