@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Tambahan Library untuk PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
@@ -23,12 +22,12 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AICHA HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V8.0 (Enterprise)</p>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V9.0 (Enterprise)</p>
             
-            <div class="flex gap-6 mt-4">
-                <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all" id="btn-laporan">Analitik Harian</button>
-                <button onclick="changeTab('tab-outlet')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all" id="btn-outlet">Master Outlet</button>
-                <button onclick="changeTab('tab-shift')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all" id="btn-shift">Master Shift</button>
+            <div class="flex gap-6 mt-4 overflow-x-auto">
+                <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Analitik Range Tanggal</button>
+                <button onclick="changeTab('tab-outlet')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-outlet">Master Outlet</button>
+                <button onclick="changeTab('tab-shift')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-shift">Master Shift</button>
             </div>
         </header>
 
@@ -39,54 +38,51 @@
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Outlet</label>
                     <select id="filter-outlet" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"><option value="Semua">Semua Outlet</option></select>
                 </div>
-                <div class="flex-1 min-w-[150px]">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Tanggal</label>
-                    <input type="date" id="filter-date" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none">
+                <div class="flex-1 min-w-[130px]">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Dari Tanggal</label>
+                    <input type="date" id="filter-start" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none">
+                </div>
+                <div class="flex-1 min-w-[130px]">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Sampai Tanggal</label>
+                    <input type="date" id="filter-end" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none">
                 </div>
                 <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis</button>
-                <button onclick="exportCSV()" class="bg-emerald-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-emerald-700">⬇ CSV</button>
-                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700">⬇ PDF</button>
+                <button onclick="exportCSV()" class="bg-emerald-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-emerald-700" title="Export CSV">CSV</button>
+                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700" title="Export PDF">PDF</button>
             </div>
 
-            <!-- Kartu Analitik Rekapitulasi -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-emerald-500 uppercase">🌟 Rajin (On Time)</h3><div id="box-rajin" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div></div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-rose-500 uppercase">⏰ Terlambat</h3><div id="box-telat" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div></div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-amber-500 uppercase">📝 Izin / Sakit</h3><div id="box-izin" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div></div>
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-slate-400 uppercase">❓ Alpa (Tanpa Kabar)</h3><div id="box-alpa" class="mt-3 text-sm font-bold text-slate-700">Pilih data...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-emerald-500 uppercase">🌟 Rajin (Pernah On Time)</h3><div id="box-rajin" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang waktu...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-rose-500 uppercase">⏰ Pernah Terlambat</h3><div id="box-telat" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang waktu...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-amber-500 uppercase">📝 Pernah Izin / Sakit</h3><div id="box-izin" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang waktu...</div></div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-xs font-black text-slate-400 uppercase">❓ Alpa Total (Tidak Ada Log)</h3><div id="box-alpa" class="mt-3 text-sm font-bold text-slate-700">Pilih rentang waktu...</div></div>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest">📋 Log Absensi Rinci</div>
-                <div class="overflow-x-auto">
+                <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest flex justify-between">
+                    <span>📋 Log Absensi Rinci</span><span id="log-count" class="text-xs text-slate-400">0 Data</span>
+                </div>
+                <div class="overflow-x-auto max-h-[500px]">
                     <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Keterangan</th></tr></thead>
+                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] sticky top-0"><tr><th class="p-4">Tgl & Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Keterangan</th></tr></thead>
                         <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="5" class="p-6 text-center italic text-slate-400">Klik "Analisis"</td></tr></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 2: KELOLA OUTLET (CRUD) -->
+        <!-- TAB 2 & 3 (SAMA SEPERTI SEBELUMNYA) -->
         <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <button onclick="bukaModalOutlet()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md mb-4">+ Tambah Outlet Baru</button>
-            <table class="w-full text-left text-sm whitespace-nowrap">
-                <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Nama Outlet</th><th class="p-4">Titik GPS & Radius</th><th class="p-4 text-right">Aksi</th></tr></thead>
-                <tbody id="table-outlet" class="divide-y divide-slate-100"></tbody>
-            </table>
+            <table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Nama Outlet</th><th class="p-4">Titik GPS & Radius</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table>
         </div>
-
-        <!-- TAB 3: KELOLA SHIFT (CRUD) -->
         <div id="tab-shift" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <button onclick="bukaModalShift()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold shadow-md mb-4">+ Buat Jadwal Shift</button>
-            <table class="w-full text-left text-sm whitespace-nowrap">
-                <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Outlet</th><th class="p-4">Kode Shift</th><th class="p-4">Jam Kerja</th><th class="p-4 text-right">Aksi</th></tr></thead>
-                <tbody id="table-shift" class="divide-y divide-slate-100"></tbody>
-            </table>
+            <table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Outlet</th><th class="p-4">Kode Shift</th><th class="p-4">Jam Kerja</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="table-shift" class="divide-y divide-slate-100"></tbody></table>
         </div>
     </div>
 
-    <!-- MODAL OUTLET -->
+    <!-- MODALS -->
     <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-screen">
             <h2 id="title-modal-out" class="text-lg font-black mb-2">Form Outlet</h2>
@@ -100,12 +96,11 @@
             <input type="number" id="out-rad" placeholder="Radius Aman (cth: 50)" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
             <div class="flex gap-2">
                 <button onclick="tutupModal('modal-outlet')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button>
-                <button onclick="simpanOutlet()" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Simpan</button>
+                <button onclick="simpanData('tambah_outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Simpan</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL SHIFT -->
     <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl">
             <h2 id="title-modal-shf" class="text-lg font-black mb-4">Form Jadwal Shift</h2>
@@ -119,19 +114,21 @@
             <input type="number" id="shf-tol" placeholder="Toleransi (menit)" value="15" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
             <div class="flex gap-2">
                 <button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button>
-                <button onclick="simpanShift()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg">Simpan</button>
+                <button onclick="simpanData('tambah_shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg">Simpan</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzx02l2Cn2rMKGubMKYlm-E7AVTMGABcBjDZEwGxLnQygMXR1uO3aTmKfBWmFZplrqZiw/exec"; // <--- Masukkan URL GAS Anda di sini
+        const API_URL = "https://script.google.com/macros/s/AKfycbwrXg2l06BypRF7bTSGqSwYm37G4qs4NmATDcyNiGLKG1JMtjU7kw6Ga1liA8jS8rWmbg/exec"; // <--- JANGAN LUPA UPDATE
         
         let map, marker, gOutlet = [], gShift = [], gKaryawan = [], gLaporan = [];
         let analyticsSummary = { rajin: [], telat: [], izin: [], alpa: [] };
 
         window.addEventListener('load', () => {
-            document.getElementById('filter-date').value = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filter-start').value = today;
+            document.getElementById('filter-end').value = today;
             syncDatabase();
         });
 
@@ -181,92 +178,43 @@
             document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>`;
         }
 
-        // --- MAP & MODAL LOGIC ---
+        // --- MAP & MODAL LOGIC (TETAP SAMA SEPERTI V8.0) ---
         function initMap(lat, lng) {
             if(!map) {
-                map = L.map('map').setView([lat, lng], 14);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                marker = L.marker([lat, lng]).addTo(map);
+                map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map);
                 map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); });
-            } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); }
-            setTimeout(() => map.invalidateSize(), 300);
+            } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } setTimeout(() => map.invalidateSize(), 300);
         }
-
-        function bukaModalOutlet() {
-            document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru";
-            document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = "";
-            document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = "";
-            document.getElementById('modal-outlet').classList.remove('hidden'); initMap(-1.269160, 116.825264);
-        }
-
-        function editModalOutlet(nama, lat, lng, rad) {
-            document.getElementById('title-modal-out').innerText = "Edit Data Outlet";
-            document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama;
-            document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad;
-            document.getElementById('modal-outlet').classList.remove('hidden'); initMap(parseFloat(lat), parseFloat(lng));
-        }
-
-        function bukaModalShift() {
-            document.getElementById('title-modal-shf').innerText = "Tambah Jadwal Shift";
-            document.getElementById('shf-oldoutlet').value = ""; document.getElementById('shf-oldkode').value = "";
-            document.getElementById('shf-outlet').value = ""; document.getElementById('shf-nama').value = "";
-            document.getElementById('shf-masuk').value = ""; document.getElementById('shf-keluar').value = ""; document.getElementById('shf-tol').value = "15";
-            document.getElementById('modal-shift').classList.remove('hidden');
-        }
-
-        function editModalShift(outlet, kode, jamM, jamK, tol) {
-            document.getElementById('title-modal-shf').innerText = "Edit Jadwal Shift";
-            document.getElementById('shf-oldoutlet').value = outlet; document.getElementById('shf-oldkode').value = kode;
-            document.getElementById('shf-outlet').value = outlet; document.getElementById('shf-nama').value = kode;
-            document.getElementById('shf-masuk').value = jamM; document.getElementById('shf-keluar').value = jamK; document.getElementById('shf-tol').value = tol;
-            document.getElementById('modal-shift').classList.remove('hidden');
-        }
-
+        function bukaModalOutlet() { document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = ""; document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = ""; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(-1.269160, 116.825264); }
+        function editModalOutlet(nama, lat, lng, rad) { document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama; document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(parseFloat(lat), parseFloat(lng)); }
+        function bukaModalShift() { document.getElementById('title-modal-shf').innerText = "Tambah Jadwal Shift"; document.getElementById('shf-oldoutlet').value = ""; document.getElementById('shf-oldkode').value = ""; document.getElementById('shf-outlet').value = ""; document.getElementById('shf-nama').value = ""; document.getElementById('shf-masuk').value = ""; document.getElementById('shf-keluar').value = ""; document.getElementById('shf-tol').value = "15"; document.getElementById('modal-shift').classList.remove('hidden'); }
+        function editModalShift(outlet, kode, jamM, jamK, tol) { document.getElementById('title-modal-shf').innerText = "Edit Jadwal Shift"; document.getElementById('shf-oldoutlet').value = outlet; document.getElementById('shf-oldkode').value = kode; document.getElementById('shf-outlet').value = outlet; document.getElementById('shf-nama').value = kode; document.getElementById('shf-masuk').value = jamM; document.getElementById('shf-keluar').value = jamK; document.getElementById('shf-tol').value = tol; document.getElementById('modal-shift').classList.remove('hidden'); }
         function tutupModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        // --- CRUD LOGIC ---
-        async function runAPI(action, payload) {
-            Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() });
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) });
-            const data = await res.json();
-            if(data.status === 'success') { Swal.fire('Berhasil', 'Basis data diperbarui.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); } 
-            else { Swal.fire('Gagal', data.message || 'Kesalahan server.', 'error'); }
-        }
+        async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Basis data diperbarui.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); } else { Swal.fire('Gagal', data.message || 'Kesalahan server.', 'error'); } }
+        function simpanData(action) { let p = {}; if(action.includes('outlet')) { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); if(oldNama) { p.oldNama = oldNama; action = 'edit_outlet'; } } else { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); if(oldOut) { p.oldOutlet = oldOut; p.oldKode = oldKode; action = 'edit_shift'; } } runAPI(action, p); }
+        function deleteRow(action, payload) { Swal.fire({ title: 'Hapus?', text: "Tindakan ini permanen.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
-        function simpanOutlet() {
-            const oldNama = document.getElementById('out-oldnama').value;
-            const p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value };
-            if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning');
-            if(oldNama) { p.oldNama = oldNama; runAPI('edit_outlet', p); } else { runAPI('tambah_outlet', p); }
-        }
-
-        function simpanShift() {
-            const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value;
-            const p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value };
-            if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning');
-            if(oldOut) { p.oldOutlet = oldOut; p.oldKode = oldKode; runAPI('edit_shift', p); } else { runAPI('tambah_shift', p); }
-        }
-
-        function deleteRow(action, payload) {
-            Swal.fire({ title: 'Hapus?', text: "Tindakan ini tidak bisa dibatalkan.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); });
-        }
-
-        // --- SUPER ANALYTICS LOGIC ---
+        // --- SUPER ANALYTICS LOGIC (WITH DATE RANGE) ---
         async function generateAnalytics() {
             const outlet = document.getElementById('filter-outlet').value;
-            const tgl = document.getElementById('filter-date').value; 
+            const tglStart = document.getElementById('filter-start').value;
+            const tglEnd = document.getElementById('filter-end').value;
             
-            Swal.fire({ title: 'Menganalisis Data...', didOpen: () => Swal.showLoading() });
+            if(tglStart > tglEnd) return Swal.fire('Error', 'Tanggal mulai tidak boleh lebih dari tanggal akhir.', 'error');
+
+            Swal.fire({ title: 'Menganalisis Data AI...', didOpen: () => Swal.showLoading() });
             const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: outlet } }) });
             const result = await res.json();
             
-            const logsToday = result.data.filter(r => r.tanggal === tgl);
-            gLaporan = logsToday; // Untuk CSV/PDF
+            // Filter DATE RANGE
+            const logsRange = result.data.filter(r => r.tanggal >= tglStart && r.tanggal <= tglEnd);
+            gLaporan = logsRange; 
             
             let htmlLog = "", rajinList = [], telatList = [], izinList = [];
             
-            logsToday.forEach(r => {
-                const isIzin = r.tipe === 'Izin'; const isTelat = r.status.includes('TERLAMBAT'); const isMasuk = r.tipe === 'Masuk';
+            logsRange.forEach(r => {
+                const isIzin = r.tipe === 'Izin', isTelat = r.status.includes('TERLAMBAT'), isMasuk = r.tipe === 'Masuk';
                 
                 let badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[10px]">ON TIME</span>';
                 if(isTelat) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
@@ -276,17 +224,18 @@
                 if(isMasuk && isTelat) telatList.push(r.nama);
                 if(isIzin) izinList.push(r.nama);
 
-                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.jam}</td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td></tr>`;
+                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.tanggal}<br><span class="text-slate-500">${r.jam}</span></td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td></tr>`;
             });
 
-            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada aktivitas.</td></tr>`;
+            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada aktivitas pada rentang tanggal ini.</td></tr>`;
+            document.getElementById('log-count').innerText = `${logsRange.length} Data`;
 
             const masterRoster = gKaryawan.filter(k => outlet === "Semua" || k.outlet === outlet).map(k => k.nama);
             const loggedNames = [...new Set([...rajinList, ...telatList, ...izinList])];
+            // Alpa Total = Nama di Master yang SAMA SEKALI tidak muncul di rentang waktu tersebut
             const alpaList = masterRoster.filter(name => !loggedNames.includes(name));
 
             const uniqRajin = [...new Set(rajinList)], uniqTelat = [...new Set(telatList)], uniqIzin = [...new Set(izinList)];
-
             analyticsSummary = { rajin: uniqRajin, telat: uniqTelat, izin: uniqIzin, alpa: alpaList };
 
             const renderPill = (arr, color) => arr.length > 0 ? arr.map(n => `<span class="karyawan-pill bg-${color}-100 text-${color}-700">${n}</span>`).join('') : '<span class="text-slate-300 italic text-xs">Kosong</span>';
@@ -299,55 +248,32 @@
             Swal.close();
         }
 
-        // --- EXPORT PDF & CSV ---
         function exportCSV() {
             if(gLaporan.length === 0) return Swal.fire('Kosong', 'Tarik data terlebih dahulu.', 'warning');
             let csv = "data:text/csv;charset=utf-8,Tanggal,Jam,Nama Karyawan,Outlet,Shift,Tipe Absen,Status Kehadiran,Informasi Tambahan\n";
             gLaporan.forEach(r => { csv += `"${r.tanggal}","${r.jam}","${r.nama}","${r.outlet}","${r.shift}","${r.tipe}","${r.status}","${r.info}"\n`; });
-            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `Aicha_HC_${document.getElementById('filter-date').value}.csv`);
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `Laporan_Aicha_${document.getElementById('filter-start').value}_to_${document.getElementById('filter-end').value}.csv`);
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         function exportPDF() {
-            if(gLaporan.length === 0) return Swal.fire('Kosong', 'Tarik data (Analisis) terlebih dahulu.', 'warning');
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape');
-            const dateStr = document.getElementById('filter-date').value;
-            const outStr = document.getElementById('filter-outlet').value;
+            if(gLaporan.length === 0) return Swal.fire('Kosong', 'Tarik data terlebih dahulu.', 'warning');
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
+            const dStart = document.getElementById('filter-start').value, dEnd = document.getElementById('filter-end').value, outStr = document.getElementById('filter-outlet').value;
 
-            // Header Dokumen Profesional
             doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold");
             doc.text("LAPORAN HUMAN CAPITAL - AICHA", 14, 22);
             doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
-            doc.text(`Tanggal Cetak: ${dateStr} | Filter Outlet: ${outStr}`, 14, 28);
+            doc.text(`Periode: ${dStart} s/d ${dEnd} | Filter Outlet: ${outStr}`, 14, 28);
             
-            // Rekapitulasi Baris
             doc.setFontSize(9); doc.setTextColor(0, 0, 0);
-            doc.text(`Rekapitulasi: Rajin (${analyticsSummary.rajin.length}) | Telat (${analyticsSummary.telat.length}) | Izin (${analyticsSummary.izin.length}) | Alpa (${analyticsSummary.alpa.length})`, 14, 36);
+            doc.text(`Pernah Hadir/Rajin: ${analyticsSummary.rajin.length} Org | Pernah Telat: ${analyticsSummary.telat.length} Org | Pernah Izin: ${analyticsSummary.izin.length} Org | Alpa Total: ${analyticsSummary.alpa.length} Org`, 14, 36);
 
-            // Tabel Data
-            const headers = [["Jam", "Nama Karyawan", "Outlet", "Shift", "Tipe", "Status", "Keterangan"]];
-            const dataRow = gLaporan.map(r => [r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.info]);
+            const headers = [["Tanggal", "Jam", "Nama Karyawan", "Outlet", "Shift", "Tipe", "Status", "Keterangan"]];
+            const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.info]);
 
-            doc.autoTable({
-                head: headers,
-                body: dataRow,
-                startY: 42,
-                theme: 'grid',
-                headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] },
-                styles: { fontSize: 8, font: 'helvetica' },
-                alternateRowStyles: { fillColor: [248, 250, 252] }
-            });
-
-            // Footer
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150);
-                doc.text(`Aicha Super App HC - Halaman ${i} dari ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-            }
-
-            doc.save(`Laporan_HC_Aicha_${dateStr}.pdf`);
+            doc.autoTable({ head: headers, body: dataRow, startY: 42, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 8 } });
+            doc.save(`Laporan_HC_${dStart}_${dEnd}.pdf`);
         }
     </script>
 </body>
