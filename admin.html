@@ -22,7 +22,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AIMOY HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V17.1 (CSV Auto-Detect Fix)</p>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V17.2 (Date Auto-Normalize Fix)</p>
             
             <div class="flex gap-6 mt-4 overflow-x-auto">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Laporan & Riwayat</button>
@@ -220,9 +220,21 @@
                 for(let i=1; i<rows.length; i++) {
                     const cols = rows[i].split(delimiter);
                     if(cols.length >= 6) {
+                        const rawDate = cols[0].trim();
+                        let safeDate = rawDate;
+                        
+                        // AUTO-FORMAT TANGGAL: Mengubah DD/MM/YYYY atau DD-MM-YYYY menjadi YYYY-MM-DD
+                        if (rawDate.includes('/')) {
+                            let p = rawDate.split('/');
+                            if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+                        } else if (rawDate.includes('-') && rawDate.split('-')[0].length <= 2) {
+                            let p = rawDate.split('-');
+                            if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+                        }
+
                         const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); 
                         dataToImport.push({
-                            tanggal: cols[0].trim(), jam: cols[1].trim(), nama: cols[2].trim(), 
+                            tanggal: safeDate, jam: cols[1].trim(), nama: cols[2].trim(), 
                             outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim()
                         });
                     }
@@ -293,7 +305,7 @@
                 else if(isLibur) liburList.push(r.nama);
                 else if(isMasuk) {
                     if(isTelat && !isManual) telatList.push(r.nama);
-                    else rajinList.push(r.nama); // FIX: Masuk Manual / Masuk On-Time otomatis masuk ke kotak "Hadir/Rajin"
+                    else rajinList.push(r.nama); 
                 }
                 
                 if(r.lembur && !isNaN(r.lembur)) totalLemburMnt += parseInt(r.lembur);
