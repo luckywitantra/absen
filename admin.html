@@ -22,7 +22,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AIMOY HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V16.0 (Enterprise Core)</p>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V17.0 (Bulk Import & Fix)</p>
             
             <div class="flex gap-6 mt-4 overflow-x-auto">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Laporan & Riwayat</button>
@@ -40,12 +40,12 @@
                 <div class="flex-1 min-w-[110px]"><label class="text-[10px] font-bold text-slate-400 uppercase">Sampai</label><input type="date" id="filter-end" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"></div>
                 <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis</button>
                 <button onclick="exportPDF()" class="bg-rose-600 text-white px-3 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700">PDF</button>
-                <button onclick="bukaModalManual()" class="bg-amber-500 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-amber-600">✍️ Input Manual / Libur</button>
+                <button onclick="bukaModalManual()" class="bg-amber-500 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-amber-600" title="Input Manual Satu-Satu">✍️ Input 1 Data</button>
+                <button onclick="bukaModalImport()" class="bg-indigo-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-indigo-700" title="Upload dari Excel/CSV">📥 Import Data</button>
             </div>
 
-            <!-- FITUR BARU: KOTAK "LIBUR (DAY OFF)" -->
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-emerald-500 uppercase">🌟 Rajin (On Time)</h3><div id="box-rajin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-emerald-500 uppercase">🌟 Hadir / Rajin</h3><div id="box-rajin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-rose-500 uppercase">⏰ Telat</h3><div id="box-telat" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-amber-500 uppercase">📝 Izin/Sakit</h3><div id="box-izin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-indigo-500 uppercase">🏖️ Libur (Off)</h3><div id="box-libur" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
@@ -77,10 +77,26 @@
         </div>
     </div>
 
+    <!-- MODAL IMPORT CSV -->
+    <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <h2 class="text-lg font-black mb-4">Import Data Masal (CSV)</h2>
+            <p class="text-xs text-slate-500 mb-4 font-bold">1. Download Template, isi data menggunakan Excel, lalu simpan dalam format (.csv).<br>2. Upload file tersebut di sini.</p>
+            <button onclick="downloadTemplateCSV()" class="w-full py-3 bg-slate-100 text-blue-600 border border-blue-200 font-black rounded-lg mb-4 hover:bg-blue-50">⬇ DOWNLOAD TEMPLATE CSV</button>
+            
+            <input type="file" id="file-csv" accept=".csv" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 text-sm font-bold outline-none">
+            
+            <div class="flex gap-2">
+                <button onclick="tutupModal('modal-import')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-slate-700">Batal</button>
+                <button onclick="prosesImportCSV()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg">Upload Data</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL ABSEN MANUAL -->
     <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <h2 class="text-lg font-black mb-4">Input Manual / Jadwal Libur</h2>
+            <h2 class="text-lg font-black mb-4">Input 1 Data Manual</h2>
             <div class="grid grid-cols-2 gap-2 mb-3">
                 <div><label class="text-[10px] font-bold text-slate-400">TANGGAL</label><input type="date" id="man-tgl" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"></div>
                 <div><label class="text-[10px] font-bold text-slate-400">JAM</label><input type="time" id="man-jam" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"></div>
@@ -92,14 +108,10 @@
             </div>
             <select id="man-tipe" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none border-blue-500">
                 <option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option>
-                <option value="Izin">Izin / Sakit</option>
-                <option value="Libur" class="text-indigo-600 font-bold">Jadwal Libur (Day Off)</option>
+                <option value="Izin">Izin / Sakit</option><option value="Libur" class="text-indigo-600 font-bold">Jadwal Libur (Day Off)</option>
             </select>
             <input type="text" id="man-ket" placeholder="Alasan Manual (Cth: Lupa Bawa HP, Jadwal Libur Mingguan)" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
-            <div class="flex gap-2">
-                <button onclick="tutupModal('modal-manual')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button>
-                <button onclick="simpanManual()" class="w-full py-3 bg-amber-500 text-white font-bold rounded-lg">Simpan Log</button>
-            </div>
+            <div class="flex gap-2"><button onclick="tutupModal('modal-manual')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button><button onclick="simpanManual()" class="w-full py-3 bg-amber-500 text-white font-bold rounded-lg">Simpan Log</button></div>
         </div>
     </div>
 
@@ -168,12 +180,9 @@
             document.getElementById('table-outlet').innerHTML = tableOut || `<tr><td colspan="3" class="text-center p-4">Kosong</td></tr>`; document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>`; document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center p-4">Kosong</td></tr>`;
         }
 
-        // --- FUNGSI MANUAL ABSEN ---
-        function bukaModalManual() {
-            document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0];
-            document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5);
-            document.getElementById('man-ket').value = ""; document.getElementById('modal-manual').classList.remove('hidden');
-        }
+        function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; document.getElementById('modal-manual').classList.remove('hidden'); }
+        function bukaModalImport() { document.getElementById('file-csv').value = ""; document.getElementById('modal-import').classList.remove('hidden'); }
+        
         function loadShiftManual() {
             const outlet = document.getElementById('man-outlet').value, shiftSelect = document.getElementById('man-shift');
             const shiftTersedia = gShift.filter(s => s.outlet === outlet);
@@ -186,6 +195,51 @@
             runAPI('absen_manual', p);
         }
 
+        // --- FUNGSI IMPORT CSV MASAL ---
+        function downloadTemplateCSV() {
+            let csv = "Tanggal (YYYY-MM-DD),Jam (HH:MM),Nama Karyawan,Outlet,Shift,Tipe Absen (Masuk/Pulang/Izin/Libur),Keterangan\n";
+            csv += "2026-05-15,08:00,Rizky Beby Auliana,Outlet Pusat,Pagi,Masuk,Input Masal HRD\n";
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv)); link.setAttribute("download", "Template_Import_Absen.csv");
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function prosesImportCSV() {
+            const fileInput = document.getElementById('file-csv');
+            if (!fileInput.files.length) return Swal.fire('Peringatan', 'Silakan pilih file CSV terlebih dahulu.', 'warning');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rows = e.target.result.split('\n').map(r => r.trim()).filter(r => r);
+                if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error');
+                
+                const dataToImport = [];
+                for(let i=1; i<rows.length; i++) {
+                    const cols = rows[i].split(',');
+                    if(cols.length >= 6) {
+                        const ket = cols.slice(6).join(',').replace(/"/g, ''); // Berjaga jika ada koma di dalam keterangan
+                        dataToImport.push({
+                            tanggal: cols[0].trim(), jam: cols[1].trim(), nama: cols[2].trim(), 
+                            outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim()
+                        });
+                    }
+                }
+                
+                if(dataToImport.length > 0) {
+                    Swal.fire({ title: 'Mengupload Data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success');
+                            tutupModal('modal-import'); generateAnalytics();
+                        } else { Swal.fire('Gagal', data.message, 'error'); }
+                    });
+                }
+            };
+            reader.readAsText(fileInput.files[0]);
+        }
+
+        // --- CORE UI ---
         function initMap(lat, lng) { if(!map) { map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } setTimeout(() => map.invalidateSize(), 300); }
         function bukaModalOutlet() { document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = ""; document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = ""; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(-1.269160, 116.825264); }
         function editModalOutlet(nama, lat, lng, rad) { document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama; document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(parseFloat(lat), parseFloat(lng)); }
@@ -194,10 +248,11 @@
         function editModalKaryawan(nama, role, outlet) { document.getElementById('kar-oldnama').value = nama; document.getElementById('kar-nama').value = nama; document.getElementById('kar-role').value = role; document.getElementById('kar-outlet').value = outlet; document.getElementById('modal-karyawan').classList.remove('hidden'); }
         function tutupModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil dilakukan.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); tutupModal('modal-karyawan'); tutupModal('modal-manual'); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
+        async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); tutupModal('modal-karyawan'); tutupModal('modal-manual'); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
         function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
         function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
+        // --- SUPER ANALYTICS FIX LOGIC ---
         async function generateAnalytics() {
             const outlet = document.getElementById('filter-outlet').value, karyawan = document.getElementById('filter-karyawan').value;
             const tglStart = document.getElementById('filter-start').value, tglEnd = document.getElementById('filter-end').value;
@@ -213,19 +268,26 @@
             let htmlLog = "", rajinList = [], telatList = [], izinList = [], liburList = [], totalLemburMnt = 0;
             
             logsRange.forEach(r => {
-                const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isTelat = r.status.includes('TERLAMBAT'), isMasuk = r.tipe === 'Masuk', isLembur = r.status.includes('LEMBUR'), isManual = r.status.includes('MANUAL');
-                
+                const isIzin = r.tipe === 'Izin';
+                const isLibur = r.tipe === 'Libur';
+                const isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang';
+                const isTelat = r.status.includes('TERLAMBAT');
+                const isLembur = r.status.includes('LEMBUR');
+                const isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
+
                 let badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[10px]">ON TIME</span>';
                 if(isTelat) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
                 if(isIzin) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[10px]">IZIN / SAKIT</span>`;
                 if(isLibur) badge = `<span class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold text-[10px]">DAY OFF</span>`;
                 if(isLembur) badge = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
-                if(isManual && !isLibur && !isIzin) badge = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
+                if(r.status.includes('MANUAL')) badge = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
 
-                if(isMasuk && !isTelat && !isManual) rajinList.push(r.nama); 
-                if(isMasuk && isTelat && !isManual) telatList.push(r.nama); 
-                if(isIzin || (isManual && r.tipe === 'Izin')) izinList.push(r.nama);
-                if(isLibur || (isManual && r.tipe === 'Libur')) liburList.push(r.nama);
+                if(isIzin) izinList.push(r.nama);
+                else if(isLibur) liburList.push(r.nama);
+                else if(isMasuk) {
+                    if(isTelat && !isManual) telatList.push(r.nama);
+                    else rajinList.push(r.nama); // FIX: Masuk Manual / Masuk On-Time masuk ke kotak "Hadir/Rajin"
+                }
                 
                 if(r.lembur && !isNaN(r.lembur)) totalLemburMnt += parseInt(r.lembur);
 
@@ -255,7 +317,7 @@
             const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
             const dStart = document.getElementById('filter-start').value, dEnd = document.getElementById('filter-end').value, empStr = document.getElementById('filter-karyawan').value;
 
-            doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.text("LAPORAN HUMAN CAPITAL - AICHA", 14, 22);
+            doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.text("LAPORAN HUMAN CAPITAL - AIMOY", 14, 22);
             doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); doc.text(`Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
             
             const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur", "Keterangan"]];
