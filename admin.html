@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Aicha Super HC - Admin</title>
+    <title>AiMoy Super HC - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -21,11 +21,11 @@
 <body class="p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 border-b border-slate-200 pb-4">
-            <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AICHA HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-sm">Super App Analytics V13.0 (Enterprise Core)</p>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter">AIMOY HQ MANAGER</h1>
+            <p class="text-slate-500 font-bold text-sm">Super App Analytics V14.0 (HR Control)</p>
             
             <div class="flex gap-6 mt-4 overflow-x-auto">
-                <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Analitik & Laporan</button>
+                <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Laporan & Riwayat</button>
                 <button onclick="changeTab('tab-karyawan')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-karyawan">Master Karyawan</button>
                 <button onclick="changeTab('tab-outlet')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-outlet">Master Outlet</button>
                 <button onclick="changeTab('tab-shift')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-xs tracking-wider transition-all whitespace-nowrap" id="btn-shift">Master Shift</button>
@@ -35,30 +35,32 @@
         <!-- TAB 1: SUPER ANALYTICS -->
         <div id="tab-laporan" class="tab-content active space-y-4">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-3 items-end">
-                <div class="flex-1 min-w-[150px]">
+                <div class="flex-1 min-w-[130px]">
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Outlet</label>
                     <select id="filter-outlet" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"><option value="Semua">Semua Outlet</option></select>
                 </div>
-                <div class="flex-1 min-w-[150px]">
+                <div class="flex-1 min-w-[130px]">
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Karyawan</label>
                     <select id="filter-karyawan" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none"><option value="Semua">Semua Karyawan</option></select>
                 </div>
-                <div class="flex-1 min-w-[130px]">
+                <div class="flex-1 min-w-[110px]">
                     <label class="text-[10px] font-bold text-slate-400 uppercase">Dari Tanggal</label>
                     <input type="date" id="filter-start" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none">
                 </div>
-                <div class="flex-1 min-w-[130px]">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Sampai Tanggal</label>
+                <div class="flex-1 min-w-[110px]">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase">Sampai</label>
                     <input type="date" id="filter-end" class="w-full bg-slate-50 border p-3 rounded-lg font-bold outline-none">
                 </div>
-                <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis Data</button>
-                <button onclick="exportPDF()" class="bg-rose-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700">PDF</button>
+                <button onclick="generateAnalytics()" class="bg-blue-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-blue-700">Analisis</button>
+                <button onclick="exportPDF()" class="bg-rose-600 text-white px-3 py-3 rounded-lg font-bold shadow-md hover:bg-rose-700">PDF</button>
+                <!-- TOMBOL INPUT MANUAL HRD -->
+                <button onclick="bukaModalManual()" class="bg-amber-500 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-amber-600">✍️ Input Manual</button>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-emerald-500 uppercase">🌟 Rajin (On Time)</h3><div id="box-rajin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-rose-500 uppercase">⏰ Telat</h3><div id="box-telat" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-amber-500 uppercase">📝 Izin/Sakit</h3><div id="box-izin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-amber-500 uppercase">📝 Izin/Sakit/Manual</h3><div id="box-izin" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-slate-400 uppercase">❓ Alpa</h3><div id="box-alpa" class="mt-2 text-xs font-bold text-slate-700">Pilih rentang...</div></div>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><h3 class="text-[10px] font-black text-blue-500 uppercase">⏱️ Lembur Total</h3><div id="box-lembur" class="mt-2 text-2xl font-black text-blue-600">0 <span class="text-[10px] text-slate-400 font-bold">Menit</span></div></div>
             </div>
@@ -67,56 +69,67 @@
                 <div class="bg-slate-900 text-white p-4 font-black text-sm uppercase tracking-widest flex justify-between"><span>📋 Log Absensi Rinci</span><span id="log-count" class="text-xs text-slate-400">0 Data</span></div>
                 <div class="overflow-x-auto max-h-[500px]">
                     <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] sticky top-0"><tr><th class="p-4">Tgl & Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Lembur</th><th class="p-4">Foto Absen</th></tr></thead>
+                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px] sticky top-0"><tr><th class="p-4">Tgl & Jam</th><th class="p-4">Karyawan</th><th class="p-4">Shift & Outlet</th><th class="p-4">Tipe Absen</th><th class="p-4">Status & Keterangan</th><th class="p-4">Validasi & Aksi</th></tr></thead>
                         <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="6" class="p-6 text-center italic text-slate-400">Klik "Analisis Data"</td></tr></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- TAB BARU: KELOLA KARYAWAN -->
+        <!-- TAB LAINNYA (Karyawan, Outlet, Shift) -->
         <div id="tab-karyawan" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <div class="flex justify-between items-center mb-4">
-                <p class="text-xs font-bold text-slate-500">💡 <b class="text-rose-500">Info:</b> Pendaftaran Karyawan Baru wajib melalui Mesin Kiosk Outlet agar biometrik wajah terkunci. Di menu ini Anda hanya dapat melakukan Mutasi, Promosi, atau Menghapus Karyawan.</p>
-            </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Tgl Daftar</th><th class="p-4">Nama Lengkap</th><th class="p-4">Jabatan (Role)</th><th class="p-4">Penempatan (Outlet)</th><th class="p-4 text-right">Aksi HRD</th></tr></thead><tbody id="table-karyawan" class="divide-y divide-slate-100"></tbody></table>
             </div>
         </div>
-
-        <!-- TAB 3: KELOLA OUTLET -->
         <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <button onclick="bukaModalOutlet()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-md mb-4">+ Tambah Outlet Baru</button>
             <table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Nama Outlet</th><th class="p-4">Titik GPS & Radius</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table>
         </div>
-
-        <!-- TAB 4: KELOLA SHIFT -->
         <div id="tab-shift" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <button onclick="bukaModalShift()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold shadow-md mb-4">+ Buat Jadwal Shift</button>
             <table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]"><tr><th class="p-4">Outlet</th><th class="p-4">Kode Shift</th><th class="p-4">Jam Kerja</th><th class="p-4 text-right">Aksi</th></tr></thead><tbody id="table-shift" class="divide-y divide-slate-100"></tbody></table>
         </div>
     </div>
 
-    <!-- MODALS FORM KARYAWAN -->
+    <!-- MODAL ABSEN MANUAL -->
+    <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <h2 class="text-lg font-black mb-4">Input Absen Manual (HRD)</h2>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <div><label class="text-[10px] font-bold text-slate-400">TANGGAL</label><input type="date" id="man-tgl" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"></div>
+                <div><label class="text-[10px] font-bold text-slate-400">JAM</label><input type="time" id="man-jam" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"></div>
+            </div>
+            <select id="man-nama" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none"></select>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <select id="man-outlet" onchange="loadShiftManual()" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"></select>
+                <select id="man-shift" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"><option value="-" selected>Pilih Shift</option></select>
+            </div>
+            <select id="man-tipe" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
+                <option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option><option value="Izin">Izin / Sakit</option>
+            </select>
+            <input type="text" id="man-ket" placeholder="Alasan Manual (Cth: Lupa Bawa HP)" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
+            <div class="flex gap-2">
+                <button onclick="tutupModal('modal-manual')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button>
+                <button onclick="simpanManual()" class="w-full py-3 bg-amber-500 text-white font-bold rounded-lg">Simpan Log</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS FORM MASTER -->
     <div id="modal-karyawan" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl">
             <h2 class="text-lg font-black mb-4">Edit Data Karyawan</h2>
-            <input type="hidden" id="kar-oldnama">
-            <input type="text" id="kar-nama" placeholder="Nama Lengkap" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
-            <select id="kar-role" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
-                <option value="Staff">Staff</option><option value="Senior">Senior</option>
-            </select>
+            <input type="hidden" id="kar-oldnama"><input type="text" id="kar-nama" placeholder="Nama Lengkap" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
+            <select id="kar-role" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none"><option value="Staff">Staff</option><option value="Senior">Senior</option></select>
             <select id="kar-outlet" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none"></select>
             <div class="flex gap-2"><button onclick="tutupModal('modal-karyawan')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button><button onclick="simpanData('edit_karyawan')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Simpan</button></div>
         </div>
     </div>
-
-    <!-- MODALS FORM OUTLET & SHIFT (Sama seperti V12) -->
     <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-screen">
             <h2 id="title-modal-out" class="text-lg font-black mb-2">Form Outlet</h2><div id="map"></div>
-            <input type="hidden" id="out-oldnama">
-            <input type="text" id="out-nama" placeholder="Nama Outlet" class="w-full p-3 bg-slate-50 border rounded-lg mb-2 text-sm font-bold outline-none">
+            <input type="hidden" id="out-oldnama"><input type="text" id="out-nama" placeholder="Nama Outlet" class="w-full p-3 bg-slate-50 border rounded-lg mb-2 text-sm font-bold outline-none">
             <div class="grid grid-cols-2 gap-2 mb-2"><input type="text" id="out-lat" readonly placeholder="Latitude" class="w-full p-2 bg-slate-100 rounded-lg text-xs outline-none"><input type="text" id="out-lng" readonly placeholder="Longitude" class="w-full p-2 bg-slate-100 rounded-lg text-xs outline-none"></div>
             <input type="number" id="out-rad" placeholder="Radius (Meter)" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
             <div class="flex gap-2"><button onclick="tutupModal('modal-outlet')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button><button onclick="simpanData('outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg">Simpan</button></div>
@@ -129,7 +142,7 @@
             <select id="shf-outlet" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none"></select>
             <input type="text" id="shf-nama" placeholder="Kode Shift" class="w-full p-3 bg-slate-50 border rounded-lg mb-3 text-sm font-bold outline-none">
             <div class="grid grid-cols-2 gap-2 mb-3"><input type="time" id="shf-masuk" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"><input type="time" id="shf-keluar" class="w-full p-3 bg-slate-50 border rounded-lg text-sm font-bold outline-none"></div>
-            <input type="number" id="shf-tol" placeholder="Toleransi Telat (Menit)" value="15" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
+            <input type="number" id="shf-tol" placeholder="Toleransi (Menit)" value="15" class="w-full p-3 bg-slate-50 border rounded-lg mb-4 text-sm font-bold outline-none">
             <div class="flex gap-2"><button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-lg">Batal</button><button onclick="simpanData('shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg">Simpan</button></div>
         </div>
     </div>
@@ -157,7 +170,8 @@
         }
 
         function renderMasterTables() {
-            let outFilter = '<option value="Semua">Semua Outlet</option>', outForm = '<option value="" disabled selected>Pilih Outlet...</option>', karFilter = '<option value="Semua">Semua Karyawan</option>';
+            let outFilter = '<option value="Semua">Semua Outlet</option>', outForm = '<option value="" disabled selected>Pilih Outlet...</option>';
+            let karFilter = '<option value="Semua">Semua Karyawan</option>', karForm = '<option value="" disabled selected>Pilih Karyawan...</option>';
             let tableOut = '', tableShf = '', tableKar = '';
             
             gOutlet.forEach(o => { outFilter += `<option value="${o.nama}">${o.nama}</option>`; outForm += `<option value="${o.nama}">${o.nama}</option>`; 
@@ -165,16 +179,43 @@
             });
             gShift.forEach(s => { tableShf += `<tr class="border-b"><td class="p-4 font-bold text-blue-600">${s.outlet}</td><td class="p-4 font-black">${s.kode}</td><td class="p-4">${s.jamMasuk} - ${s.jamKeluar}</td><td class="p-4 text-right"><button onclick="editModalShift('${s.outlet}','${s.kode}','${s.jamMasuk}','${s.jamKeluar}','${s.toleransi}')" class="bg-amber-100 text-amber-600 px-3 py-1 rounded text-xs font-bold mr-1">Edit</button><button onclick="deleteRow('hapus_shift', {outlet: '${s.outlet}', kode: '${s.kode}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button></td></tr>`; });
             gKaryawan.forEach(k => { 
-                karFilter += `<option value="${k.nama}">${k.nama} (${k.outlet})</option>`; 
+                karFilter += `<option value="${k.nama}">${k.nama} (${k.outlet})</option>`; karForm += `<option value="${k.nama}">${k.nama}</option>`;
                 let badgeRole = k.role === 'Senior' ? '<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-black text-[10px]">SENIOR</span>' : '<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold text-[10px]">STAFF</span>';
-                tableKar += `<tr class="border-b"><td class="p-4 text-xs font-bold">${k.ts}</td><td class="p-4 font-black text-slate-800">${k.nama}</td><td class="p-4">${badgeRole}</td><td class="p-4 font-bold text-blue-600">${k.outlet}</td><td class="p-4 text-right"><button onclick="editModalKaryawan('${k.nama}','${k.role}','${k.outlet}')" class="bg-amber-100 text-amber-600 px-3 py-1 rounded text-xs font-bold mr-1">Edit</button><button onclick="deleteRow('hapus_karyawan', {nama: '${k.nama}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Resign/Hapus</button></td></tr>`;
+                tableKar += `<tr class="border-b"><td class="p-4 text-xs font-bold">${k.ts}</td><td class="p-4 font-black text-slate-800">${k.nama}</td><td class="p-4">${badgeRole}</td><td class="p-4 font-bold text-blue-600">${k.outlet}</td><td class="p-4 text-right"><button onclick="editModalKaryawan('${k.nama}','${k.role}','${k.outlet}')" class="bg-amber-100 text-amber-600 px-3 py-1 rounded text-xs font-bold mr-1">Edit</button><button onclick="deleteRow('hapus_karyawan', {nama: '${k.nama}'})" class="bg-rose-100 text-rose-600 px-3 py-1 rounded text-xs font-bold">Hapus</button></td></tr>`;
             });
 
-            document.getElementById('filter-outlet').innerHTML = outFilter; document.getElementById('shf-outlet').innerHTML = outForm; document.getElementById('kar-outlet').innerHTML = outForm;
-            document.getElementById('filter-karyawan').innerHTML = karFilter;
+            document.getElementById('filter-outlet').innerHTML = outFilter; document.getElementById('shf-outlet').innerHTML = outForm; 
+            document.getElementById('kar-outlet').innerHTML = outForm; document.getElementById('man-outlet').innerHTML = outForm;
+            document.getElementById('filter-karyawan').innerHTML = karFilter; document.getElementById('man-nama').innerHTML = karForm;
+            
             document.getElementById('table-outlet').innerHTML = tableOut || `<tr><td colspan="3" class="text-center p-4">Kosong</td></tr>`;
             document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>`;
-            document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center p-4">Belum ada karyawan terdaftar. Gunakan Mesin Kiosk untuk Mendaftar.</td></tr>`;
+            document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center p-4">Kosong</td></tr>`;
+        }
+
+        // --- FUNGSI MANUAL ABSEN ---
+        function bukaModalManual() {
+            document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0];
+            document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5);
+            document.getElementById('man-ket').value = "";
+            document.getElementById('modal-manual').classList.remove('hidden');
+        }
+        function loadShiftManual() {
+            const outlet = document.getElementById('man-outlet').value;
+            const shiftSelect = document.getElementById('man-shift');
+            const shiftTersedia = gShift.filter(s => s.outlet === outlet);
+            shiftSelect.innerHTML = '<option value="-" selected>Pilih Shift (Atau Kosongkan jika Izin)</option>';
+            shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}">${s.kode}</option>`; });
+        }
+        function simpanManual() {
+            const p = {
+                tanggal: document.getElementById('man-tgl').value, jam: document.getElementById('man-jam').value,
+                nama: document.getElementById('man-nama').value, outlet: document.getElementById('man-outlet').value,
+                shift: document.getElementById('man-shift').value, tipe: document.getElementById('man-tipe').value,
+                keterangan: document.getElementById('man-ket').value
+            };
+            if(!p.tanggal || !p.jam || !p.nama || !p.outlet) return Swal.fire('Error', 'Data penting wajib diisi!', 'warning');
+            runAPI('absen_manual', p);
         }
 
         // --- MODAL TRIGGERS ---
@@ -186,23 +227,9 @@
         function editModalKaryawan(nama, role, outlet) { document.getElementById('kar-oldnama').value = nama; document.getElementById('kar-nama').value = nama; document.getElementById('kar-role').value = role; document.getElementById('kar-outlet').value = outlet; document.getElementById('modal-karyawan').classList.remove('hidden'); }
         function tutupModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Basis data diperbarui.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); tutupModal('modal-karyawan'); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
-        
-        function simpanData(type) { 
-            let p = {}, act = ""; 
-            if(type === 'outlet') { 
-                const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; 
-                if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; 
-            } else if(type === 'shift') { 
-                const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; 
-                if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} 
-            } else if(type === 'edit_karyawan') {
-                p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value };
-                if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan';
-            }
-            runAPI(act, p); 
-        }
-        function deleteRow(action, payload) { Swal.fire({ title: 'Hapus Permanen?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
+        async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil dilakukan.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); tutupModal('modal-karyawan'); tutupModal('modal-manual'); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
+        function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
+        function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
         // --- SUPER ANALYTICS LOGIC ---
         async function generateAnalytics() {
@@ -220,18 +247,23 @@
             let htmlLog = "", rajinList = [], telatList = [], izinList = [], totalLemburMnt = 0;
             
             logsRange.forEach(r => {
-                const isIzin = r.tipe === 'Izin', isTelat = r.status.includes('TERLAMBAT'), isMasuk = r.tipe === 'Masuk', isLembur = r.status.includes('LEMBUR');
+                const isIzin = r.tipe === 'Izin', isTelat = r.status.includes('TERLAMBAT'), isMasuk = r.tipe === 'Masuk', isLembur = r.status.includes('LEMBUR'), isManual = r.status.includes('MANUAL');
+                
                 let badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[10px]">ON TIME</span>';
                 if(isTelat) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
                 if(isIzin) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[10px]">IZIN / SAKIT</span>`;
                 if(isLembur) badge = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
+                if(isManual) badge = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold text-[10px]">${r.status}</span>`;
 
-                if(isMasuk && !isTelat) rajinList.push(r.nama); if(isMasuk && isTelat) telatList.push(r.nama); if(isIzin) izinList.push(r.nama);
+                if(isMasuk && !isTelat && !isManual) rajinList.push(r.nama); 
+                if(isMasuk && isTelat && !isManual) telatList.push(r.nama); 
+                if(isIzin || isManual) izinList.push(r.nama);
+                
                 if(r.lembur && !isNaN(r.lembur)) totalLemburMnt += parseInt(r.lembur);
 
-                const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http")) ? `<a href="${r.foto}" target="_blank" class="bg-blue-600 text-white px-2 py-1 rounded font-bold hover:bg-blue-700 transition-all">Lihat Foto</a>` : `<span class="text-slate-300">-</span>`;
+                const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http") && r.foto !== "Bypass HRD") ? `<a href="${r.foto}" target="_blank" class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-200 transition-all text-[10px]">Lihat Foto</a>` : `<span class="text-[10px] text-slate-400 font-bold italic">${r.foto}</span>`;
 
-                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.tanggal}<br><span class="text-slate-500">${r.jam}</span></td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td><td class="p-4 text-xs">${linkFoto}</td></tr>`;
+                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="p-4 font-black">${r.tanggal}<br><span class="text-slate-500">${r.jam}</span></td><td class="p-4 font-bold">${r.nama}</td><td class="p-4 font-bold text-blue-600">${r.outlet} <br><span class="text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="p-4 font-black uppercase text-[10px]">${r.tipe}</td><td class="p-4">${badge} <br><span class="text-[10px] text-slate-400">${r.info}</span></td><td class="p-4">${linkFoto} <button onclick="deleteRow('hapus_absen', {ts: '${r.ts}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[10px] font-bold ml-1 hover:bg-rose-200" title="Hapus Log Ini">Hapus</button></td></tr>`;
             });
 
             document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-bold">Tidak ada aktivitas.</td></tr>`;
@@ -258,8 +290,8 @@
             doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.text("LAPORAN HUMAN CAPITAL - AICHA", 14, 22);
             doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); doc.text(`Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
             
-            const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur", "Link Foto"]];
-            const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, r.foto]);
+            const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur", "Keterangan"]];
+            const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, (r.foto==="Bypass HRD" ? r.foto : "Terdapat Foto")]);
 
             doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 7 } });
             doc.save(`Laporan_HC_${dStart}_${dEnd}.pdf`);
