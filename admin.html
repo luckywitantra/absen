@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AiMoy Super HC - Admin</title>
+    
+    <!-- PWA META TAGS (PENTING UNTUK INSTALL APLIKASI) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AiMoy Admin">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -16,7 +26,7 @@
         .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 900; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        /* Scrollbar kustom untuk HP agar lebih rapi */
+        .karyawan-pill { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 800; margin: 0.15rem; }
         ::-webkit-scrollbar { height: 6px; width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -28,7 +38,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-4 md:mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter">AIMOY HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-xs md:text-sm">Super App Analytics V19.1 (Executive UI)</p>
+            <p class="text-slate-500 font-bold text-xs md:text-sm">Super App V20.0 (PWA & Akumulasi Penggajian)</p>
             
             <div class="flex gap-4 md:gap-6 mt-4 overflow-x-auto pb-2 scroll-smooth">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-[10px] md:text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Laporan & Riwayat</button>
@@ -39,39 +49,39 @@
         </header>
 
         <div id="tab-laporan" class="tab-content active space-y-4">
+            <!-- PANEL FILTER ADVANCED -->
             <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200">
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 items-end">
-                    <div class="col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Outlet</label><select id="filter-outlet" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Outlet</option></select></div>
-                    <div class="col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Karyawan</label><select id="filter-karyawan" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Karyawan</option></select></div>
-                    <div class="col-span-1">
-                        <label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Kategori</label>
-                        <select id="filter-kategori" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs">
-                            <option value="Semua">Semua Data</option><option value="Rajin">Hadir / Rajin</option><option value="Telat">Terlambat</option>
-                            <option value="Izin">Izin / Sakit</option><option value="Libur">Libur (Day Off)</option><option value="Lembur">Data Lembur</option><option value="Alpa">Alpa (Tanpa Log)</option>
-                        </select>
-                    </div>
-                    <div class="col-span-1">
-                        <label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Urutkan</label>
-                        <select id="filter-sort" class="w-full bg-slate-50 border border-blue-200 p-2.5 md:p-3 rounded-lg font-black text-blue-600 outline-none text-xs">
-                            <option value="tgl_baru">Tanggal (Terbaru)</option><option value="tgl_lama">Tanggal (Terlama)</option><option value="telat_tinggi">Telat Terlama (Menit)</option><option value="lembur_tinggi">Lembur Tertinggi</option>
-                        </select>
-                    </div>
-                    <div class="col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Dari Tgl</label><input type="date" id="filter-start" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"></div>
-                    <div class="col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Sampai Tgl</label><input type="date" id="filter-end" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 items-end">
                     
-                    <div class="col-span-2 md:col-span-2 lg:col-span-1 flex gap-2">
-                        <button onclick="generateAnalytics()" class="w-full bg-blue-600 text-white p-2.5 md:p-3 rounded-lg font-bold shadow-md hover:bg-blue-700 text-xs">Analisis</button>
-                        <button onclick="exportPDF()" class="w-full bg-rose-600 text-white p-2.5 md:p-3 rounded-lg font-bold shadow-md hover:bg-rose-700 text-xs">PDF</button>
+                    <!-- FITUR BARU: MODE LAPORAN (RINCI VS REKAP) -->
+                    <div class="col-span-2 lg:col-span-2">
+                        <label class="text-[9px] md:text-[10px] font-bold text-blue-600 uppercase">MODE TAMPILAN</label>
+                        <select id="mode-laporan" onchange="generateAnalytics()" class="w-full bg-blue-50 border border-blue-200 p-2.5 md:p-3 rounded-lg font-black text-blue-700 outline-none text-xs">
+                            <option value="rekap">📊 Rekap Total (Akumulasi Gaji)</option>
+                            <option value="rinci">📋 Log Rinci (Satu Per Satu)</option>
+                        </select>
                     </div>
+
+                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Outlet</label><select id="filter-outlet" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Outlet</option></select></div>
+                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Karyawan</label><select id="filter-karyawan" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Karyawan</option></select></div>
+                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Kategori</label><select id="filter-kategori" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Data</option><option value="Rajin">Hadir / Rajin</option><option value="Telat">Terlambat</option><option value="Izin">Izin / Sakit</option><option value="Libur">Libur (Day Off)</option><option value="Lembur">Data Lembur</option><option value="Alpa">Alpa (Tanpa Log)</option></select></div>
+                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Urutkan</label><select id="filter-sort" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="tgl_baru">Tanggal Baru</option><option value="tgl_lama">Tanggal Lama</option><option value="telat_tinggi">Telat Lama</option><option value="lembur_tinggi">Lembur Tinggi</option></select></div>
+                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Dari Tgl</label><input type="date" id="filter-start" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-[10px]"></div>
+                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Sampai Tgl</label><input type="date" id="filter-end" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-[10px]"></div>
+                </div>
+                
+                <div class="flex gap-2 mt-3">
+                    <button onclick="generateAnalytics()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-md hover:bg-blue-700 text-xs">Analisis Data</button>
+                    <button onclick="exportPDF()" class="w-full bg-rose-600 text-white p-3 rounded-lg font-bold shadow-md hover:bg-rose-700 text-xs">Download PDF</button>
                 </div>
             </div>
             
             <div class="flex flex-col sm:flex-row gap-2">
                 <button onclick="bukaModalManual()" class="w-full sm:w-auto bg-amber-500 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:bg-amber-600 text-xs">✍️ Input 1 Data Manual</button>
-                <button onclick="bukaModalImport()" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:bg-indigo-700 text-xs">📥 Import dari Excel/CSV</button>
+                <button onclick="bukaModalImport()" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:bg-indigo-700 text-xs">📥 Import Bulk Excel</button>
             </div>
 
-            <!-- KOTAK SUMMARY RESPONSIVE & INTERAKTIF (PERBAIKAN UI) -->
+            <!-- KOTAK SUMMARY -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-2">
                 <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-emerald-500 uppercase">🌟 Hadir/Rajin</h3><div id="box-rajin" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
                 <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-rose-500 uppercase">⏰ Telat</h3><div id="box-telat" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
@@ -81,118 +91,51 @@
                 <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">⏱️ Total Lembur</h3><div id="box-lembur" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
             </div>
 
+            <!-- TABEL DUA MODE (RINCI & REKAP) -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-900 text-white p-3 md:p-4 font-black text-xs md:text-sm uppercase tracking-widest flex justify-between items-center">
-                    <span>📋 Log Tersaring</span><span id="log-count" class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">0 Data</span>
+                    <span id="judul-tabel">📋 Laporan Rinci</span><span id="log-count" class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">0 Data</span>
                 </div>
                 <div class="overflow-x-auto max-h-[500px]">
-                    <table class="w-full text-left text-xs md:text-sm whitespace-nowrap">
+                    
+                    <!-- TABEL 1: MODE RINCI -->
+                    <table id="tabel-mode-rinci" class="w-full text-left text-xs md:text-sm whitespace-nowrap">
                         <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px] sticky top-0 z-10"><tr><th class="px-3 py-3 md:p-4">Tgl & Jam</th><th class="px-3 py-3 md:p-4">Karyawan</th><th class="px-3 py-3 md:p-4">Shift & Outlet</th><th class="px-3 py-3 md:p-4">Tipe</th><th class="px-3 py-3 md:p-4">Status & Info</th><th class="px-3 py-3 md:p-4 text-center">Aksi</th></tr></thead>
-                        <tbody id="table-laporan" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="6" class="p-6 text-center italic text-slate-400 text-xs">Klik "Analisis" untuk memuat data.</td></tr></tbody>
+                        <tbody id="body-rinci" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="6" class="p-6 text-center italic text-slate-400 text-xs">Klik "Analisis" untuk memuat data.</td></tr></tbody>
                     </table>
+
+                    <!-- TABEL 2: MODE REKAP TOTAL -->
+                    <table id="tabel-mode-rekap" class="hidden w-full text-left text-xs md:text-sm whitespace-nowrap">
+                        <thead class="bg-blue-50 text-blue-800 font-bold uppercase text-[9px] md:text-[10px] sticky top-0 z-10">
+                            <tr><th class="px-3 py-3 md:p-4">Karyawan</th><th class="px-3 py-3 md:p-4">Penempatan Outlet</th><th class="px-3 py-3 md:p-4 text-center">Hadir (On-Time)</th><th class="px-3 py-3 md:p-4 text-center">Terlambat</th><th class="px-3 py-3 md:p-4 text-center">Izin / Sakit</th><th class="px-3 py-3 md:p-4 text-center">Libur (Off)</th><th class="px-3 py-3 md:p-4 text-center">Total Lembur</th></tr>
+                        </thead>
+                        <tbody id="body-rekap" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="7" class="p-6 text-center italic text-slate-400 text-xs">Pilih mode Rekap dan klik Analisis.</td></tr></tbody>
+                    </table>
+
                 </div>
             </div>
         </div>
 
-        <!-- TAB KARYAWAN -->
-        <div id="tab-karyawan" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Tgl Daftar</th><th class="px-3 py-3 md:p-4">Nama Lengkap</th><th class="px-3 py-3 md:p-4">Jabatan</th><th class="px-3 py-3 md:p-4">Penempatan</th><th class="px-3 py-3 md:p-4 text-right">Aksi HRD</th></tr></thead><tbody id="table-karyawan" class="divide-y divide-slate-100"></tbody></table>
-            </div>
-        </div>
-        
-        <!-- TAB OUTLET -->
-        <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
-            <button onclick="bukaModalOutlet()" class="w-full md:w-auto bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Tambah Outlet Baru</button>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Nama Outlet</th><th class="px-3 py-3 md:p-4">Titik GPS & Radius</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table>
-            </div>
-        </div>
-        
-        <!-- TAB SHIFT -->
-        <div id="tab-shift" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
-            <button onclick="bukaModalShift()" class="w-full md:w-auto bg-emerald-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Buat Jadwal Shift</button>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Outlet</th><th class="px-3 py-3 md:p-4">Kode Shift</th><th class="px-3 py-3 md:p-4">Jam Kerja</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-shift" class="divide-y divide-slate-100"></tbody></table>
-            </div>
-        </div>
+        <!-- TAB KARYAWAN, OUTLET, SHIFT TETAP SAMA -->
+        <div id="tab-karyawan" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Tgl Daftar</th><th class="px-3 py-3 md:p-4">Nama Lengkap</th><th class="px-3 py-3 md:p-4">Jabatan</th><th class="px-3 py-3 md:p-4">Penempatan</th><th class="px-3 py-3 md:p-4 text-right">Aksi HRD</th></tr></thead><tbody id="table-karyawan" class="divide-y divide-slate-100"></tbody></table></div></div>
+        <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><button onclick="bukaModalOutlet()" class="w-full md:w-auto bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Tambah Outlet</button><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Nama Outlet</th><th class="px-3 py-3 md:p-4">Titik GPS & Radius</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table></div></div>
+        <div id="tab-shift" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><button onclick="bukaModalShift()" class="w-full md:w-auto bg-emerald-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Buat Jadwal Shift</button><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Outlet</th><th class="px-3 py-3 md:p-4">Kode Shift</th><th class="px-3 py-3 md:p-4">Jam Kerja</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-shift" class="divide-y divide-slate-100"></tbody></table></div></div>
     </div>
 
-    <!-- MODAL IMPORT CSV -->
-    <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <h2 class="text-base md:text-lg font-black mb-3 md:mb-4">Import Data Masal (CSV)</h2>
-            <p class="text-[10px] md:text-xs text-slate-500 mb-4 font-bold leading-relaxed">1. Download Template, isi data menggunakan Excel, lalu simpan dalam format (.csv).<br>2. Upload file tersebut di sini.</p>
-            <button onclick="downloadTemplateCSV()" class="w-full py-2.5 md:py-3 bg-slate-100 text-blue-600 border border-blue-200 font-black rounded-lg mb-4 hover:bg-blue-50 text-xs md:text-sm">⬇ DOWNLOAD TEMPLATE CSV</button>
-            <input type="file" id="file-csv" accept=".csv" class="w-full p-2.5 md:p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 text-xs md:text-sm font-bold outline-none">
-            <div class="flex gap-2"><button onclick="tutupModal('modal-import')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-slate-700 text-xs md:text-sm">Batal</button><button onclick="prosesImportCSV()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg text-xs md:text-sm">Upload Data</button></div>
-        </div>
-    </div>
-
-    <!-- MODAL ABSEN MANUAL -->
-    <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
-            <h2 class="text-base md:text-lg font-black mb-4">Input 1 Data Manual</h2>
-            <div class="grid grid-cols-2 gap-2 mb-3">
-                <div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">TANGGAL</label><input type="date" id="man-tgl" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div>
-                <div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">JAM</label><input type="time" id="man-jam" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div>
-            </div>
-            <select id="man-nama" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"></select>
-            <div class="grid grid-cols-2 gap-2 mb-3">
-                <select id="man-outlet" onchange="loadShiftManual()" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></select>
-                <select id="man-shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"><option value="-" selected>Pilih Shift</option></select>
-            </div>
-            <select id="man-tipe" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none border-blue-500">
-                <option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option>
-                <option value="Izin">Izin / Sakit</option><option value="Libur" class="text-indigo-600 font-bold">Jadwal Libur (Day Off)</option>
-            </select>
-            <input type="text" id="man-ket" placeholder="Alasan (Cth: Lupa Bawa HP)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none">
-            <div class="flex gap-2"><button onclick="tutupModal('modal-manual')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanManual()" class="w-full py-3 bg-amber-500 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div>
-        </div>
-    </div>
-
-    <!-- MODAL EDIT KARYAWAN -->
-    <div id="modal-karyawan" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-sm shadow-2xl">
-            <h2 class="text-base md:text-lg font-black mb-4">Edit Data Karyawan</h2>
-            <input type="hidden" id="kar-oldnama"><input type="text" id="kar-nama" placeholder="Nama Lengkap" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none">
-            <select id="kar-role" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><option value="Staff">Staff</option><option value="Senior">Senior</option></select>
-            <select id="kar-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"></select>
-            <div class="flex gap-2"><button onclick="tutupModal('modal-karyawan')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('edit_karyawan')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div>
-        </div>
-    </div>
-
-    <!-- MODAL OUTLET -->
-    <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
-            <h2 id="title-modal-out" class="text-base md:text-lg font-black mb-2">Form Outlet</h2><div id="map" class="h-[200px] md:h-[250px]"></div>
-            <input type="hidden" id="out-oldnama"><input type="text" id="out-nama" placeholder="Nama Outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-2 text-xs md:text-sm font-bold outline-none">
-            <div class="grid grid-cols-2 gap-2 mb-2"><input type="text" id="out-lat" readonly placeholder="Latitude" class="w-full p-2 bg-slate-100 rounded-lg text-[10px] md:text-xs outline-none"><input type="text" id="out-lng" readonly placeholder="Longitude" class="w-full p-2 bg-slate-100 rounded-lg text-[10px] md:text-xs outline-none"></div>
-            <input type="number" id="out-rad" placeholder="Radius (Meter)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none">
-            <div class="flex gap-2"><button onclick="tutupModal('modal-outlet')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div>
-        </div>
-    </div>
-
-    <!-- MODAL SHIFT -->
-    <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]">
-            <h2 id="title-modal-shf" class="text-base md:text-lg font-black mb-4">Form Shift</h2>
-            <input type="hidden" id="shf-oldoutlet"><input type="hidden" id="shf-oldkode">
-            <select id="shf-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"></select>
-            <input type="text" id="shf-nama" placeholder="Kode Shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none">
-            <div class="grid grid-cols-2 gap-2 mb-3"><input type="time" id="shf-masuk" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"><input type="time" id="shf-keluar" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div>
-            <input type="number" id="shf-tol" placeholder="Toleransi Telat (Menit)" value="15" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none">
-            <div class="flex gap-2"><button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div>
-        </div>
-    </div>
+    <!-- SEMUA MODAL POP-UP (Sama seperti sebelumnya, disembunyikan agar hemat ruang code) -->
+    <!-- (Modal Import CSV, Manual, Karyawan, Outlet, Shift - TETAP PERTAHANKAN KODE DARI V19.1 ANDA DI SINI) -->
+    <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl"><h2 class="text-base md:text-lg font-black mb-3 md:mb-4">Import Data Masal (CSV)</h2><p class="text-[10px] md:text-xs text-slate-500 mb-4 font-bold leading-relaxed">1. Download Template, isi data menggunakan Excel, lalu simpan dalam format (.csv).<br>2. Upload file tersebut di sini.</p><button onclick="downloadTemplateCSV()" class="w-full py-2.5 md:py-3 bg-slate-100 text-blue-600 border border-blue-200 font-black rounded-lg mb-4 hover:bg-blue-50 text-xs md:text-sm">⬇ DOWNLOAD TEMPLATE CSV</button><input type="file" id="file-csv" accept=".csv" class="w-full p-2.5 md:p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-import')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-slate-700 text-xs md:text-sm">Batal</button><button onclick="prosesImportCSV()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg text-xs md:text-sm">Upload Data</button></div></div></div>
+    <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"><h2 class="text-base md:text-lg font-black mb-4">Input 1 Data Manual</h2><div class="grid grid-cols-2 gap-2 mb-3"><div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">TANGGAL</label><input type="date" id="man-tgl" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div><div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">JAM</label><input type="time" id="man-jam" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div></div><select id="man-nama" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"></select><div class="grid grid-cols-2 gap-2 mb-3"><select id="man-outlet" onchange="loadShiftManual()" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></select><select id="man-shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"><option value="-" selected>Pilih Shift</option></select></div><select id="man-tipe" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none border-blue-500"><option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option><option value="Izin">Izin / Sakit</option><option value="Libur" class="text-indigo-600 font-bold">Jadwal Libur (Day Off)</option></select><input type="text" id="man-ket" placeholder="Alasan (Cth: Lupa Bawa HP)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-manual')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanManual()" class="w-full py-3 bg-amber-500 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
+    <div id="modal-karyawan" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-sm shadow-2xl"><h2 class="text-base md:text-lg font-black mb-4">Edit Data Karyawan</h2><input type="hidden" id="kar-oldnama"><input type="text" id="kar-nama" placeholder="Nama Lengkap" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><select id="kar-role" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><option value="Staff">Staff</option><option value="Senior">Senior</option></select><select id="kar-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"></select><div class="flex gap-2"><button onclick="tutupModal('modal-karyawan')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('edit_karyawan')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
+    <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"><h2 id="title-modal-out" class="text-base md:text-lg font-black mb-2">Form Outlet</h2><div id="map" class="h-[200px] md:h-[250px]"></div><input type="hidden" id="out-oldnama"><input type="text" id="out-nama" placeholder="Nama Outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-2 text-xs md:text-sm font-bold outline-none"><div class="grid grid-cols-2 gap-2 mb-2"><input type="text" id="out-lat" readonly placeholder="Latitude" class="w-full p-2 bg-slate-100 rounded-lg text-[10px] md:text-xs outline-none"><input type="text" id="out-lng" readonly placeholder="Longitude" class="w-full p-2 bg-slate-100 rounded-lg text-[10px] md:text-xs outline-none"></div><input type="number" id="out-rad" placeholder="Radius (Meter)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-outlet')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
+    <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]"><h2 id="title-modal-shf" class="text-base md:text-lg font-black mb-4">Form Shift</h2><input type="hidden" id="shf-oldoutlet"><input type="hidden" id="shf-oldkode"><select id="shf-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"></select><input type="text" id="shf-nama" placeholder="Kode Shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><div class="grid grid-cols-2 gap-2 mb-3"><input type="time" id="shf-masuk" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"><input type="time" id="shf-keluar" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div><input type="number" id="shf-tol" placeholder="Toleransi Telat (Menit)" value="15" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- JANGAN LUPA UPDATE
         
-        let map, marker, gOutlet = [], gShift = [], gKaryawan = [], gLaporan = [];
-        let summaryData = {}; // Global variable untuk Modal Detail Interaktif
+        let map, marker, gOutlet = [], gShift = [], gKaryawan = [], gLaporanRinci = [], gLaporanRekap = [];
+        let summaryData = {}; 
         
-        // KONFIGURASI WARNA UNTUK MODAL DETAIL
         const uiColors = {
             rajin: { textMain: 'text-emerald-600', bgBtn: 'bg-emerald-50', hoverBtn: 'hover:bg-emerald-100', textBtn: 'text-emerald-700', pillBg: 'bg-emerald-100', pillBorder: 'border-emerald-200' },
             telat: { textMain: 'text-rose-600', bgBtn: 'bg-rose-50', hoverBtn: 'hover:bg-rose-100', textBtn: 'text-rose-700', pillBg: 'bg-rose-100', pillBorder: 'border-rose-200' },
@@ -201,6 +144,11 @@
             alpa: { textMain: 'text-slate-600', bgBtn: 'bg-slate-50', hoverBtn: 'hover:bg-slate-100', textBtn: 'text-slate-700', pillBg: 'bg-slate-100', pillBorder: 'border-slate-200' },
             lembur: { textMain: 'text-blue-600', bgBtn: 'bg-blue-50', hoverBtn: 'hover:bg-blue-100', textBtn: 'text-blue-700', pillBg: 'bg-blue-100', pillBorder: 'border-blue-200' }
         };
+
+        // PWA SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); });
+        }
 
         window.addEventListener('load', () => {
             const today = new Date();
@@ -237,94 +185,22 @@
             document.getElementById('table-outlet').innerHTML = tableOut || `<tr><td colspan="3" class="text-center p-4">Kosong</td></tr>`; document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>`; document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center p-4">Kosong</td></tr>`;
         }
 
-        // --- FUNGSI TAMPILKAN MODAL DETAIL INTERAKTIF ---
         function showDetailModal(key) {
             const titleMap = { rajin: '🌟 Daftar Hadir', telat: '⏰ Daftar Terlambat', izin: '📝 Daftar Izin / Sakit', libur: '🏖️ Daftar Libur', alpa: '❓ Daftar Alpa', lembur: '⏱️ Daftar Lembur' };
-            const data = summaryData[key] || [];
-            const c = uiColors[key];
-            
+            const data = summaryData[key] || []; const c = uiColors[key];
             let htmlContent = '';
-            if(data.length === 0) {
-                htmlContent = `<div class="p-4 text-center text-slate-400 italic text-sm">Tidak ada data karyawan.</div>`;
-            } else {
-                const pills = data.map(n => `<span class="inline-block ${c.pillBg} ${c.textBtn} px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold m-1 border ${c.pillBorder}">${n}</span>`).join('');
-                htmlContent = `<div class="p-2 text-center max-h-[50vh] overflow-y-auto leading-relaxed">${pills}</div>`;
-            }
-
-            Swal.fire({
-                title: `<span class="${c.textMain} font-black text-base md:text-lg uppercase tracking-wider">${titleMap[key]}</span>`,
-                html: htmlContent, showCloseButton: true, showConfirmButton: false, customClass: { popup: 'rounded-3xl' }
-            });
+            if(data.length === 0) { htmlContent = `<div class="p-4 text-center text-slate-400 italic text-sm">Tidak ada data karyawan.</div>`; } 
+            else { const pills = data.map(n => `<span class="inline-block ${c.pillBg} ${c.textBtn} px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold m-1 border ${c.pillBorder}">${n}</span>`).join(''); htmlContent = `<div class="p-2 text-center max-h-[50vh] overflow-y-auto leading-relaxed">${pills}</div>`; }
+            Swal.fire({ title: `<span class="${c.textMain} font-black text-base md:text-lg uppercase tracking-wider">${titleMap[key]}</span>`, html: htmlContent, showCloseButton: true, showConfirmButton: false, customClass: { popup: 'rounded-3xl' } });
         }
 
-        // --- FUNGSI MANUAL & IMPORT CSV ---
+        // FUNGSI MODAL LAINNYA TETAP (Saya sembunyikan untuk hemat space, letakkan script modal biasa di sini)
         function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; document.getElementById('modal-manual').classList.remove('hidden'); }
         function bukaModalImport() { document.getElementById('file-csv').value = ""; document.getElementById('modal-import').classList.remove('hidden'); }
-        
-        function loadShiftManual() {
-            const outlet = document.getElementById('man-outlet').value, shiftSelect = document.getElementById('man-shift');
-            const shiftTersedia = gShift.filter(s => s.outlet === outlet);
-            shiftSelect.innerHTML = '<option value="-" selected>Pilih Shift (Abaikan jika Libur/Izin)</option>';
-            shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}">${s.kode}</option>`; });
-        }
-        function simpanManual() {
-            const p = { tanggal: document.getElementById('man-tgl').value, jam: document.getElementById('man-jam').value, nama: document.getElementById('man-nama').value, outlet: document.getElementById('man-outlet').value, shift: document.getElementById('man-shift').value, tipe: document.getElementById('man-tipe').value, keterangan: document.getElementById('man-ket').value };
-            if(!p.tanggal || !p.jam || !p.nama || !p.outlet) return Swal.fire('Error', 'Data penting wajib diisi!', 'warning');
-            runAPI('absen_manual', p);
-        }
-
-        function downloadTemplateCSV() {
-            let csv = "Tanggal (YYYY-MM-DD),Jam (HH:MM),Nama Karyawan,Outlet,Shift,Tipe Absen (Masuk/Pulang/Izin/Libur),Keterangan\n";
-            csv += "2026-05-15,08:00,Rizky Beby Auliana,Outlet Pusat,Pagi,Masuk,Input Masal HRD\n";
-            const link = document.createElement("a"); link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv)); link.setAttribute("download", "Template_Import_Absen.csv");
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        }
-
-        function prosesImportCSV() {
-            const fileInput = document.getElementById('file-csv');
-            if (!fileInput.files.length) return Swal.fire('Peringatan', 'Silakan pilih file CSV terlebih dahulu.', 'warning');
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r);
-                if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error');
-                
-                const delimiter = rows[0].includes(';') ? ';' : ',';
-                const dataToImport = [];
-                
-                for(let i=1; i<rows.length; i++) {
-                    const cols = rows[i].split(delimiter);
-                    if(cols.length >= 6) {
-                        const rawDate = cols[0].trim();
-                        let safeDate = rawDate;
-                        if (rawDate.includes('/')) {
-                            let p = rawDate.split('/'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
-                        } else if (rawDate.includes('-') && rawDate.split('-')[0].length <= 2) {
-                            let p = rawDate.split('-'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
-                        }
-
-                        const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); 
-                        dataToImport.push({
-                            tanggal: safeDate, jam: cols[1].trim(), nama: cols[2].trim(), 
-                            outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim()
-                        });
-                    }
-                }
-                
-                if(dataToImport.length > 0) {
-                    Swal.fire({ title: 'Mengupload Data...', html: 'Mohon tunggu, proses ini butuh waktu.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) })
-                    .then(res => res.json())
-                    .then(data => {
-                        if(data.status === 'success') { Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success'); tutupModal('modal-import'); generateAnalytics(); } 
-                        else { Swal.fire('Gagal', data.message, 'error'); }
-                    }).catch(err => Swal.fire('Error', 'Gagal menghubungi server Google Apps Script.', 'error'));
-                } else { Swal.fire('Format Salah', 'Sistem tidak dapat membaca baris data. Pastikan format kolom sesuai dengan template Excel!', 'error'); }
-            };
-            reader.readAsText(fileInput.files[0]);
-        }
-
-        // --- CORE UI ---
+        function loadShiftManual() { const outlet = document.getElementById('man-outlet').value, shiftSelect = document.getElementById('man-shift'); const shiftTersedia = gShift.filter(s => s.outlet === outlet); shiftSelect.innerHTML = '<option value="-" selected>Pilih Shift (Abaikan jika Libur/Izin)</option>'; shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}">${s.kode}</option>`; }); }
+        function simpanManual() { const p = { tanggal: document.getElementById('man-tgl').value, jam: document.getElementById('man-jam').value, nama: document.getElementById('man-nama').value, outlet: document.getElementById('man-outlet').value, shift: document.getElementById('man-shift').value, tipe: document.getElementById('man-tipe').value, keterangan: document.getElementById('man-ket').value }; if(!p.tanggal || !p.jam || !p.nama || !p.outlet) return Swal.fire('Error', 'Data penting wajib diisi!', 'warning'); runAPI('absen_manual', p); }
+        function downloadTemplateCSV() { let csv = "Tanggal (YYYY-MM-DD),Jam (HH:MM),Nama Karyawan,Outlet,Shift,Tipe Absen (Masuk/Pulang/Izin/Libur),Keterangan\n"; csv += "2026-05-15,08:00,Rizky Beby Auliana,Outlet Pusat,Pagi,Masuk,Input Masal HRD\n"; const link = document.createElement("a"); link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv)); link.setAttribute("download", "Template_Import_Absen.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+        function prosesImportCSV() { const fileInput = document.getElementById('file-csv'); if (!fileInput.files.length) return Swal.fire('Peringatan', 'Silakan pilih file CSV terlebih dahulu.', 'warning'); const reader = new FileReader(); reader.onload = function(e) { const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r); if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error'); const delimiter = rows[0].includes(';') ? ';' : ','; const dataToImport = []; for(let i=1; i<rows.length; i++) { const cols = rows[i].split(delimiter); if(cols.length >= 6) { const rawDate = cols[0].trim(); let safeDate = rawDate; if (rawDate.includes('/')) { let p = rawDate.split('/'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } else if (rawDate.includes('-') && rawDate.split('-')[0].length <= 2) { let p = rawDate.split('-'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); dataToImport.push({ tanggal: safeDate, jam: cols[1].trim(), nama: cols[2].trim(), outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim() }); } } if(dataToImport.length > 0) { Swal.fire({ title: 'Mengupload Data...', html: 'Mohon tunggu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) }).then(res => res.json()).then(data => { if(data.status === 'success') { Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success'); tutupModal('modal-import'); generateAnalytics(); } else { Swal.fire('Gagal', data.message, 'error'); } }).catch(err => Swal.fire('Error', 'Gagal server GAS.', 'error')); } else { Swal.fire('Format Salah', 'Sistem tidak dapat membaca baris data.', 'error'); } }; reader.readAsText(fileInput.files[0]); }
         function initMap(lat, lng) { if(!map) { map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } setTimeout(() => map.invalidateSize(), 300); }
         function bukaModalOutlet() { document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = ""; document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = ""; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(-1.269160, 116.825264); }
         function editModalOutlet(nama, lat, lng, rad) { document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama; document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(parseFloat(lat), parseFloat(lng)); }
@@ -332,13 +208,13 @@
         function editModalShift(outlet, kode, jamM, jamK, tol) { document.getElementById('title-modal-shf').innerText = "Edit Jadwal Shift"; document.getElementById('shf-oldoutlet').value = outlet; document.getElementById('shf-oldkode').value = kode; document.getElementById('shf-outlet').value = outlet; document.getElementById('shf-nama').value = kode; document.getElementById('shf-masuk').value = jamM; document.getElementById('shf-keluar').value = jamK; document.getElementById('shf-tol').value = tol; document.getElementById('modal-shift').classList.remove('hidden'); }
         function editModalKaryawan(nama, role, outlet) { document.getElementById('kar-oldnama').value = nama; document.getElementById('kar-nama').value = nama; document.getElementById('kar-role').value = role; document.getElementById('kar-outlet').value = outlet; document.getElementById('modal-karyawan').classList.remove('hidden'); }
         function tutupModal(id) { document.getElementById(id).classList.add('hidden'); }
-
         async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); tutupModal('modal-karyawan'); tutupModal('modal-manual'); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
         function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
         function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
-        // --- SUPER ANALYTICS WITH INTERACTIVE BOXES & SORTING ---
+        // --- CORE ANALYTICS (RINCI VS REKAP) ---
         async function generateAnalytics() {
+            const mode = document.getElementById('mode-laporan').value;
             const outlet = document.getElementById('filter-outlet').value, karyawan = document.getElementById('filter-karyawan').value;
             const tglStart = document.getElementById('filter-start').value, tglEnd = document.getElementById('filter-end').value;
             const kategori = document.getElementById('filter-kategori').value, sortMode = document.getElementById('filter-sort').value; 
@@ -349,115 +225,154 @@
             const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: 'Semua' } }) }); 
             const result = await res.json();
             
-            // 1. Filter Dasar (Tanggal, Outlet, Karyawan)
             const logsRange = result.data.filter(r => r.tanggal >= tglStart && r.tanggal <= tglEnd && (outlet === 'Semua' || r.outlet === outlet) && (karyawan === 'Semua' || r.nama === karyawan) );
             
-            let htmlLog = "", rajinList = [], telatList = [], izinList = [], liburList = [], lemburList = [], totalLemburMnt = 0;
-            let tableLogsToRender = []; 
+            let rajinList = [], telatList = [], izinList = [], liburList = [], lemburList = [], totalLemburMnt = 0;
+            let rekapAkumulasi = {}; // Objek untuk Mode Rekap
             
-            // 2. Kalkulasi Summary Box (Seluruh Data Sesuai Tanggal)
+            // Inisialisasi Master Karyawan agar yang Alpa tetap muncul di Rekap
+            const masterRoster = gKaryawan.filter(k => (outlet === "Semua" || k.outlet === outlet) && (karyawan === "Semua" || k.nama === karyawan));
+            masterRoster.forEach(emp => {
+                rekapAkumulasi[emp.nama] = { outlet: emp.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0 };
+            });
+
+            // 1. Tally/Hitung untuk Summary Boxes & Rekap Akumulasi
             logsRange.forEach(r => {
                 const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
-                if(isIzin) izinList.push(r.nama); else if(isLibur) liburList.push(r.nama);
-                else if(isMasuk) { if(isTelat && !isManual) telatList.push(r.nama); else rajinList.push(r.nama); }
+                
+                // Pastikan nama ada di rekap (jika ada data nyasar dari karyawan yg sudah dihapus, buat objek baru)
+                if(!rekapAkumulasi[r.nama]) rekapAkumulasi[r.nama] = { outlet: r.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0 };
+
+                if(isIzin) { izinList.push(r.nama); rekapAkumulasi[r.nama].izin++; }
+                else if(isLibur) { liburList.push(r.nama); rekapAkumulasi[r.nama].libur++; }
+                else if(isMasuk) { 
+                    if(isTelat && !isManual) { telatList.push(r.nama); rekapAkumulasi[r.nama].telat++; }
+                    else { rajinList.push(r.nama); rekapAkumulasi[r.nama].rajin++; }
+                }
                 
                 if(r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) > 0) {
-                    totalLemburMnt += parseInt(r.lembur);
-                    lemburList.push(`${r.nama} (+${r.lembur}m)`);
+                    const l = parseInt(r.lembur);
+                    totalLemburMnt += l; lemburList.push(`${r.nama} (+${l}m)`);
+                    rekapAkumulasi[r.nama].lembur += l;
                 }
             });
 
-            const masterRoster = gKaryawan.filter(k => (outlet === "Semua" || k.outlet === outlet) && (karyawan === "Semua" || k.nama === karyawan)).map(k => k.nama);
             const loggedNames = [...new Set([...rajinList, ...telatList, ...izinList, ...liburList])];
-            const alpaList = masterRoster.filter(name => !loggedNames.includes(name));
+            const alpaList = masterRoster.filter(k => !loggedNames.includes(k.nama)).map(k => k.nama);
 
             // Simpan ke Global Variable untuk Pop-Up Detail Interaktif
-            summaryData = {
-                rajin: [...new Set(rajinList)], telat: [...new Set(telatList)], izin: [...new Set(izinList)],
-                libur: [...new Set(liburList)], alpa: alpaList, lembur: [...new Set(lemburList)]
-            };
+            summaryData = { rajin: [...new Set(rajinList)], telat: [...new Set(telatList)], izin: [...new Set(izinList)], libur: [...new Set(liburList)], alpa: alpaList, lembur: [...new Set(lemburList)] };
 
-            // 3. Filter Kategori Spesifik untuk Tabel
-            if (kategori === 'Semua') { tableLogsToRender = logsRange; } 
-            else if (kategori === 'Alpa') {
-                tableLogsToRender = alpaList.map(nama => ({ ts: '-', tanggal: `${tglStart} s/d ${tglEnd}`, jam: '-', nama: nama, outlet: outlet, shift: '-', tipe: '-', status: 'ALPA', info: 'Tidak ada log / Bolos', lembur: 0, foto: '-' }));
-            } else {
-                tableLogsToRender = logsRange.filter(r => {
-                    const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
-                    if(kategori === 'Rajin') return isMasuk && !isTelat;
-                    if(kategori === 'Telat') return isTelat;
-                    if(kategori === 'Izin') return isIzin || (isManual && r.tipe === 'Izin');
-                    if(kategori === 'Libur') return isLibur || (isManual && r.tipe === 'Libur');
-                    if(kategori === 'Lembur') return r.lembur > 0;
-                    return true;
+            // ================= LOGIKA RENDER TABEL BERDASARKAN MODE =================
+            if (mode === 'rinci') {
+                document.getElementById('tabel-mode-rinci').classList.remove('hidden');
+                document.getElementById('tabel-mode-rekap').classList.add('hidden');
+                document.getElementById('judul-tabel').innerText = "📋 Log Harian Rinci";
+
+                let tableLogsToRender = [];
+                if (kategori === 'Semua') { tableLogsToRender = logsRange; } 
+                else if (kategori === 'Alpa') { tableLogsToRender = alpaList.map(nama => ({ ts: '-', tanggal: `${tglStart} s/d ${tglEnd}`, jam: '-', nama: nama, outlet: outlet, shift: '-', tipe: '-', status: 'ALPA', info: 'Tidak ada log', lembur: 0, foto: '-' })); } 
+                else {
+                    tableLogsToRender = logsRange.filter(r => {
+                        const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
+                        if(kategori === 'Rajin') return isMasuk && !isTelat; if(kategori === 'Telat') return isTelat;
+                        if(kategori === 'Izin') return isIzin || (isManual && r.tipe === 'Izin'); if(kategori === 'Libur') return isLibur || (isManual && r.tipe === 'Libur');
+                        if(kategori === 'Lembur') return r.lembur > 0; return true;
+                    });
+                }
+
+                tableLogsToRender.sort((a, b) => {
+                    if (sortMode === 'tgl_baru') return (b.tanggal + ' ' + b.jam).localeCompare(a.tanggal + ' ' + a.jam);
+                    else if (sortMode === 'tgl_lama') return (a.tanggal + ' ' + a.jam).localeCompare(b.tanggal + ' ' + b.jam);
+                    else if (sortMode === 'lembur_tinggi') return (parseInt(b.lembur) || 0) - (parseInt(a.lembur) || 0);
+                    else if (sortMode === 'telat_tinggi') { const getTelat = (str) => { const match = str.match(/TERLAMBAT \((\d+)/); return match ? parseInt(match[1]) : 0; }; return getTelat(b.status) - getTelat(a.status); }
+                    return 0;
                 });
+
+                gLaporanRinci = tableLogsToRender; // Sinkronisasi PDF
+
+                let htmlLog = "";
+                tableLogsToRender.forEach(r => {
+                    let badge = '<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">TIDAK DIKETAHUI</span>';
+                    if(r.status === 'ALPA') badge = `<span class="bg-slate-800 text-white px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">ALPA</span>`; else if(r.status.includes('TERLAMBAT')) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('IZIN')) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">IZIN / SAKIT</span>`; else if(r.status.includes('DAY OFF')) badge = `<span class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">DAY OFF</span>`; else if(r.status.includes('LEMBUR')) badge = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('MANUAL')) badge = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('ON TIME')) badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">ON TIME</span>';
+                    const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http") && r.foto !== "Bypass HRD") ? `<a href="${r.foto}" target="_blank" class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-200 transition-all text-[9px] md:text-[10px]">Lihat Foto</a>` : `<span class="text-[9px] md:text-[10px] text-slate-400 font-bold italic">${r.foto}</span>`;
+                    const btnHapus = r.status === 'ALPA' ? '' : `<button onclick="deleteRow('hapus_absen', {ts: '${r.ts}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[9px] md:text-[10px] font-bold mt-1 md:mt-0 md:ml-1 hover:bg-rose-200" title="Hapus Log">Hapus</button>`;
+                    htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="px-3 py-3 md:p-4 font-black leading-tight">${r.tanggal}<br><span class="text-slate-500 font-bold">${r.jam}</span></td><td class="px-3 py-3 md:p-4 font-bold text-slate-800">${r.nama}</td><td class="px-3 py-3 md:p-4 font-bold text-blue-600 leading-tight">${r.outlet} <br><span class="text-[9px] md:text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="px-3 py-3 md:p-4 font-black uppercase text-[9px] md:text-[10px]">${r.tipe}</td><td class="px-3 py-3 md:p-4 leading-tight">${badge} <br><span class="text-[9px] md:text-[10px] text-slate-400 mt-1 block">${r.info}</span></td><td class="px-3 py-3 md:p-4 text-center whitespace-normal md:whitespace-nowrap">${linkFoto} ${btnHapus}</td></tr>`;
+                });
+                document.getElementById('body-rinci').innerHTML = htmlLog || `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-bold text-xs md:text-sm">Tidak ada data untuk filter ini.</td></tr>`;
+                document.getElementById('log-count').innerText = `${tableLogsToRender.length} Data Tersaring`;
+
+            } else {
+                // =============== MODE REKAP =================
+                document.getElementById('tabel-mode-rinci').classList.add('hidden');
+                document.getElementById('tabel-mode-rekap').classList.remove('hidden');
+                document.getElementById('judul-tabel').innerText = "📊 Rekap Akumulasi Gaji";
+
+                // Ubah Objek ke Array untuk di-Sort
+                let arrRekap = Object.keys(rekapAkumulasi).map(nama => ({
+                    nama: nama, outlet: rekapAkumulasi[nama].outlet, rajin: rekapAkumulasi[nama].rajin, telat: rekapAkumulasi[nama].telat, 
+                    izin: rekapAkumulasi[nama].izin, libur: rekapAkumulasi[nama].libur, lembur: rekapAkumulasi[nama].lembur
+                }));
+
+                // Sorting Rekap
+                arrRekap.sort((a, b) => {
+                    if (sortMode === 'lembur_tinggi') return b.lembur - a.lembur;
+                    if (sortMode === 'telat_tinggi') return b.telat - a.telat;
+                    return a.nama.localeCompare(b.nama); // Default Alphabetical
+                });
+
+                gLaporanRekap = arrRekap; // Sinkronisasi PDF
+
+                let htmlRekap = "";
+                arrRekap.forEach(r => {
+                    htmlRekap += `<tr class="hover:bg-slate-50 border-b border-slate-50">
+                        <td class="px-3 py-3 md:p-4 font-black text-slate-800">${r.nama}</td>
+                        <td class="px-3 py-3 md:p-4 font-bold text-blue-600">${r.outlet}</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-bold text-emerald-600 bg-emerald-50/30">${r.rajin}x</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-bold text-rose-600 bg-rose-50/30">${r.telat}x</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-bold text-amber-500">${r.izin}x</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-bold text-indigo-500">${r.libur}x</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-black text-blue-600 bg-blue-50/30">${r.lembur} Mnt</td>
+                    </tr>`;
+                });
+                document.getElementById('body-rekap').innerHTML = htmlRekap || `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic font-bold text-xs md:text-sm">Tidak ada data.</td></tr>`;
+                document.getElementById('log-count').innerText = `${arrRekap.length} Karyawan`;
             }
 
-            // 4. SMART SORTING (Pengurutan Data)
-            tableLogsToRender.sort((a, b) => {
-                if (sortMode === 'tgl_baru') { return (b.tanggal + ' ' + b.jam).localeCompare(a.tanggal + ' ' + a.jam); } 
-                else if (sortMode === 'tgl_lama') { return (a.tanggal + ' ' + a.jam).localeCompare(b.tanggal + ' ' + b.jam); } 
-                else if (sortMode === 'lembur_tinggi') { return (parseInt(b.lembur) || 0) - (parseInt(a.lembur) || 0); } 
-                else if (sortMode === 'telat_tinggi') {
-                    const getTelat = (str) => { const match = str.match(/TERLAMBAT \((\d+)/); return match ? parseInt(match[1]) : 0; };
-                    return getTelat(b.status) - getTelat(a.status);
-                } return 0;
-            });
-
-            gLaporan = tableLogsToRender; // Sinkronisasi PDF
-
-            // 5. Render HTML Tabel
-            tableLogsToRender.forEach(r => {
-                let badge = '<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">TIDAK DIKETAHUI</span>';
-                if(r.status === 'ALPA') badge = `<span class="bg-slate-800 text-white px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">ALPA</span>`;
-                else if(r.status.includes('TERLAMBAT')) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`;
-                else if(r.status.includes('IZIN')) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">IZIN / SAKIT</span>`;
-                else if(r.status.includes('DAY OFF')) badge = `<span class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">DAY OFF</span>`;
-                else if(r.status.includes('LEMBUR')) badge = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`;
-                else if(r.status.includes('MANUAL')) badge = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`;
-                else if(r.status.includes('ON TIME')) badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">ON TIME</span>';
-
-                const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http") && r.foto !== "Bypass HRD") ? `<a href="${r.foto}" target="_blank" class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-200 transition-all text-[9px] md:text-[10px]">Lihat Foto</a>` : `<span class="text-[9px] md:text-[10px] text-slate-400 font-bold italic">${r.foto}</span>`;
-                const btnHapus = r.status === 'ALPA' ? '' : `<button onclick="deleteRow('hapus_absen', {ts: '${r.ts}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[9px] md:text-[10px] font-bold mt-1 md:mt-0 md:ml-1 hover:bg-rose-200" title="Hapus Log">Hapus</button>`;
-
-                htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="px-3 py-3 md:p-4 font-black leading-tight">${r.tanggal}<br><span class="text-slate-500 font-bold">${r.jam}</span></td><td class="px-3 py-3 md:p-4 font-bold text-slate-800">${r.nama}</td><td class="px-3 py-3 md:p-4 font-bold text-blue-600 leading-tight">${r.outlet} <br><span class="text-[9px] md:text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="px-3 py-3 md:p-4 font-black uppercase text-[9px] md:text-[10px]">${r.tipe}</td><td class="px-3 py-3 md:p-4 leading-tight">${badge} <br><span class="text-[9px] md:text-[10px] text-slate-400 mt-1 block">${r.info}</span></td><td class="px-3 py-3 md:p-4 text-center whitespace-normal md:whitespace-nowrap">${linkFoto} ${btnHapus}</td></tr>`;
-            });
-
-            document.getElementById('table-laporan').innerHTML = htmlLog || `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-bold text-xs md:text-sm">Tidak ada data untuk filter ini.</td></tr>`;
-            document.getElementById('log-count').innerText = `${tableLogsToRender.length} Data Tersaring`;
-
-            // 6. Update UI Summary Boxes dengan Tombol Interaktif
-            const renderBox = (count, unit, key, colorConfig) => `
-                <div class="mt-1 md:mt-2 text-xl md:text-2xl font-black ${colorConfig.textMain}">${count} <span class="text-[9px] md:text-[10px] text-slate-400 font-bold">${unit}</span></div>
-                <button onclick="showDetailModal('${key}')" class="mt-2 w-full ${colorConfig.bgBtn} ${colorConfig.hoverBtn} ${colorConfig.textBtn} text-[9px] md:text-[10px] font-bold py-1.5 rounded-lg transition-all">👁️ Lihat Detail</button>
-            `;
-
-            document.getElementById('box-rajin').innerHTML = renderBox(summaryData.rajin.length, 'Orang', 'rajin', uiColors.rajin);
-            document.getElementById('box-telat').innerHTML = renderBox(summaryData.telat.length, 'Orang', 'telat', uiColors.telat);
-            document.getElementById('box-izin').innerHTML = renderBox(summaryData.izin.length, 'Orang', 'izin', uiColors.izin);
-            document.getElementById('box-libur').innerHTML = renderBox(summaryData.libur.length, 'Orang', 'libur', uiColors.libur);
-            document.getElementById('box-alpa').innerHTML = renderBox(summaryData.alpa.length, 'Orang', 'alpa', uiColors.alpa);
-            document.getElementById('box-lembur').innerHTML = renderBox(totalLemburMnt, 'Menit', 'lembur', uiColors.lembur);
+            // Update UI Summary Boxes
+            const renderBox = (count, unit, key, colorConfig) => `<div class="mt-1 md:mt-2 text-xl md:text-2xl font-black ${colorConfig.textMain}">${count} <span class="text-[9px] md:text-[10px] text-slate-400 font-bold">${unit}</span></div><button onclick="showDetailModal('${key}')" class="mt-2 w-full ${colorConfig.bgBtn} ${colorConfig.hoverBtn} ${colorConfig.textBtn} text-[9px] md:text-[10px] font-bold py-1.5 rounded-lg transition-all">👁️ Lihat Detail</button>`;
+            document.getElementById('box-rajin').innerHTML = renderBox(summaryData.rajin.length, 'Orang', 'rajin', uiColors.rajin); document.getElementById('box-telat').innerHTML = renderBox(summaryData.telat.length, 'Orang', 'telat', uiColors.telat); document.getElementById('box-izin').innerHTML = renderBox(summaryData.izin.length, 'Orang', 'izin', uiColors.izin); document.getElementById('box-libur').innerHTML = renderBox(summaryData.libur.length, 'Orang', 'libur', uiColors.libur); document.getElementById('box-alpa').innerHTML = renderBox(summaryData.alpa.length, 'Orang', 'alpa', uiColors.alpa); document.getElementById('box-lembur').innerHTML = renderBox(totalLemburMnt, 'Menit', 'lembur', uiColors.lembur);
 
             Swal.close();
         }
 
         function exportPDF() {
-            if(gLaporan.length === 0) return Swal.fire('Kosong', 'Analisis data terlebih dahulu.', 'warning');
+            const mode = document.getElementById('mode-laporan').value;
             const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
-            
             const dStart = document.getElementById('filter-start').value, dEnd = document.getElementById('filter-end').value, empStr = document.getElementById('filter-karyawan').value;
-            const katStr = document.getElementById('filter-kategori').options[document.getElementById('filter-kategori').selectedIndex].text;
-            const sortStr = document.getElementById('filter-sort').options[document.getElementById('filter-sort').selectedIndex].text;
-
-            doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); doc.text("LAPORAN HUMAN CAPITAL - AIMOY", 14, 22);
-            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); doc.text(`Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr} | Kategori: ${katStr} | Urutan: ${sortStr}`, 14, 28);
             
-            const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur (Mnt)", "Keterangan"]];
-            const dataRow = gLaporan.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, (r.foto==="Bypass HRD" || r.status==="ALPA" ? r.foto : "Terdapat Foto")]);
-
-            doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 7 } });
-            doc.save(`Laporan_HC_${katStr}_${dStart}_to_${dEnd}.pdf`);
+            doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); 
+            doc.text("LAPORAN HUMAN CAPITAL - AIMOY", 14, 22);
+            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); 
+            
+            if(mode === 'rinci') {
+                if(gLaporanRinci.length === 0) return Swal.fire('Kosong', 'Tidak ada data untuk di-export.', 'warning');
+                const katStr = document.getElementById('filter-kategori').options[document.getElementById('filter-kategori').selectedIndex].text;
+                doc.text(`Tipe: Rincian Log Harian | Periode: ${dStart} s/d ${dEnd} | Filter: ${katStr}`, 14, 28);
+                
+                const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur (Mnt)", "Keterangan"]];
+                const dataRow = gLaporanRinci.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, (r.foto==="Bypass HRD" || r.status==="ALPA" ? r.foto : "Terdapat Foto")]);
+                doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 7 } });
+                doc.save(`Log_Rinci_${dStart}_to_${dEnd}.pdf`);
+            } else {
+                if(gLaporanRekap.length === 0) return Swal.fire('Kosong', 'Tidak ada data rekap.', 'warning');
+                doc.text(`Tipe: Rekapitulasi Akumulasi Gaji | Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
+                
+                const headers = [["Nama Karyawan", "Outlet", "Total Hadir", "Total Telat", "Total Izin/Sakit", "Total Libur (Off)", "Total Lembur (Menit)"]];
+                const dataRow = gLaporanRekap.map(r => [r.nama, r.outlet, `${r.rajin}x`, `${r.telat}x`, `${r.izin}x`, `${r.libur}x`, r.lembur]);
+                doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [37, 99, 235] }, styles: { fontSize: 9 } });
+                doc.save(`Rekap_Gaji_${dStart}_to_${dEnd}.pdf`);
+            }
         }
     </script>
 </body>
