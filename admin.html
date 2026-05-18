@@ -3,376 +3,446 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AiMoy Super HC - Admin</title>
+    <title>AiMoy Absen - Smart Kiosk</title>
     
-    <!-- PWA META TAGS (PENTING UNTUK INSTALL APLIKASI) -->
+    <!-- PWA META TAGS -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#020617">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="AiMoy Admin">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f8fafc; }
-        #map { height: 250px; width: 100%; border-radius: 1rem; margin-bottom: 1rem; z-index: 1;}
-        .tab-btn.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: 900; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .karyawan-pill { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 800; margin: 0.15rem; }
-        ::-webkit-scrollbar { height: 6px; width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        div:where(.swal2-container) .swal2-html-container { margin: 1em 1.6em 0.3em; }
+        body { background: #020617; font-family: sans-serif; overflow: hidden; }
+        
+        /* Kamera Full Area */
+        .camera-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; z-index: 0; }
+        video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        
+        /* Glassmorphism Classes */
+        .glass-panel { background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .glass-input { background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); color: white; }
+        
+        /* Efek Pemindai Dinamis */
+        @keyframes pulse-white { 0%, 100% { border-color: rgba(255,255,255,0.3); box-shadow: 0 0 15px rgba(255,255,255,0.1); } 50% { border-color: rgba(255,255,255,0.8); box-shadow: 0 0 25px rgba(255,255,255,0.4); } }
+        @keyframes pulse-yellow { 0%, 100% { border-color: rgba(251,191,36,0.6); box-shadow: 0 0 20px rgba(251,191,36,0.3); } 50% { border-color: rgba(251,191,36,1); box-shadow: 0 0 40px rgba(251,191,36,0.8); } }
+        
+        .box-searching { animation: pulse-white 2s infinite; border-style: dashed; }
+        .box-liveness { animation: pulse-yellow 1.5s infinite; border-style: dashed; }
+        .box-success { border-color: #10b981; border-style: solid; box-shadow: 0 0 30px rgba(16, 185, 129, 0.6); transform: scale(1.05); transition: all 0.4s ease-out; }
+        .box-error { border-color: #f43f5e; border-style: solid; box-shadow: 0 0 30px rgba(244, 63, 94, 0.6); transition: all 0.3s; }
+        
+        /* Kustomisasi Scrollbar Select agar cantik di mode gelap */
+        select option { background: #0f172a; color: white; }
     </style>
 </head>
-<body class="p-3 md:p-6 lg:p-8">
-    <div class="max-w-7xl mx-auto">
-        <header class="mb-4 md:mb-6 border-b border-slate-200 pb-4">
-            <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter">AIMOY HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-xs md:text-sm">Super App V20.0 (PWA & Akumulasi Penggajian)</p>
-            
-            <div class="flex gap-4 md:gap-6 mt-4 overflow-x-auto pb-2 scroll-smooth">
-                <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-[10px] md:text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Laporan & Riwayat</button>
-                <button onclick="changeTab('tab-karyawan')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-[10px] md:text-xs tracking-wider transition-all whitespace-nowrap" id="btn-karyawan">Master Karyawan</button>
-                <button onclick="changeTab('tab-outlet')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-[10px] md:text-xs tracking-wider transition-all whitespace-nowrap" id="btn-outlet">Master Outlet</button>
-                <button onclick="changeTab('tab-shift')" class="tab-btn pb-2 font-bold text-slate-400 uppercase text-[10px] md:text-xs tracking-wider transition-all whitespace-nowrap" id="btn-shift">Master Shift</button>
-            </div>
-        </header>
+<body class="w-screen h-screen flex items-center justify-center text-white select-none">
 
-        <div id="tab-laporan" class="tab-content active space-y-4">
-            <!-- PANEL FILTER ADVANCED -->
-            <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200">
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 items-end">
-                    
-                    <!-- FITUR BARU: MODE LAPORAN (RINCI VS REKAP) -->
-                    <div class="col-span-2 lg:col-span-2">
-                        <label class="text-[9px] md:text-[10px] font-bold text-blue-600 uppercase">MODE TAMPILAN</label>
-                        <select id="mode-laporan" onchange="generateAnalytics()" class="w-full bg-blue-50 border border-blue-200 p-2.5 md:p-3 rounded-lg font-black text-blue-700 outline-none text-xs">
-                            <option value="rekap">📊 Rekap Total (Akumulasi Gaji)</option>
-                            <option value="rinci">📋 Log Rinci (Satu Per Satu)</option>
-                        </select>
+    <!-- RANGKA MESIN KIOSK -->
+    <div class="relative w-full max-w-md mx-auto h-full sm:h-[95vh] sm:rounded-[2.5rem] overflow-hidden shadow-2xl sm:border-[6px] sm:border-slate-800 flex flex-col">
+        
+        <!-- 1. KAMERA BACKGROUND -->
+        <div class="camera-container">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay" class="z-10"></canvas>
+            
+            <!-- OVERLAY GELAP AGAR UI TERLIHAT -->
+            <div class="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-transparent to-slate-900/95 z-20 pointer-events-none"></div>
+        </div>
+
+        <!-- 2. TOP BAR (FULLSCREEN, GPS, HEADER) -->
+        <div class="relative z-30 flex justify-between items-start p-5">
+            <div>
+                <h1 class="text-xl font-black tracking-tighter italic text-white drop-shadow-md">AIMOY KIOSK</h1>
+                <div id="geo-status" class="flex items-center gap-1 mt-1">
+                    <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span></span>
+                    <span class="text-rose-400 text-[9px] tracking-widest font-bold drop-shadow">MENCARI GPS...</span>
+                </div>
+            </div>
+            <button onclick="toggleFullScreen()" class="glass-panel p-2 rounded-full hover:bg-white/10 transition">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+        </div>
+
+        <!-- 3. JAM DIGITAL SUPER BESAR -->
+        <div class="relative z-30 flex flex-col items-center mt-2 pointer-events-none drop-shadow-2xl">
+            <div id="real-time-clock" class="text-6xl font-black tracking-tighter text-white">00:00:00</div>
+            <div id="real-time-date" class="text-xs font-bold text-slate-300 tracking-widest uppercase mt-1">Memuat Tanggal...</div>
+        </div>
+
+        <!-- 4. INDIKATOR PEMINDAI DINAMIS (DYNAMIC BOUNDING BOX) -->
+        <div class="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none mt-10">
+            <!-- Kotak Wajah -->
+            <div id="face-guide-box" class="w-[190px] h-[260px] border-[4px] rounded-[50%] box-searching"></div>
+            
+            <!-- Label Instruksi -->
+            <div id="cam-instruction" class="mt-6 glass-panel px-5 py-2 rounded-full text-white text-[10px] font-black tracking-widest shadow-lg transition-colors duration-300">
+                SEJAJARKAN WAJAH DI SINI
+            </div>
+        </div>
+
+        <!-- 5. KARTU STATUS PERSONALISASI (MUNCUL SAAT WAJAH DIKENALI) -->
+        <div class="absolute bottom-[200px] left-4 right-4 z-40 flex justify-center pointer-events-none">
+            <div id="greeting-card" class="glass-card w-full rounded-2xl p-4 transform translate-y-10 opacity-0 transition-all duration-500 ease-out">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-400/50">
+                        <span class="text-2xl">✨</span>
                     </div>
-
-                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Outlet</label><select id="filter-outlet" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Outlet</option></select></div>
-                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Karyawan</label><select id="filter-karyawan" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Karyawan</option></select></div>
-                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Kategori</label><select id="filter-kategori" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="Semua">Semua Data</option><option value="Rajin">Hadir / Rajin</option><option value="Telat">Terlambat</option><option value="Izin">Izin / Sakit</option><option value="Libur">Libur (Day Off)</option><option value="Lembur">Data Lembur</option><option value="Alpa">Alpa (Tanpa Log)</option></select></div>
-                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Urutkan</label><select id="filter-sort" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-xs"><option value="tgl_baru">Tanggal Baru</option><option value="tgl_lama">Tanggal Lama</option><option value="telat_tinggi">Telat Lama</option><option value="lembur_tinggi">Lembur Tinggi</option></select></div>
-                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Dari Tgl</label><input type="date" id="filter-start" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-[10px]"></div>
-                    <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Sampai Tgl</label><input type="date" id="filter-end" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-[10px]"></div>
-                </div>
-                
-                <div class="flex gap-2 mt-3">
-                    <button onclick="generateAnalytics()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-md hover:bg-blue-700 text-xs">Analisis Data</button>
-                    <button onclick="exportPDF()" class="w-full bg-rose-600 text-white p-3 rounded-lg font-bold shadow-md hover:bg-rose-700 text-xs">Download PDF</button>
-                </div>
-            </div>
-            
-            <div class="flex flex-col sm:flex-row gap-2">
-                <button onclick="bukaModalManual()" class="w-full sm:w-auto bg-amber-500 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:bg-amber-600 text-xs">✍️ Input 1 Data Manual</button>
-                <button onclick="bukaModalImport()" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:bg-indigo-700 text-xs">📥 Import Bulk Excel</button>
-            </div>
-
-            <!-- KOTAK SUMMARY -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-2">
-                <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-emerald-500 uppercase">🌟 Hadir/Rajin</h3><div id="box-rajin" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
-                <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-rose-500 uppercase">⏰ Telat</h3><div id="box-telat" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
-                <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-amber-500 uppercase">📝 Izin/Sakit</h3><div id="box-izin" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
-                <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-indigo-500 uppercase">🏖️ Libur (Off)</h3><div id="box-libur" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
-                <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase">❓ Alpa</h3><div id="box-alpa" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
-                <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">⏱️ Total Lembur</h3><div id="box-lembur" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
-            </div>
-
-            <!-- TABEL DUA MODE (RINCI & REKAP) -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-900 text-white p-3 md:p-4 font-black text-xs md:text-sm uppercase tracking-widest flex justify-between items-center">
-                    <span id="judul-tabel">📋 Laporan Rinci</span><span id="log-count" class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">0 Data</span>
-                </div>
-                <div class="overflow-x-auto max-h-[500px]">
-                    
-                    <!-- TABEL 1: MODE RINCI -->
-                    <table id="tabel-mode-rinci" class="w-full text-left text-xs md:text-sm whitespace-nowrap">
-                        <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px] sticky top-0 z-10"><tr><th class="px-3 py-3 md:p-4">Tgl & Jam</th><th class="px-3 py-3 md:p-4">Karyawan</th><th class="px-3 py-3 md:p-4">Shift & Outlet</th><th class="px-3 py-3 md:p-4">Tipe</th><th class="px-3 py-3 md:p-4">Status & Info</th><th class="px-3 py-3 md:p-4 text-center">Aksi</th></tr></thead>
-                        <tbody id="body-rinci" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="6" class="p-6 text-center italic text-slate-400 text-xs">Klik "Analisis" untuk memuat data.</td></tr></tbody>
-                    </table>
-
-                    <!-- TABEL 2: MODE REKAP TOTAL -->
-                    <table id="tabel-mode-rekap" class="hidden w-full text-left text-xs md:text-sm whitespace-nowrap">
-                        <thead class="bg-blue-50 text-blue-800 font-bold uppercase text-[9px] md:text-[10px] sticky top-0 z-10">
-                            <tr><th class="px-3 py-3 md:p-4">Karyawan</th><th class="px-3 py-3 md:p-4">Penempatan Outlet</th><th class="px-3 py-3 md:p-4 text-center">Hadir (On-Time)</th><th class="px-3 py-3 md:p-4 text-center">Terlambat</th><th class="px-3 py-3 md:p-4 text-center">Izin / Sakit</th><th class="px-3 py-3 md:p-4 text-center">Libur (Off)</th><th class="px-3 py-3 md:p-4 text-center">Total Lembur</th></tr>
-                        </thead>
-                        <tbody id="body-rekap" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="7" class="p-6 text-center italic text-slate-400 text-xs">Pilih mode Rekap dan klik Analisis.</td></tr></tbody>
-                    </table>
-
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Selamat Datang,</p>
+                        <h2 id="ai-name" class="text-lg font-black text-white truncate w-48">Mencari...</h2>
+                        <p id="ai-status" class="text-xs font-bold text-emerald-400 mt-0.5">Sistem Siap</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- TAB KARYAWAN, OUTLET, SHIFT TETAP SAMA -->
-        <div id="tab-karyawan" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Tgl Daftar</th><th class="px-3 py-3 md:p-4">Nama Lengkap</th><th class="px-3 py-3 md:p-4">Jabatan</th><th class="px-3 py-3 md:p-4">Penempatan</th><th class="px-3 py-3 md:p-4 text-right">Aksi HRD</th></tr></thead><tbody id="table-karyawan" class="divide-y divide-slate-100"></tbody></table></div></div>
-        <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><button onclick="bukaModalOutlet()" class="w-full md:w-auto bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Tambah Outlet</button><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Nama Outlet</th><th class="px-3 py-3 md:p-4">Titik GPS & Radius</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table></div></div>
-        <div id="tab-shift" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><button onclick="bukaModalShift()" class="w-full md:w-auto bg-emerald-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Buat Jadwal Shift</button><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Outlet</th><th class="px-3 py-3 md:p-4">Kode Shift</th><th class="px-3 py-3 md:p-4">Jam Kerja</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-shift" class="divide-y divide-slate-100"></tbody></table></div></div>
+        <!-- 6. CONTROL PANEL BAWAH (GLASSMORPHISM DOCK) -->
+        <div class="relative z-40 mt-auto w-full px-4 pb-6 pt-10">
+            
+            <!-- Alert GPS Radius -->
+            <div id="dist-alert" class="hidden mb-3 glass-card bg-rose-500/20 border-rose-500/50 text-rose-300 p-2 rounded-xl text-[10px] font-bold text-center animate-pulse"></div>
+
+            <!-- TAB ABSENSI (Default) -->
+            <div id="panel-absen" class="space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3 glass-input rounded-xl text-xs font-bold outline-none appearance-none text-center"><option value="" disabled selected>Pilih Outlet</option></select>
+                    <select id="sel-shift" class="w-full p-3 glass-input rounded-xl text-xs font-bold outline-none appearance-none text-center"><option value="" disabled selected>Pilih Shift</option></select>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="glass-panel bg-blue-600/60 hover:bg-blue-600 border-blue-400/50 text-white py-3.5 rounded-xl font-black shadow-lg disabled:opacity-20 disabled:cursor-not-allowed transition-all text-xs tracking-wider">MASUK</button>
+                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="glass-panel bg-slate-800/60 hover:bg-slate-800 text-white py-3.5 rounded-xl font-black shadow-lg disabled:opacity-20 disabled:cursor-not-allowed transition-all text-xs tracking-wider">PULANG</button>
+                    <button id="btn-izin" onclick="ajukanIzin()" disabled class="glass-panel bg-amber-500/60 hover:bg-amber-500 border-amber-400/50 text-white py-3.5 rounded-xl font-black shadow-lg disabled:opacity-20 disabled:cursor-not-allowed transition-all text-xs tracking-wider">IZIN / SAKIT</button>
+                </div>
+            </div>
+
+            <!-- TAB REGISTRASI (Hidden Default) -->
+            <div id="panel-reg" class="hidden space-y-3 glass-panel p-4 rounded-2xl">
+                <div class="text-center mb-2"><h3 class="font-black text-sm text-blue-400">Pendaftaran Biometrik</h3></div>
+                <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 glass-input rounded-xl text-xs font-bold outline-none text-center">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="reg-role" class="p-3 glass-input rounded-xl text-xs font-bold outline-none text-center"><option value="Staff">Role: Staff</option><option value="Senior">Role: Senior</option></select>
+                    <select id="reg-outlet" class="p-3 glass-input rounded-xl text-xs font-bold outline-none text-center"><option value="" disabled selected>Penempatan</option></select>
+                </div>
+                <button onclick="daftarkan()" class="w-full glass-panel bg-emerald-500/80 hover:bg-emerald-500 border-emerald-400/50 text-white py-3 rounded-xl font-black shadow-lg transition-all mt-1">KUNCI WAJAH SEKARANG</button>
+            </div>
+
+            <!-- TOGGLE MENU BAWAH KECIL -->
+            <div class="flex justify-center gap-6 mt-4 opacity-50 text-[9px] font-bold tracking-widest uppercase">
+                <span id="tab-absen" onclick="switchTab('absen')" class="cursor-pointer text-blue-400">Absensi</span>
+                <span id="tab-reg" onclick="switchTab('reg')" class="cursor-pointer hover:text-white transition">Registrasi Baru</span>
+            </div>
+        </div>
     </div>
 
-    <!-- SEMUA MODAL POP-UP (Sama seperti sebelumnya, disembunyikan agar hemat ruang code) -->
-    <!-- (Modal Import CSV, Manual, Karyawan, Outlet, Shift - TETAP PERTAHANKAN KODE DARI V19.1 ANDA DI SINI) -->
-    <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl"><h2 class="text-base md:text-lg font-black mb-3 md:mb-4">Import Data Masal (CSV)</h2><p class="text-[10px] md:text-xs text-slate-500 mb-4 font-bold leading-relaxed">1. Download Template, isi data menggunakan Excel, lalu simpan dalam format (.csv).<br>2. Upload file tersebut di sini.</p><button onclick="downloadTemplateCSV()" class="w-full py-2.5 md:py-3 bg-slate-100 text-blue-600 border border-blue-200 font-black rounded-lg mb-4 hover:bg-blue-50 text-xs md:text-sm">⬇ DOWNLOAD TEMPLATE CSV</button><input type="file" id="file-csv" accept=".csv" class="w-full p-2.5 md:p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-import')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-slate-700 text-xs md:text-sm">Batal</button><button onclick="prosesImportCSV()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg text-xs md:text-sm">Upload Data</button></div></div></div>
-    <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"><h2 class="text-base md:text-lg font-black mb-4">Input 1 Data Manual</h2><div class="grid grid-cols-2 gap-2 mb-3"><div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">TANGGAL</label><input type="date" id="man-tgl" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div><div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">JAM</label><input type="time" id="man-jam" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div></div><select id="man-nama" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"></select><div class="grid grid-cols-2 gap-2 mb-3"><select id="man-outlet" onchange="loadShiftManual()" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></select><select id="man-shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"><option value="-" selected>Pilih Shift</option></select></div><select id="man-tipe" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none border-blue-500"><option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option><option value="Izin">Izin / Sakit</option><option value="Libur" class="text-indigo-600 font-bold">Jadwal Libur (Day Off)</option></select><input type="text" id="man-ket" placeholder="Alasan (Cth: Lupa Bawa HP)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-manual')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanManual()" class="w-full py-3 bg-amber-500 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
-    <div id="modal-karyawan" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-sm shadow-2xl"><h2 class="text-base md:text-lg font-black mb-4">Edit Data Karyawan</h2><input type="hidden" id="kar-oldnama"><input type="text" id="kar-nama" placeholder="Nama Lengkap" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><select id="kar-role" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><option value="Staff">Staff</option><option value="Senior">Senior</option></select><select id="kar-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"></select><div class="flex gap-2"><button onclick="tutupModal('modal-karyawan')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('edit_karyawan')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
-    <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"><h2 id="title-modal-out" class="text-base md:text-lg font-black mb-2">Form Outlet</h2><div id="map" class="h-[200px] md:h-[250px]"></div><input type="hidden" id="out-oldnama"><input type="text" id="out-nama" placeholder="Nama Outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-2 text-xs md:text-sm font-bold outline-none"><div class="grid grid-cols-2 gap-2 mb-2"><input type="text" id="out-lat" readonly placeholder="Latitude" class="w-full p-2 bg-slate-100 rounded-lg text-[10px] md:text-xs outline-none"><input type="text" id="out-lng" readonly placeholder="Longitude" class="w-full p-2 bg-slate-100 rounded-lg text-[10px] md:text-xs outline-none"></div><input type="number" id="out-rad" placeholder="Radius (Meter)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-outlet')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
-    <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]"><h2 id="title-modal-shf" class="text-base md:text-lg font-black mb-4">Form Shift</h2><input type="hidden" id="shf-oldoutlet"><input type="hidden" id="shf-oldkode"><select id="shf-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"></select><input type="text" id="shf-nama" placeholder="Kode Shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><div class="grid grid-cols-2 gap-2 mb-3"><input type="time" id="shf-masuk" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"><input type="time" id="shf-keluar" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div><input type="number" id="shf-tol" placeholder="Toleransi Telat (Menit)" value="15" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
-
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- JANGAN LUPA UPDATE
+        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- JANGAN LUPA UPDATE URL GOOGLE APPS SCRIPT ANDA
         
-        let map, marker, gOutlet = [], gShift = [], gKaryawan = [], gLaporanRinci = [], gLaporanRekap = [];
-        let summaryData = {}; 
-        
-        const uiColors = {
-            rajin: { textMain: 'text-emerald-600', bgBtn: 'bg-emerald-50', hoverBtn: 'hover:bg-emerald-100', textBtn: 'text-emerald-700', pillBg: 'bg-emerald-100', pillBorder: 'border-emerald-200' },
-            telat: { textMain: 'text-rose-600', bgBtn: 'bg-rose-50', hoverBtn: 'hover:bg-rose-100', textBtn: 'text-rose-700', pillBg: 'bg-rose-100', pillBorder: 'border-rose-200' },
-            izin: { textMain: 'text-amber-500', bgBtn: 'bg-amber-50', hoverBtn: 'hover:bg-amber-100', textBtn: 'text-amber-700', pillBg: 'bg-amber-100', pillBorder: 'border-amber-200' },
-            libur: { textMain: 'text-indigo-600', bgBtn: 'bg-indigo-50', hoverBtn: 'hover:bg-indigo-100', textBtn: 'text-indigo-700', pillBg: 'bg-indigo-100', pillBorder: 'border-indigo-200' },
-            alpa: { textMain: 'text-slate-600', bgBtn: 'bg-slate-50', hoverBtn: 'hover:bg-slate-100', textBtn: 'text-slate-700', pillBg: 'bg-slate-100', pillBorder: 'border-slate-200' },
-            lembur: { textMain: 'text-blue-600', bgBtn: 'bg-blue-50', hoverBtn: 'hover:bg-blue-100', textBtn: 'text-blue-700', pillBg: 'bg-blue-100', pillBorder: 'border-blue-200' }
-        };
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('overlay');
+        let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
+        let userLat = 0, userLng = 0, distance = 0, isLocValid = false, lastRecognizedName = null;
+        let isPrompting = false, isLivenessPassed = false;
 
-        // PWA SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); });
+        // 1. FUNGSI JAM DIGITAL REAL-TIME
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('real-time-clock').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+            document.getElementById('real-time-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }, 1000);
+
+        // 2. FUNGSI FULLSCREEN
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    Swal.fire('Info', 'Browser tidak mendukung layar penuh.', 'info');
+                });
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
         }
 
         window.addEventListener('load', () => {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            
-            document.getElementById('filter-start').value = `${yyyy}-${mm}-01`;
-            document.getElementById('filter-end').value = `${yyyy}-${mm}-${dd}`;
-            
-            syncDatabase();
+            if(navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    pos => { 
+                        userLat = pos.coords.latitude; userLng = pos.coords.longitude; 
+                        document.getElementById('geo-status').innerHTML = `<span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span><span class="text-emerald-400 text-[9px] tracking-widest font-bold drop-shadow">GPS TERKUNCI</span>`;
+                        cekJarak(); 
+                    },
+                    err => { Swal.fire('Info', 'GPS tidak diizinkan. Hanya fitur IZIN yang aktif.', 'info'); }, 
+                    { enableHighAccuracy: true }
+                );
+            }
+            setTimeout(initApp, 800);
         });
 
-        function changeTab(tabId) { document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active')); document.getElementById(tabId).classList.add('active'); document.getElementById('btn-' + tabId.split('-')[1]).classList.add('active'); }
+        function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
+            const lat2 = parseFloat(lat2Str), lon2 = parseFloat(lon2Str);
+            const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2) * Math.sin(Δλ/2)*Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
 
-        async function syncDatabase(silent = false) {
-            if(!silent) Swal.fire({ title: 'Sinkronisasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        async function initApp() {
+            Swal.fire({ title: 'Menyiapkan AI...', background: '#0f172a', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            await Promise.all([ 
+                faceapi.nets.tinyFaceDetector.loadFromUri(URL), 
+                faceapi.nets.faceLandmark68Net.loadFromUri(URL), 
+                faceapi.nets.faceRecognitionNet.loadFromUri(URL),
+                faceapi.nets.faceExpressionNet.loadFromUri(URL) 
+            ]);
+
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                 const data = await res.json();
-                if (data.status === 'ready') { gOutlet = data.dataOutlet; gShift = data.dataShift; gKaryawan = data.dataKaryawan; renderMasterTables(); if(!silent) Swal.close(); }
-            } catch (e) { Swal.fire('Error', 'Gagal memuat database', 'error'); }
-        }
+                dbOutlet = data.dataOutlet; dbShift = data.dataShift;
 
-        function renderMasterTables() {
-            let outFilter = '<option value="Semua">Semua Outlet</option>', outForm = '<option value="" disabled selected>Pilih Outlet...</option>', karFilter = '<option value="Semua">Semua Karyawan</option>', karForm = '<option value="" disabled selected>Pilih Karyawan...</option>';
-            let tableOut = '', tableShf = '', tableKar = '';
-            
-            gOutlet.forEach(o => { outFilter += `<option value="${o.nama}">${o.nama}</option>`; outForm += `<option value="${o.nama}">${o.nama}</option>`; tableOut += `<tr class="border-b"><td class="px-3 py-3 md:p-4 font-black">${o.nama}</td><td class="px-3 py-3 md:p-4 leading-tight">${o.lat}, ${o.lng} <br><span class="text-[10px] text-slate-400">Radius: ${o.radius}m</span></td><td class="px-3 py-3 md:p-4 text-right"><button onclick="editModalOutlet('${o.nama}','${o.lat}','${o.lng}','${o.radius}')" class="bg-amber-100 text-amber-600 px-2 py-1 rounded text-[10px] font-bold mr-1">Edit</button><button onclick="deleteRow('hapus_outlet', {nama: '${o.nama}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[10px] font-bold">Hapus</button></td></tr>`; });
-            gShift.forEach(s => { tableShf += `<tr class="border-b"><td class="px-3 py-3 md:p-4 font-bold text-blue-600">${s.outlet}</td><td class="px-3 py-3 md:p-4 font-black">${s.kode}</td><td class="px-3 py-3 md:p-4">${s.jamMasuk} - ${s.jamKeluar}</td><td class="px-3 py-3 md:p-4 text-right"><button onclick="editModalShift('${s.outlet}','${s.kode}','${s.jamMasuk}','${s.jamKeluar}','${s.toleransi}')" class="bg-amber-100 text-amber-600 px-2 py-1 rounded text-[10px] font-bold mr-1">Edit</button><button onclick="deleteRow('hapus_shift', {outlet: '${s.outlet}', kode: '${s.kode}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[10px] font-bold">Hapus</button></td></tr>`; });
-            gKaryawan.forEach(k => { karFilter += `<option value="${k.nama}">${k.nama} (${k.outlet})</option>`; karForm += `<option value="${k.nama}">${k.nama}</option>`; let badgeRole = k.role === 'Senior' ? '<span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded font-black text-[9px]">SENIOR</span>' : '<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold text-[9px]">STAFF</span>'; tableKar += `<tr class="border-b"><td class="px-3 py-3 md:p-4 text-[10px] font-bold text-slate-500">${k.ts}</td><td class="px-3 py-3 md:p-4 font-black text-slate-800">${k.nama}</td><td class="px-3 py-3 md:p-4">${badgeRole}</td><td class="px-3 py-3 md:p-4 font-bold text-blue-600">${k.outlet}</td><td class="px-3 py-3 md:p-4 text-right"><button onclick="editModalKaryawan('${k.nama}','${k.role}','${k.outlet}')" class="bg-amber-100 text-amber-600 px-2 py-1 rounded text-[10px] font-bold mr-1">Edit</button><button onclick="deleteRow('hapus_karyawan', {nama: '${k.nama}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[10px] font-bold">Hapus</button></td></tr>`; });
+                let outHtml = '<option value="" disabled selected>Pilih Outlet</option>';
+                dbOutlet.forEach(o => { outHtml += `<option value="${o.nama}">${o.nama}</option>`; });
+                document.getElementById('sel-outlet').innerHTML = outHtml; document.getElementById('reg-outlet').innerHTML = outHtml;
 
-            document.getElementById('filter-outlet').innerHTML = outFilter; document.getElementById('shf-outlet').innerHTML = outForm; document.getElementById('kar-outlet').innerHTML = outForm; document.getElementById('man-outlet').innerHTML = outForm; document.getElementById('filter-karyawan').innerHTML = karFilter; document.getElementById('man-nama').innerHTML = karForm;
-            document.getElementById('table-outlet').innerHTML = tableOut || `<tr><td colspan="3" class="text-center p-4">Kosong</td></tr>`; document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>`; document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center p-4">Kosong</td></tr>`;
-        }
-
-        function showDetailModal(key) {
-            const titleMap = { rajin: '🌟 Daftar Hadir', telat: '⏰ Daftar Terlambat', izin: '📝 Daftar Izin / Sakit', libur: '🏖️ Daftar Libur', alpa: '❓ Daftar Alpa', lembur: '⏱️ Daftar Lembur' };
-            const data = summaryData[key] || []; const c = uiColors[key];
-            let htmlContent = '';
-            if(data.length === 0) { htmlContent = `<div class="p-4 text-center text-slate-400 italic text-sm">Tidak ada data karyawan.</div>`; } 
-            else { const pills = data.map(n => `<span class="inline-block ${c.pillBg} ${c.textBtn} px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold m-1 border ${c.pillBorder}">${n}</span>`).join(''); htmlContent = `<div class="p-2 text-center max-h-[50vh] overflow-y-auto leading-relaxed">${pills}</div>`; }
-            Swal.fire({ title: `<span class="${c.textMain} font-black text-base md:text-lg uppercase tracking-wider">${titleMap[key]}</span>`, html: htmlContent, showCloseButton: true, showConfirmButton: false, customClass: { popup: 'rounded-3xl' } });
-        }
-
-        // FUNGSI MODAL LAINNYA TETAP (Saya sembunyikan untuk hemat space, letakkan script modal biasa di sini)
-        function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; document.getElementById('modal-manual').classList.remove('hidden'); }
-        function bukaModalImport() { document.getElementById('file-csv').value = ""; document.getElementById('modal-import').classList.remove('hidden'); }
-        function loadShiftManual() { const outlet = document.getElementById('man-outlet').value, shiftSelect = document.getElementById('man-shift'); const shiftTersedia = gShift.filter(s => s.outlet === outlet); shiftSelect.innerHTML = '<option value="-" selected>Pilih Shift (Abaikan jika Libur/Izin)</option>'; shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}">${s.kode}</option>`; }); }
-        function simpanManual() { const p = { tanggal: document.getElementById('man-tgl').value, jam: document.getElementById('man-jam').value, nama: document.getElementById('man-nama').value, outlet: document.getElementById('man-outlet').value, shift: document.getElementById('man-shift').value, tipe: document.getElementById('man-tipe').value, keterangan: document.getElementById('man-ket').value }; if(!p.tanggal || !p.jam || !p.nama || !p.outlet) return Swal.fire('Error', 'Data penting wajib diisi!', 'warning'); runAPI('absen_manual', p); }
-        function downloadTemplateCSV() { let csv = "Tanggal (YYYY-MM-DD),Jam (HH:MM),Nama Karyawan,Outlet,Shift,Tipe Absen (Masuk/Pulang/Izin/Libur),Keterangan\n"; csv += "2026-05-15,08:00,Rizky Beby Auliana,Outlet Pusat,Pagi,Masuk,Input Masal HRD\n"; const link = document.createElement("a"); link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv)); link.setAttribute("download", "Template_Import_Absen.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
-        function prosesImportCSV() { const fileInput = document.getElementById('file-csv'); if (!fileInput.files.length) return Swal.fire('Peringatan', 'Silakan pilih file CSV terlebih dahulu.', 'warning'); const reader = new FileReader(); reader.onload = function(e) { const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r); if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error'); const delimiter = rows[0].includes(';') ? ';' : ','; const dataToImport = []; for(let i=1; i<rows.length; i++) { const cols = rows[i].split(delimiter); if(cols.length >= 6) { const rawDate = cols[0].trim(); let safeDate = rawDate; if (rawDate.includes('/')) { let p = rawDate.split('/'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } else if (rawDate.includes('-') && rawDate.split('-')[0].length <= 2) { let p = rawDate.split('-'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); dataToImport.push({ tanggal: safeDate, jam: cols[1].trim(), nama: cols[2].trim(), outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim() }); } } if(dataToImport.length > 0) { Swal.fire({ title: 'Mengupload Data...', html: 'Mohon tunggu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) }).then(res => res.json()).then(data => { if(data.status === 'success') { Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success'); tutupModal('modal-import'); generateAnalytics(); } else { Swal.fire('Gagal', data.message, 'error'); } }).catch(err => Swal.fire('Error', 'Gagal server GAS.', 'error')); } else { Swal.fire('Format Salah', 'Sistem tidak dapat membaca baris data.', 'error'); } }; reader.readAsText(fileInput.files[0]); }
-        function initMap(lat, lng) { if(!map) { map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } setTimeout(() => map.invalidateSize(), 300); }
-        function bukaModalOutlet() { document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = ""; document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = ""; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(-1.269160, 116.825264); }
-        function editModalOutlet(nama, lat, lng, rad) { document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama; document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(parseFloat(lat), parseFloat(lng)); }
-        function bukaModalShift() { document.getElementById('title-modal-shf').innerText = "Tambah Jadwal Shift"; document.getElementById('shf-oldoutlet').value = ""; document.getElementById('shf-oldkode').value = ""; document.getElementById('shf-outlet').value = ""; document.getElementById('shf-nama').value = ""; document.getElementById('shf-masuk').value = ""; document.getElementById('shf-keluar').value = ""; document.getElementById('shf-tol').value = "15"; document.getElementById('modal-shift').classList.remove('hidden'); }
-        function editModalShift(outlet, kode, jamM, jamK, tol) { document.getElementById('title-modal-shf').innerText = "Edit Jadwal Shift"; document.getElementById('shf-oldoutlet').value = outlet; document.getElementById('shf-oldkode').value = kode; document.getElementById('shf-outlet').value = outlet; document.getElementById('shf-nama').value = kode; document.getElementById('shf-masuk').value = jamM; document.getElementById('shf-keluar').value = jamK; document.getElementById('shf-tol').value = tol; document.getElementById('modal-shift').classList.remove('hidden'); }
-        function editModalKaryawan(nama, role, outlet) { document.getElementById('kar-oldnama').value = nama; document.getElementById('kar-nama').value = nama; document.getElementById('kar-role').value = role; document.getElementById('kar-outlet').value = outlet; document.getElementById('modal-karyawan').classList.remove('hidden'); }
-        function tutupModal(id) { document.getElementById(id).classList.add('hidden'); }
-        async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); tutupModal('modal-karyawan'); tutupModal('modal-manual'); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
-        function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
-        function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
-
-        // --- CORE ANALYTICS (RINCI VS REKAP) ---
-        async function generateAnalytics() {
-            const mode = document.getElementById('mode-laporan').value;
-            const outlet = document.getElementById('filter-outlet').value, karyawan = document.getElementById('filter-karyawan').value;
-            const tglStart = document.getElementById('filter-start').value, tglEnd = document.getElementById('filter-end').value;
-            const kategori = document.getElementById('filter-kategori').value, sortMode = document.getElementById('filter-sort').value; 
-
-            if(tglStart > tglEnd) return Swal.fire('Error', 'Tanggal mulai tidak boleh lebih dari tanggal akhir.', 'error');
-
-            Swal.fire({ title: 'Menganalisis Data...', didOpen: () => Swal.showLoading() });
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: 'Semua' } }) }); 
-            const result = await res.json();
-            
-            const logsRange = result.data.filter(r => r.tanggal >= tglStart && r.tanggal <= tglEnd && (outlet === 'Semua' || r.outlet === outlet) && (karyawan === 'Semua' || r.nama === karyawan) );
-            
-            let rajinList = [], telatList = [], izinList = [], liburList = [], lemburList = [], totalLemburMnt = 0;
-            let rekapAkumulasi = {}; // Objek untuk Mode Rekap
-            
-            // Inisialisasi Master Karyawan agar yang Alpa tetap muncul di Rekap
-            const masterRoster = gKaryawan.filter(k => (outlet === "Semua" || k.outlet === outlet) && (karyawan === "Semua" || k.nama === karyawan));
-            masterRoster.forEach(emp => {
-                rekapAkumulasi[emp.nama] = { outlet: emp.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0 };
-            });
-
-            // 1. Tally/Hitung untuk Summary Boxes & Rekap Akumulasi
-            logsRange.forEach(r => {
-                const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
-                
-                // Pastikan nama ada di rekap (jika ada data nyasar dari karyawan yg sudah dihapus, buat objek baru)
-                if(!rekapAkumulasi[r.nama]) rekapAkumulasi[r.nama] = { outlet: r.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0 };
-
-                if(isIzin) { izinList.push(r.nama); rekapAkumulasi[r.nama].izin++; }
-                else if(isLibur) { liburList.push(r.nama); rekapAkumulasi[r.nama].libur++; }
-                else if(isMasuk) { 
-                    if(isTelat && !isManual) { telatList.push(r.nama); rekapAkumulasi[r.nama].telat++; }
-                    else { rajinList.push(r.nama); rekapAkumulasi[r.nama].rajin++; }
+                if (data.dataKaryawan.length > 0) {
+                    const labeled = data.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
+                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.40);
                 }
                 
-                if(r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) > 0) {
-                    const l = parseInt(r.lembur);
-                    totalLemburMnt += l; lemburList.push(`${r.nama} (+${l}m)`);
-                    rekapAkumulasi[r.nama].lembur += l;
-                }
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(s => { video.srcObject = s; Swal.close(); }).catch(e => Swal.fire('Error', 'Kamera diblokir.', 'error'));
+            } catch (e) { Swal.fire('Error', 'Gagal memuat database.', 'error'); }
+        }
+
+        function loadShiftDropdown() {
+            cekJarak();
+            const outletName = document.getElementById('sel-outlet').value;
+            const shiftSelect = document.getElementById('sel-shift');
+            const shiftTersedia = dbShift.filter(s => s.outlet === outletName);
+            
+            if(shiftTersedia.length === 0) { shiftSelect.innerHTML = '<option value="" disabled selected>Tidak Ada Jadwal</option>'; } 
+            else {
+                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift</option>';
+                shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}" data-jamm="${s.jamMasuk}" data-jamk="${s.jamKeluar}" data-tol="${s.toleransi}">${s.kode} (${s.jamMasuk}-${s.jamKeluar})</option>`; });
+            }
+        }
+
+        function cariShiftOtomatis(outletName) {
+            const shifts = dbShift.filter(s => s.outlet === outletName);
+            if (shifts.length === 0) return null;
+            const now = new Date(); const currentMins = now.getHours() * 60 + now.getMinutes();
+            let bestShift = shifts[0], minDiff = Infinity;
+            shifts.forEach(s => {
+                const mMasuk = parseInt(s.jamMasuk.split(':')[0]) * 60 + parseInt(s.jamMasuk.split(':')[1]);
+                const mKeluar = parseInt(s.jamKeluar.split(':')[0]) * 60 + parseInt(s.jamKeluar.split(':')[1]);
+                const closest = Math.min(Math.abs(currentMins - mMasuk), Math.abs(currentMins - mKeluar));
+                if(closest < minDiff) { minDiff = closest; bestShift = s; }
             });
+            return bestShift;
+        }
 
-            const loggedNames = [...new Set([...rajinList, ...telatList, ...izinList, ...liburList])];
-            const alpaList = masterRoster.filter(k => !loggedNames.includes(k.nama)).map(k => k.nama);
+        function cekJarak() {
+            const outName = document.getElementById('sel-outlet').value, alertBox = document.getElementById('dist-alert');
+            if(!outName || userLat === 0) return;
+            const outlet = dbOutlet.find(o => o.nama === outName);
+            if(!outlet) return; distance = hitungJarak(userLat, userLng, outlet.lat, outlet.lng);
+            
+            if (distance > outlet.radius) { isLocValid = false; alertBox.classList.remove('hidden'); alertBox.innerHTML = `⚠️ Di Luar Area! Jarak Anda ${Math.round(distance)}m. Maks ${outlet.radius}m`; updateUI(currentFace !== null, "ERROR"); } 
+            else { isLocValid = true; alertBox.classList.add('hidden'); updateUI(currentFace !== null, isLivenessPassed ? "READY" : "LIVENESS_WAIT"); }
+        }
 
-            // Simpan ke Global Variable untuk Pop-Up Detail Interaktif
-            summaryData = { rajin: [...new Set(rajinList)], telat: [...new Set(telatList)], izin: [...new Set(izinList)], libur: [...new Set(liburList)], alpa: alpaList, lembur: [...new Set(lemburList)] };
+        video.addEventListener('loadedmetadata', () => { canvas.width = video.videoWidth; canvas.height = video.videoHeight; });
 
-            // ================= LOGIKA RENDER TABEL BERDASARKAN MODE =================
-            if (mode === 'rinci') {
-                document.getElementById('tabel-mode-rinci').classList.remove('hidden');
-                document.getElementById('tabel-mode-rekap').classList.add('hidden');
-                document.getElementById('judul-tabel').innerText = "📋 Log Harian Rinci";
+        video.addEventListener('play', () => {
+            const size = { width: video.videoWidth, height: video.videoHeight };
+            faceapi.matchDimensions(canvas, size);
+            
+            setInterval(async () => {
+                if(isPrompting) return;
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
+                const resized = faceapi.resizeResults(detections, size); canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
 
-                let tableLogsToRender = [];
-                if (kategori === 'Semua') { tableLogsToRender = logsRange; } 
-                else if (kategori === 'Alpa') { tableLogsToRender = alpaList.map(nama => ({ ts: '-', tanggal: `${tglStart} s/d ${tglEnd}`, jam: '-', nama: nama, outlet: outlet, shift: '-', tipe: '-', status: 'ALPA', info: 'Tidak ada log', lembur: 0, foto: '-' })); } 
-                else {
-                    tableLogsToRender = logsRange.filter(r => {
-                        const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
-                        if(kategori === 'Rajin') return isMasuk && !isTelat; if(kategori === 'Telat') return isTelat;
-                        if(kategori === 'Izin') return isIzin || (isManual && r.tipe === 'Izin'); if(kategori === 'Libur') return isLibur || (isManual && r.tipe === 'Libur');
-                        if(kategori === 'Lembur') return r.lembur > 0; return true;
-                    });
+                if (!document.getElementById('panel-absen').classList.contains('hidden') && detections.length > 0 && faceMatcher) {
+                    const match = faceMatcher.findBestMatch(resized[0].descriptor);
+                    if (match.label !== 'unknown') {
+                        const info = JSON.parse(match.label);
+                        
+                        // LIVENESS DETECTION: Tersenyum
+                        const expressions = resized[0].expressions;
+                        if (expressions.happy > 0.6) { isLivenessPassed = true; }
+
+                        if (!isLivenessPassed) {
+                            currentFace = info; updateUI(true, "LIVENESS_WAIT"); return; 
+                        }
+                        
+                        // Jika Lolos
+                        if(lastRecognizedName !== info.n) { 
+                            lastRecognizedName = info.n; currentFace = info; 
+                            const outSel = document.getElementById('sel-outlet'); 
+                            if(info.o) { outSel.value = info.o; loadShiftDropdown(); } 
+                            
+                            const autoShift = cariShiftOtomatis(info.o);
+                            if(autoShift) {
+                                document.getElementById('sel-shift').value = autoShift.kode;
+                                updateUI(true, isLocValid ? "READY" : "ERROR");
+                                munculkanPopupAutoAbsen(info, autoShift);
+                            } else { updateUI(true, isLocValid ? "READY" : "ERROR"); }
+                        } else { currentFace = info; updateUI(true, isLocValid ? "READY" : "ERROR"); }
+                    } else { lastRecognizedName = null; isLivenessPassed = false; updateUI(false); }
+                } else { lastRecognizedName = null; isLivenessPassed = false; updateUI(false); if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); } }
+            }, 800);
+        });
+
+        // 3. LOGIKA UI UPDATE (BOX WARNA & KARTU GREETING)
+        function updateUI(found, state = "SEARCHING") {
+            const box = document.getElementById('face-guide-box');
+            const camInstruction = document.getElementById('cam-instruction');
+            const greetingCard = document.getElementById('greeting-card');
+            const nameEl = document.getElementById('ai-name');
+            const statusEl = document.getElementById('ai-status');
+            
+            const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out'), btnIzin = document.getElementById('btn-izin');
+            const outSel = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift').value;
+            
+            if (found && currentFace) {
+                // Tampilkan Greeting Card
+                greetingCard.classList.remove('translate-y-10', 'opacity-0');
+                nameEl.innerText = currentFace.n;
+
+                if (state === "LIVENESS_WAIT") {
+                    box.className = "w-[190px] h-[260px] border-[4px] rounded-[50%] box-liveness";
+                    camInstruction.innerText = "😊 SILAKAN TERSENYUM"; camInstruction.className = "mt-6 bg-amber-500 px-5 py-2 rounded-full text-white text-[10px] font-black tracking-widest shadow-[0_0_15px_rgba(251,191,36,0.6)] transition-colors duration-300";
+                    statusEl.innerText = "Menunggu verifikasi kehidupan..."; statusEl.className = "text-xs font-bold text-amber-400 mt-0.5";
+                    btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
+                } else if (state === "ERROR") {
+                    box.className = "w-[190px] h-[260px] border-[4px] rounded-[50%] box-error";
+                    camInstruction.innerText = "⛔ DI LUAR RADIUS TOKO"; camInstruction.className = "mt-6 bg-rose-500 px-5 py-2 rounded-full text-white text-[10px] font-black tracking-widest shadow-[0_0_15px_rgba(244,63,94,0.6)] transition-colors duration-300";
+                    statusEl.innerText = "Kembali ke area Outlet!"; statusEl.className = "text-xs font-bold text-rose-400 mt-0.5";
+                    btnIn.disabled = true; btnOut.disabled = true; 
+                    if(outSel) btnIzin.disabled = false;
+                } else {
+                    box.className = "w-[190px] h-[260px] border-[4px] rounded-[50%] box-success";
+                    camInstruction.innerText = "✅ WAJAH TERKUNCI"; camInstruction.className = "mt-6 bg-emerald-500 px-5 py-2 rounded-full text-white text-[10px] font-black tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.6)] transition-colors duration-300";
+                    statusEl.innerText = shf ? `Shift Terdeteksi: ${shf}` : "Silakan Pilih Shift Anda"; statusEl.className = "text-xs font-bold text-emerald-400 mt-0.5";
+                    
+                    if(outSel) btnIzin.disabled = false; else btnIzin.disabled = true;
+                    if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
                 }
+            } else { 
+                // Sembunyikan Greeting Card
+                greetingCard.classList.add('translate-y-10', 'opacity-0');
+                
+                box.className = "w-[190px] h-[260px] border-[4px] rounded-[50%] box-searching";
+                camInstruction.innerText = "SEJAJARKAN WAJAH DI SINI"; camInstruction.className = "mt-6 glass-panel px-5 py-2 rounded-full text-white text-[10px] font-black tracking-widest shadow-lg transition-colors duration-300";
+                
+                currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true; 
+            }
+        }
 
-                tableLogsToRender.sort((a, b) => {
-                    if (sortMode === 'tgl_baru') return (b.tanggal + ' ' + b.jam).localeCompare(a.tanggal + ' ' + a.jam);
-                    else if (sortMode === 'tgl_lama') return (a.tanggal + ' ' + a.jam).localeCompare(b.tanggal + ' ' + b.jam);
-                    else if (sortMode === 'lembur_tinggi') return (parseInt(b.lembur) || 0) - (parseInt(a.lembur) || 0);
-                    else if (sortMode === 'telat_tinggi') { const getTelat = (str) => { const match = str.match(/TERLAMBAT \((\d+)/); return match ? parseInt(match[1]) : 0; }; return getTelat(b.status) - getTelat(a.status); }
-                    return 0;
-                });
+        document.getElementById('sel-shift').addEventListener('change', () => updateUI(currentFace !== null, isLocValid ? "READY" : "ERROR"));
 
-                gLaporanRinci = tableLogsToRender; // Sinkronisasi PDF
+        function munculkanPopupAutoAbsen(faceInfo, shift) {
+            isPrompting = true; cekJarak();
+            if(!isLocValid) {
+                Swal.fire({ icon: 'warning', title: 'Di Luar Radius!', text: 'Wajah cocok, tapi GPS Anda di luar area toko.', confirmButtonText: 'Tutup', background: '#0f172a', color: '#fff' }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); return;
+            }
+            Swal.fire({
+                title: `Halo, ${faceInfo.n}! 👋`,
+                html: `<div class="text-slate-300 text-sm">Outlet: <b class="text-white">${faceInfo.o}</b><br><br>Shift saat ini:<br><div class="bg-blue-600/20 border border-blue-500 rounded-xl py-2 mt-2 font-black text-xl text-blue-400">${shift.kode} <span class="text-xs font-normal text-blue-300 block">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
+                showDenyButton: true, showCancelButton: true, background: '#0f172a', color: '#fff',
+                confirmButtonText: 'MASUK KERJA', confirmButtonColor: '#2563eb',
+                denyButtonText: 'PULANG KERJA', denyButtonColor: '#1e293b',
+                cancelButtonText: 'Batal', allowOutsideClick: false,
+                customClass: { popup: 'rounded-3xl border border-slate-700', confirmButton: 'rounded-xl font-black', denyButton: 'rounded-xl font-black border border-slate-600', cancelButton: 'rounded-xl' }
+            }).then((result) => {
+                if (result.isConfirmed) { kirimAbsen('Masuk'); } 
+                else if (result.isDenied) { kirimAbsen('Pulang'); } 
+                else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; } 
+            });
+        }
 
-                let htmlLog = "";
-                tableLogsToRender.forEach(r => {
-                    let badge = '<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">TIDAK DIKETAHUI</span>';
-                    if(r.status === 'ALPA') badge = `<span class="bg-slate-800 text-white px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">ALPA</span>`; else if(r.status.includes('TERLAMBAT')) badge = `<span class="bg-rose-100 text-rose-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('IZIN')) badge = `<span class="bg-amber-100 text-amber-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">IZIN / SAKIT</span>`; else if(r.status.includes('DAY OFF')) badge = `<span class="bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">DAY OFF</span>`; else if(r.status.includes('LEMBUR')) badge = `<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('MANUAL')) badge = `<span class="bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('ON TIME')) badge = '<span class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">ON TIME</span>';
-                    const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http") && r.foto !== "Bypass HRD") ? `<a href="${r.foto}" target="_blank" class="bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-200 transition-all text-[9px] md:text-[10px]">Lihat Foto</a>` : `<span class="text-[9px] md:text-[10px] text-slate-400 font-bold italic">${r.foto}</span>`;
-                    const btnHapus = r.status === 'ALPA' ? '' : `<button onclick="deleteRow('hapus_absen', {ts: '${r.ts}'})" class="bg-rose-100 text-rose-600 px-2 py-1 rounded text-[9px] md:text-[10px] font-bold mt-1 md:mt-0 md:ml-1 hover:bg-rose-200" title="Hapus Log">Hapus</button>`;
-                    htmlLog += `<tr class="hover:bg-slate-50 border-b border-slate-50"><td class="px-3 py-3 md:p-4 font-black leading-tight">${r.tanggal}<br><span class="text-slate-500 font-bold">${r.jam}</span></td><td class="px-3 py-3 md:p-4 font-bold text-slate-800">${r.nama}</td><td class="px-3 py-3 md:p-4 font-bold text-blue-600 leading-tight">${r.outlet} <br><span class="text-[9px] md:text-[10px] text-slate-400 uppercase">${r.shift}</span></td><td class="px-3 py-3 md:p-4 font-black uppercase text-[9px] md:text-[10px]">${r.tipe}</td><td class="px-3 py-3 md:p-4 leading-tight">${badge} <br><span class="text-[9px] md:text-[10px] text-slate-400 mt-1 block">${r.info}</span></td><td class="px-3 py-3 md:p-4 text-center whitespace-normal md:whitespace-nowrap">${linkFoto} ${btnHapus}</td></tr>`;
-                });
-                document.getElementById('body-rinci').innerHTML = htmlLog || `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-bold text-xs md:text-sm">Tidak ada data untuk filter ini.</td></tr>`;
-                document.getElementById('log-count').innerText = `${tableLogsToRender.length} Data Tersaring`;
+        function ambilFotoKamera() {
+            const tempCanvas = document.createElement('canvas'); const scale = 480 / video.videoWidth; 
+            tempCanvas.width = 480; tempCanvas.height = video.videoHeight * scale;
+            const ctx = tempCanvas.getContext('2d'); ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1); 
+            ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+            return tempCanvas.toDataURL('image/jpeg', 0.6);
+        }
 
-            } else {
-                // =============== MODE REKAP =================
-                document.getElementById('tabel-mode-rinci').classList.add('hidden');
-                document.getElementById('tabel-mode-rekap').classList.remove('hidden');
-                document.getElementById('judul-tabel').innerText = "📊 Rekap Akumulasi Gaji";
+        async function kirimAbsen(tipe) {
+            isPrompting = true; 
+            const out = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift');
+            const shfM = shf.options[shf.selectedIndex].getAttribute('data-jamm'), shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk'), shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
+            const fotoData = ambilFotoKamera();
 
-                // Ubah Objek ke Array untuk di-Sort
-                let arrRekap = Object.keys(rekapAkumulasi).map(nama => ({
-                    nama: nama, outlet: rekapAkumulasi[nama].outlet, rajin: rekapAkumulasi[nama].rajin, telat: rekapAkumulasi[nama].telat, 
-                    izin: rekapAkumulasi[nama].izin, libur: rekapAkumulasi[nama].libur, lembur: rekapAkumulasi[nama].lembur
-                }));
+            Swal.fire({ title: 'Merekam Log...', html: 'Mohon tunggu', allowOutsideClick: false, background: '#0f172a', color: '#fff', didOpen: () => Swal.showLoading() });
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, tipe: tipe, jarak: distance, foto: fotoData } }) });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}`;
+                    const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
-                // Sorting Rekap
-                arrRekap.sort((a, b) => {
-                    if (sortMode === 'lembur_tinggi') return b.lembur - a.lembur;
-                    if (sortMode === 'telat_tinggi') return b.telat - a.telat;
-                    return a.nama.localeCompare(b.nama); // Default Alphabetical
-                });
+                    Swal.fire({
+                        icon: 'success', title: 'Berhasil!', background: '#0f172a', color: '#fff',
+                        html: `<div class="text-sm text-slate-300"><b>${currentFace.n}</b> berhasil ${tipe}.<br>Status: <b class="text-emerald-400">${result.statusWaktu}</b></div><br><a href="${waLink}" target="_blank" class="mt-2 bg-emerald-500/20 border border-emerald-500 text-emerald-400 px-4 py-3 rounded-xl font-black block text-center uppercase tracking-widest text-xs hover:bg-emerald-500 hover:text-white transition-all">💬 Kirim ke Grup WA</a>`,
+                        showConfirmButton: false, timer: 15000, customClass: { popup: 'rounded-3xl border border-slate-700' }
+                    }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
+                } else { Swal.fire({title: 'Ditolak', text: result.message, icon: 'error', background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-3xl border border-slate-700' }}).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+            } catch (e) { Swal.fire({title: 'Gagal', text: 'Gangguan server', icon: 'error', background: '#0f172a', color: '#fff'}).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+        }
 
-                gLaporanRekap = arrRekap; // Sinkronisasi PDF
+        async function ajukanIzin() {
+            isPrompting = true;
+            const out = document.getElementById('sel-outlet').value;
+            const { value: alasan } = await Swal.fire({ title: 'Pengajuan Izin', input: 'text', inputLabel: 'Alasan Izin/Sakit', showCancelButton: true, background: '#0f172a', color: '#fff', inputValidator: (value) => { if (!value) return 'Wajib diisi!' }, customClass: { popup: 'rounded-3xl border border-slate-700', input: 'text-white' } });
+            if (alasan) {
+                const fotoData = ambilFotoKamera();
+                Swal.fire({ title: 'Merekam Izin...', allowOutsideClick: false, background: '#0f172a', color: '#fff', didOpen: () => Swal.showLoading() });
+                try {
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
+                    const result = await res.json();
+                    if (result.status === 'success') Swal.fire({title: 'Terekam!', html: `Izin <b>${currentFace.n}</b> dicatat.`, icon: 'success', background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-3xl border border-slate-700' }}).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
+                } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error').then(() => { isPrompting = false; }); }
+            } else { isPrompting = false; }
+        }
 
-                let htmlRekap = "";
-                arrRekap.forEach(r => {
-                    htmlRekap += `<tr class="hover:bg-slate-50 border-b border-slate-50">
-                        <td class="px-3 py-3 md:p-4 font-black text-slate-800">${r.nama}</td>
-                        <td class="px-3 py-3 md:p-4 font-bold text-blue-600">${r.outlet}</td>
-                        <td class="px-3 py-3 md:p-4 text-center font-bold text-emerald-600 bg-emerald-50/30">${r.rajin}x</td>
-                        <td class="px-3 py-3 md:p-4 text-center font-bold text-rose-600 bg-rose-50/30">${r.telat}x</td>
-                        <td class="px-3 py-3 md:p-4 text-center font-bold text-amber-500">${r.izin}x</td>
-                        <td class="px-3 py-3 md:p-4 text-center font-bold text-indigo-500">${r.libur}x</td>
-                        <td class="px-3 py-3 md:p-4 text-center font-black text-blue-600 bg-blue-50/30">${r.lembur} Mnt</td>
-                    </tr>`;
-                });
-                document.getElementById('body-rekap').innerHTML = htmlRekap || `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic font-bold text-xs md:text-sm">Tidak ada data.</td></tr>`;
-                document.getElementById('log-count').innerText = `${arrRekap.length} Karyawan`;
+        async function daftarkan() {
+            isPrompting = true;
+            const nama = document.getElementById('reg-nama').value, role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
+            if(!nama || !outlet) { isPrompting = false; return Swal.fire({title:'Peringatan', text:'Nama dan Outlet wajib diisi!', icon:'warning', background: '#0f172a', color: '#fff'}); }
+
+            Swal.fire({ title: 'Menganalisis Biometrik...', text: 'Tahan Posisi Wajah', allowOutsideClick: false, background: '#0f172a', color: '#fff', didOpen: () => Swal.showLoading() });
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+            if(!detection) { isPrompting = false; return Swal.fire({title:'Gagal', text:'Wajah tidak jelas.', icon:'error', background: '#0f172a', color: '#fff'}); }
+
+            if (faceMatcher) {
+                const match = faceMatcher.findBestMatch(detection.descriptor);
+                if (match.label !== 'unknown') {
+                    const existData = JSON.parse(match.label);
+                    isPrompting = false; return Swal.fire({ icon: 'error', title: 'Ditolak', html: `Wajah sudah terdaftar atas nama:<br><b class="text-xl text-blue-400">${existData.n}</b>`, background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-3xl border border-slate-700' } });
+                }
             }
 
-            // Update UI Summary Boxes
-            const renderBox = (count, unit, key, colorConfig) => `<div class="mt-1 md:mt-2 text-xl md:text-2xl font-black ${colorConfig.textMain}">${count} <span class="text-[9px] md:text-[10px] text-slate-400 font-bold">${unit}</span></div><button onclick="showDetailModal('${key}')" class="mt-2 w-full ${colorConfig.bgBtn} ${colorConfig.hoverBtn} ${colorConfig.textBtn} text-[9px] md:text-[10px] font-bold py-1.5 rounded-lg transition-all">👁️ Lihat Detail</button>`;
-            document.getElementById('box-rajin').innerHTML = renderBox(summaryData.rajin.length, 'Orang', 'rajin', uiColors.rajin); document.getElementById('box-telat').innerHTML = renderBox(summaryData.telat.length, 'Orang', 'telat', uiColors.telat); document.getElementById('box-izin').innerHTML = renderBox(summaryData.izin.length, 'Orang', 'izin', uiColors.izin); document.getElementById('box-libur').innerHTML = renderBox(summaryData.libur.length, 'Orang', 'libur', uiColors.libur); document.getElementById('box-alpa').innerHTML = renderBox(summaryData.alpa.length, 'Orang', 'alpa', uiColors.alpa); document.getElementById('box-lembur').innerHTML = renderBox(totalLemburMnt, 'Menit', 'lembur', uiColors.lembur);
-
-            Swal.close();
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'enroll', payload: { nama, role, outlet, descriptor: Array.from(detection.descriptor) } }) });
+                const data = await res.json();
+                if(data.status === 'success') Swal.fire({title:'Tersimpan!', text:`Wajah ${nama} dikunci.`, icon:'success', background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-3xl border border-slate-700' }}).then(() => location.reload());
+            } catch(e) { Swal.fire('Error', 'Gagal menyimpan.', 'error').then(() => { isPrompting = false; }); }
         }
 
-        function exportPDF() {
-            const mode = document.getElementById('mode-laporan').value;
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
-            const dStart = document.getElementById('filter-start').value, dEnd = document.getElementById('filter-end').value, empStr = document.getElementById('filter-karyawan').value;
-            
-            doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.setFont("helvetica", "bold"); 
-            doc.text("LAPORAN HUMAN CAPITAL - AIMOY", 14, 22);
-            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139); 
-            
-            if(mode === 'rinci') {
-                if(gLaporanRinci.length === 0) return Swal.fire('Kosong', 'Tidak ada data untuk di-export.', 'warning');
-                const katStr = document.getElementById('filter-kategori').options[document.getElementById('filter-kategori').selectedIndex].text;
-                doc.text(`Tipe: Rincian Log Harian | Periode: ${dStart} s/d ${dEnd} | Filter: ${katStr}`, 14, 28);
-                
-                const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur (Mnt)", "Keterangan"]];
-                const dataRow = gLaporanRinci.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, (r.foto==="Bypass HRD" || r.status==="ALPA" ? r.foto : "Terdapat Foto")]);
-                doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 7 } });
-                doc.save(`Log_Rinci_${dStart}_to_${dEnd}.pdf`);
-            } else {
-                if(gLaporanRekap.length === 0) return Swal.fire('Kosong', 'Tidak ada data rekap.', 'warning');
-                doc.text(`Tipe: Rekapitulasi Akumulasi Gaji | Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
-                
-                const headers = [["Nama Karyawan", "Outlet", "Total Hadir", "Total Telat", "Total Izin/Sakit", "Total Libur (Off)", "Total Lembur (Menit)"]];
-                const dataRow = gLaporanRekap.map(r => [r.nama, r.outlet, `${r.rajin}x`, `${r.telat}x`, `${r.izin}x`, `${r.libur}x`, r.lembur]);
-                doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [37, 99, 235] }, styles: { fontSize: 9 } });
-                doc.save(`Rekap_Gaji_${dStart}_to_${dEnd}.pdf`);
-            }
+        function switchTab(t) { 
+            document.getElementById('panel-absen').classList.toggle('hidden', t === 'reg'); 
+            document.getElementById('panel-reg').classList.toggle('hidden', t === 'absen'); 
+            document.getElementById('tab-absen').classList.toggle('text-blue-400', t === 'absen'); 
+            document.getElementById('tab-absen').classList.toggle('text-slate-500', t === 'reg'); 
+            document.getElementById('tab-reg').classList.toggle('text-blue-400', t === 'reg'); 
+            document.getElementById('tab-reg').classList.toggle('text-slate-500', t === 'absen'); 
         }
     </script>
 </body>
