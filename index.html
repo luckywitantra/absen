@@ -3,293 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AiMoy Smart Kiosk</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#020617">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+    <title>SI-AMoy (Sistem Absensi Aicha Momoyo)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        body { background: #020617; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; touch-action: manipulation; }
-        
-        @keyframes blob { 0% { transform: translate(0px, 0px) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0px, 0px) scale(1); } }
-        .animate-blob { animation: blob 7s infinite; }
-        .animation-delay-2000 { animation-delay: 2s; }
-        .animation-delay-4000 { animation-delay: 4s; }
-
-        .camera-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; z-index: 0; }
+        body { background: #0f172a; font-family: sans-serif; }
+        .camera-container { position: relative; width: 100%; aspect-ratio: 3/4; background: #000; border-radius: 1.5rem; overflow: hidden; border: 4px solid #334155; }
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        
-        .glass-panel { background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-        .glass-input { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: white; transition: all 0.3s; }
-        .glass-input:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); outline: none; }
-        
-        @keyframes pulse-white { 0%, 100% { border-color: rgba(255,255,255,0.2); box-shadow: 0 0 10px rgba(255,255,255,0.05); } 50% { border-color: rgba(255,255,255,0.7); box-shadow: 0 0 25px rgba(255,255,255,0.3); } }
-        @keyframes pulse-yellow { 0%, 100% { border-color: rgba(251,191,36,0.6); box-shadow: 0 0 20px rgba(251,191,36,0.3); transform: scale(1); } 50% { border-color: rgba(251,191,36,1); box-shadow: 0 0 40px rgba(251,191,36,0.6); transform: scale(1.02); } }
-        @keyframes pulse-orange { 0%, 100% { border-color: rgba(249,115,22,0.6); box-shadow: 0 0 20px rgba(249,115,22,0.3); } 50% { border-color: rgba(249,115,22,1); box-shadow: 0 0 40px rgba(249,115,22,0.6); } }
-        @keyframes scan-laser { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-
-        .shape-oval { width: 210px; height: 290px; border-radius: 11rem; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .shape-rect { width: 230px; height: 230px; border-radius: 1.5rem; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        .viewfinder-corners { position: absolute; inset: -4px; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
-        .shape-rect .viewfinder-corners { opacity: 1; }
-        .corner { position: absolute; width: 30px; height: 30px; border-color: #3b82f6; border-style: solid; }
-        .corner-tl { top: 0; left: 0; border-width: 4px 0 0 4px; border-top-left-radius: 1.5rem; }
-        .corner-tr { top: 0; right: 0; border-width: 4px 4px 0 0; border-top-right-radius: 1.5rem; }
-        .corner-bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-bottom-left-radius: 1.5rem; }
-        .corner-br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-bottom-right-radius: 1.5rem; }
-
-        .box-searching { animation: pulse-white 2.5s infinite ease-in-out; border-style: dashed; border-width: 3px; }
-        .box-liveness { animation: pulse-yellow 1.5s infinite ease-in-out; border-style: solid; border-width: 4px; }
-        .box-proximity { animation: pulse-orange 1.2s infinite ease-in-out; border-style: dashed; border-width: 4px; }
-        .box-success { border-color: #10b981; border-style: solid; border-width: 4px; box-shadow: 0 0 40px rgba(16, 185, 129, 0.5); transform: scale(1.05); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .box-error { border-color: #f43f5e; border-style: solid; border-width: 4px; box-shadow: 0 0 30px rgba(244, 63, 94, 0.5); }
-        
-        .laser-line { position: absolute; width: 100%; height: 3px; background: #3b82f6; box-shadow: 0 0 20px 2px #3b82f6; display: none; }
-        .box-searching .laser-line { display: block; animation: scan-laser 2.5s infinite linear; }
-
-        #loader-screen { transition: opacity 0.6s ease; }
-        .spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        select option { background: #0f172a; color: white; padding: 10px; }
-        div:where(.swal2-container) .swal2-popup { border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15, 23, 42, 0.95) !important; backdrop-filter: blur(20px); color: white; }
+        .tab-btn.active { color: #2563eb; border-bottom: 3px solid #2563eb; background: #eff6ff; }
+        @keyframes pulse-border { 0% { border-color: rgba(255,255,255,0.4); } 50% { border-color: rgba(255,255,255,0.8); } 100% { border-color: rgba(255,255,255,0.4); } }
+        .face-guide { animation: pulse-border 2s infinite; }
+        div:where(.swal2-container) button:where(.swal2-styled).swal2-confirm, div:where(.swal2-container) button:where(.swal2-styled).swal2-deny, div:where(.swal2-container) button:where(.swal2-styled).swal2-cancel { border-radius: 0.75rem; font-weight: 900; }
     </style>
 </head>
-<body class="w-screen h-screen flex items-center justify-center text-white select-none antialiased">
+<body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- LAYAR LOADING KOSMIK -->
-    <div id="loader-screen" class="absolute inset-0 z-50 bg-[#020617] flex flex-col items-center justify-center">
-        <div class="spinner mb-4"></div>
-        <h2 class="text-lg font-black tracking-widest animate-pulse text-blue-400">MEMUAT SISTEM...</h2>
-        <p id="loader-text" class="text-xs text-slate-500 font-bold mt-2">Membaca memori lokal</p>
-    </div>
-
-    <!-- RANGKA MESIN KIOSK -->
-    <div class="relative w-full max-w-md mx-auto h-full sm:h-[95vh] sm:rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_-12px_rgba(59,130,246,0.3)] sm:border-[6px] sm:border-slate-800 flex flex-col transition-all bg-[#020617]">
-        
-        <!-- KAMERA BACKGROUND -->
-        <div class="camera-container">
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlay" class="z-10"></canvas>
-            <div class="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/10 to-slate-900/95 z-20 pointer-events-none"></div>
-            <!-- Orb Bergerak -->
-            <div class="absolute top-0 left-[-20%] w-64 h-64 bg-blue-600/20 rounded-full mix-blend-screen filter blur-[60px] animate-blob z-20 pointer-events-none"></div>
-            <div class="absolute bottom-[20%] right-[-20%] w-64 h-64 bg-emerald-600/15 rounded-full mix-blend-screen filter blur-[60px] animate-blob animation-delay-4000 z-20 pointer-events-none"></div>
+    <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
+        <div class="bg-slate-900 p-5 text-center">
+            <h1 class="text-white font-black tracking-tighter text-2xl italic">Absensi Online</h1>
+            <p id="geo-status" class="text-rose-400 text-[10px] tracking-widest font-bold mt-1">📍 MENCARI GPS...</p>
         </div>
 
-        <!-- TOP BAR -->
-        <div class="relative z-30 flex justify-between items-start p-6">
-            <div>
-                <h1 class="text-2xl font-black tracking-tighter text-white drop-shadow-lg">AiMoy</h1>
-                <div class="flex items-center gap-2 mt-1">
-                    <button onclick="forceRefreshGPS()" class="glass-panel p-1.5 rounded-full hover:bg-white/20 transition group" title="Refresh GPS">
-                        <svg class="w-3 h-3 text-blue-400 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    </button>
-                    <span id="geo-status" class="text-rose-400 text-[10px] tracking-widest font-bold flex items-center gap-1.5">
-                        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span></span>
-                        MENCARI GPS...
-                    </span>
+        <div class="flex border-b border-slate-100">
+            <button onclick="switchTab('absen')" id="tab-absen" class="tab-btn active flex-1 py-4 text-xs font-black transition-all">ABSENSI</button>
+            <button onclick="switchTab('reg')" id="tab-reg" class="tab-btn flex-1 py-4 text-xs font-black text-slate-400 transition-all">REGISTRASI</button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            
+            <div class="camera-container">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="overlay" class="z-10"></canvas>
+                <div class="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
+                    <div class="w-[180px] h-[240px] border-[3px] border-dashed rounded-[50%] face-guide shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"></div>
+                    <div class="mt-4 bg-slate-900/70 backdrop-blur px-4 py-1.5 rounded-full text-white text-[9px] font-black tracking-widest text-center" id="cam-instruction">SEJAJARKAN WAJAH DI SINI</div>
                 </div>
             </div>
-            <button onclick="toggleFullScreen()" class="glass-panel p-2.5 rounded-full hover:bg-white/20 transition-all active:scale-95 shadow-lg">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-            </button>
-        </div>
 
-        <!-- JAM DIGITAL -->
-        <div class="relative z-30 flex flex-col items-center mt-2 pointer-events-none drop-shadow-2xl">
-            <div id="real-time-clock" class="text-[5rem] leading-none font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">00:00</div>
-            <div id="real-time-date" class="text-xs font-bold text-blue-400 tracking-widest uppercase mt-2 bg-blue-900/30 px-4 py-1 rounded-full border border-blue-500/30 backdrop-blur-md">Memuat Waktu...</div>
-        </div>
-
-        <!-- PEMINDAI WAJAH -->
-        <div class="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none mt-14">
-            <div id="face-guide-box" class="relative shape-oval box-searching overflow-hidden backdrop-brightness-110">
-                <div class="laser-line"></div>
-                <div class="viewfinder-corners">
-                    <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
-                    <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+            <div id="panel-absen" class="space-y-4">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    <h2 id="ai-name" class="text-lg font-black text-slate-300 italic">Mencari Wajah...</h2>
                 </div>
-            </div>
-            <div id="cam-instruction" class="mt-8 glass-panel px-6 py-2.5 rounded-full text-white text-[10px] font-black tracking-widest shadow-xl transition-all duration-300 transform">
-                POSISIKAN WAJAH ANDA
-            </div>
-        </div>
 
-        <!-- KARTU GREETING -->
-        <div class="absolute bottom-[230px] left-5 right-5 z-40 flex justify-center pointer-events-none">
-            <div id="greeting-card" class="glass-card w-full rounded-2xl p-4 transform translate-y-12 opacity-0 transition-all duration-500 ease-out flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <span class="text-2xl">✨</span>
-                </div>
-                <div class="flex-1">
-                    <p class="text-[9px] font-black text-blue-300 uppercase tracking-widest mb-0.5">Identitas Dikonfirmasi</p>
-                    <h2 id="ai-name" class="text-lg font-black text-white truncate leading-tight">Nama...</h2>
-                    <p id="ai-status" class="text-[11px] font-bold text-emerald-400 mt-1 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Siap Absen</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- GLASS DOCK BAWAH -->
-        <div class="relative z-40 mt-auto w-full px-5 pb-8 pt-10">
-            <div id="dist-alert" class="hidden mb-4 glass-card bg-rose-500/20 border-rose-500/50 text-rose-300 p-2.5 rounded-xl text-[11px] font-black text-center shadow-rose-500/20 shadow-lg"></div>
-
-            <div id="panel-absen" class="space-y-3 transform transition-all duration-300">
-                <div class="grid grid-cols-2 gap-3">
-                    <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3.5 glass-input rounded-xl text-[11px] uppercase tracking-wider font-bold text-center"><option value="" disabled selected>Pilih Outlet</option></select>
-                    <select id="sel-shift" class="w-full p-3.5 glass-input rounded-xl text-[11px] uppercase tracking-wider font-bold text-center"><option value="" disabled selected>Pilih Shift</option></select>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"><option value="" disabled selected>Pilih Outlet</option></select>
+                    <select id="sel-shift" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"><option value="" disabled selected>Pilih Shift</option></select>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3 pt-1">
-                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="relative overflow-hidden group bg-blue-600 hover:bg-blue-500 border border-blue-400/50 text-white py-4 rounded-xl font-black shadow-[0_0_20px_rgba(37,99,235,0.4)] disabled:opacity-30 disabled:shadow-none transition-all text-xs tracking-widest active:scale-95">
-                        <span class="relative z-10">MASUK</span>
-                    </button>
-                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="relative overflow-hidden group bg-slate-800 hover:bg-slate-700 border border-slate-600/50 text-white py-4 rounded-xl font-black shadow-lg disabled:opacity-30 transition-all text-xs tracking-widest active:scale-95">
-                        <span class="relative z-10">PULANG</span>
-                    </button>
+                <div id="dist-alert" class="hidden bg-rose-100 text-rose-600 p-2 rounded-xl text-[10px] font-bold text-center"></div>
+
+                <div class="grid grid-cols-3 gap-2 pt-2">
+                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">MASUK</button>
+                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-slate-900 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">PULANG</button>
+                    <button id="btn-izin" onclick="ajukanIzin()" disabled class="bg-amber-500 text-white py-3 rounded-xl font-black shadow-lg disabled:opacity-30">IZIN</button>
                 </div>
-                <button id="btn-izin" onclick="ajukanIzin()" disabled class="w-full mt-2 glass-panel bg-amber-500/20 hover:bg-amber-500/40 border-amber-500/50 text-amber-400 py-3 rounded-xl font-bold shadow-lg disabled:opacity-30 transition-all text-[10px] tracking-widest uppercase active:scale-95">Ajukan Izin / Sakit</button>
             </div>
 
-            <div id="panel-reg" class="hidden space-y-3 glass-panel p-5 rounded-2xl transform transition-all duration-300 scale-95 opacity-0">
-                <h3 class="font-black text-xs text-blue-400 text-center tracking-widest uppercase mb-3">Registrasi Wajah Baru</h3>
-                <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3.5 glass-input rounded-xl text-xs font-bold text-center">
-                <div class="grid grid-cols-2 gap-3">
-                    <select id="reg-role" class="p-3.5 glass-input rounded-xl text-xs font-bold text-center"><option value="Staff">Staff</option><option value="Senior">Senior</option></select>
-                    <select id="reg-outlet" class="p-3.5 glass-input rounded-xl text-xs font-bold text-center"><option value="" disabled selected>Penempatan</option></select>
+            <div id="panel-reg" class="hidden space-y-3">
+                <input type="text" id="reg-nama" placeholder="Nama Lengkap Staf" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none mt-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="reg-role" class="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none"><option value="Staff">Role: Staff</option><option value="Senior">Role: Senior</option></select>
+                    <select id="reg-outlet" class="p-3 border border-slate-200 rounded-xl text-xs font-bold outline-none"><option value="" disabled selected>Penempatan...</option></select>
                 </div>
-                <button onclick="daftarkan()" class="w-full bg-emerald-500 hover:bg-emerald-400 border border-emerald-400 text-white py-3.5 rounded-xl font-black shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all mt-2 text-xs tracking-widest active:scale-95">KUNCI BIOMETRIK</button>
-            </div>
-
-            <div class="flex justify-center gap-8 mt-6 opacity-60 text-[9px] font-black tracking-[0.2em] uppercase">
-                <span id="tab-absen" onclick="switchTab('absen')" class="cursor-pointer text-blue-400 transition-colors py-2">Absensi</span>
-                <span id="tab-reg" onclick="switchTab('reg')" class="cursor-pointer text-slate-500 hover:text-white transition-colors py-2">Registrasi Baru</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- POP-UP INSTALL APP (PWA) -->
-    <div id="install-prompt" class="fixed bottom-0 left-0 right-0 z-50 p-4 transform translate-y-full transition-transform duration-500">
-        <div class="glass-card bg-blue-900/80 border-blue-500/30 rounded-[2rem] p-5 shadow-[0_0_40px_rgba(37,99,235,0.3)] flex flex-col items-center text-center">
-            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-3">
-                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Icon" class="w-8 h-8">
-            </div>
-            <h3 class="text-white font-black text-lg">Install AiMoy Kiosk</h3>
-            <p id="install-instruction" class="text-blue-200 text-xs font-medium mt-1 mb-4 leading-relaxed">
-                Tambahkan aplikasi ini ke layar utama HP Anda agar kamera lebih stabil dan bisa diakses lebih cepat!
-            </p>
-            <div class="flex gap-2 w-full">
-                <button onclick="closeInstallPrompt()" class="flex-1 py-3 rounded-xl bg-slate-800/80 text-white font-bold text-xs">Nanti Saja</button>
-                <button id="btn-install" class="flex-1 py-3 rounded-xl bg-blue-500 text-white font-black text-xs shadow-lg shadow-blue-500/50">INSTALL SEKARANG</button>
+                <button onclick="daftarkan()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-black shadow-lg mt-2">KUNCI WAJAH</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- JANGAN LUPA UPDATE
+        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- UPDATE URL GAS ANDA
         
-        // --- 1. LOGIKA INSTALL PWA (ANDROID & IOS) ---
-        let deferredPrompt;
-        const installPopup = document.getElementById('install-prompt');
-        const btnInstall = document.getElementById('btn-install');
-        const instructionText = document.getElementById('install-instruction');
-
-        // Deteksi iOS (Apple)
-        const isIos = () => { const userAgent = window.navigator.userAgent.toLowerCase(); return /iphone|ipad|ipod/.test(userAgent); };
-        // Deteksi apakah sudah terinstall / dibuka sebagai aplikasi mandiri
-        const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
-
-        if (!isInStandaloneMode()) {
-            if (isIos()) {
-                // Instruksi Manual untuk iOS
-                instructionText.innerHTML = `Tekan tombol <b>Share (Bagikan)</b> <span class="text-lg">⍐</span> di bawah layar, lalu pilih<br><b>"Tambahkan ke Layar Utama" ⊞</b>.`;
-                btnInstall.style.display = 'none'; // Sembunyikan tombol install karena iOS tidak mendukung auto-install
-                setTimeout(() => installPopup.classList.remove('translate-y-full'), 3000);
-            } else {
-                // Tangkap Event Android
-                window.addEventListener('beforeinstallprompt', (e) => {
-                    e.preventDefault(); deferredPrompt = e;
-                    setTimeout(() => installPopup.classList.remove('translate-y-full'), 3000);
-                });
-
-                btnInstall.addEventListener('click', async () => {
-                    if (deferredPrompt) {
-                        deferredPrompt.prompt();
-                        const { outcome } = await deferredPrompt.userChoice;
-                        if (outcome === 'accepted') { closeInstallPrompt(); }
-                        deferredPrompt = null;
-                    }
-                });
-            }
-        }
-
-        function closeInstallPrompt() { installPopup.classList.add('translate-y-full'); }
-
-        // --- 2. LOGIKA KIOSK & AI ---
-        const video = document.getElementById('video'), canvas = document.getElementById('overlay');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('overlay');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
         let userLat = 0, userLng = 0, distance = 0, isLocValid = false, lastRecognizedName = null;
         let isPrompting = false, isLivenessPassed = false;
 
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('real-time-clock').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(/\./g, ':');
-            document.getElementById('real-time-date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        }, 1000);
-
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => {}); } 
-            else { if (document.exitFullscreen) document.exitFullscreen(); }
-        }
-
-        function forceRefreshGPS() {
-            document.getElementById('geo-status').innerHTML = `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span><span class="text-blue-400 text-[10px] tracking-widest font-bold">MENYEGARKAN...</span>`;
-            navigator.geolocation.getCurrentPosition(pos => {
-                userLat = pos.coords.latitude; userLng = pos.coords.longitude;
-                document.getElementById('geo-status').innerHTML = `<span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_10px_#10b981]"></span></span><span class="text-emerald-400 text-[10px] tracking-widest font-bold">AKURAT</span>`;
-                cekJarak();
-            }, err => { Swal.fire({title:'GPS Gagal', text:'Pastikan izin lokasi HP aktif', background:'#0f172a', color:'#fff', icon:'warning'}); }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
-        }
-
-        // --- DAFTARKAN SERVICE WORKER & MULAI APLIKASI ---
-        window.addEventListener('load', () => { 
-            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
-            forceRefreshGPS(); setTimeout(initApp, 500); 
+        window.addEventListener('load', () => {
+            if(navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    pos => { userLat = pos.coords.latitude; userLng = pos.coords.longitude; document.getElementById('geo-status').innerText = "📍 GPS TERKUNCI"; document.getElementById('geo-status').className = "text-emerald-400 text-[10px] tracking-widest font-bold mt-1"; cekJarak(); },
+                    err => { Swal.fire('Info', 'GPS tidak diizinkan. Hanya fitur IZIN yang aktif.', 'info'); }, { enableHighAccuracy: true }
+                );
+            }
+            setTimeout(initApp, 800);
         });
 
         function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
             const lat2 = parseFloat(lat2Str), lon2 = parseFloat(lon2Str);
-            const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180, Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
+            const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
             const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2) * Math.sin(Δλ/2)*Math.sin(Δλ/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         async function initApp() {
-            // PERUBAHAN PENTING: Mengubah URL otak AI ke server lokal / folder sendiri
-            const URL = './models'; 
-            
+            Swal.fire({ title: 'Please Wait...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            // Tambahan: Memuat Model Ekspresi Wajah (Liveness Detection)
+            await Promise.all([ 
+                faceapi.nets.tinyFaceDetector.loadFromUri(URL), 
+                faceapi.nets.faceLandmark68Net.loadFromUri(URL), 
+                faceapi.nets.faceRecognitionNet.loadFromUri(URL),
+                faceapi.nets.faceExpressionNet.loadFromUri(URL) 
+            ]);
+
             try {
-                document.getElementById('loader-text').innerText = "Mengaktifkan AI (Cepat)";
-                // Lazy Loading Tahap 1: Muat pendeteksi dasar agar kamera cepat terbuka
-                await Promise.all([ 
-                    faceapi.nets.tinyFaceDetector.loadFromUri(URL), 
-                    faceapi.nets.faceLandmark68Net.loadFromUri(URL), 
-                    faceapi.nets.faceRecognitionNet.loadFromUri(URL) 
-                ]);
-                
-                document.getElementById('loader-text').innerText = "Sinkronisasi Master Karyawan...";
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                 const data = await res.json();
-                
                 dbOutlet = data.dataOutlet; dbShift = data.dataShift;
-                let outHtml = '<option value="" disabled selected>Pilih Penempatan</option>';
+
+                let outHtml = '<option value="" disabled selected>Pilih Outlet</option>';
                 dbOutlet.forEach(o => { outHtml += `<option value="${o.nama}">${o.nama}</option>`; });
                 document.getElementById('sel-outlet').innerHTML = outHtml; document.getElementById('reg-outlet').innerHTML = outHtml;
 
@@ -298,37 +123,30 @@
                     faceMatcher = new faceapi.FaceMatcher(labeled, 0.40);
                 }
                 
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: {ideal: 720} } });
-                video.srcObject = stream;
-                
-                // Hilangkan layar loading
-                const loader = document.getElementById('loader-screen');
-                loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 600);
-
-                // Lazy Loading Tahap 2: Muat detektor ekspresi (senyum) di latar belakang secara diam-diam
-                faceapi.nets.faceExpressionNet.loadFromUri(URL);
-
-            } catch (e) { 
-                document.getElementById('loader-screen').innerHTML = `<div class="p-6 text-center"><h2 class="text-rose-500 font-black text-xl mb-2">ERROR SISTEM</h2><p class="text-white text-xs">Pastikan Anda sudah mendownload folder <b>models</b> dan internet stabil.</p></div>`;
-            }
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(s => { video.srcObject = s; Swal.close(); }).catch(e => Swal.fire('Error', 'Kamera diblokir.', 'error'));
+            } catch (e) { Swal.fire('Error', 'Gagal memuat database.', 'error'); }
         }
 
         function loadShiftDropdown() {
             cekJarak();
-            const outletName = document.getElementById('sel-outlet').value, shiftSelect = document.getElementById('sel-shift');
+            const outletName = document.getElementById('sel-outlet').value;
+            const shiftSelect = document.getElementById('sel-shift');
             const shiftTersedia = dbShift.filter(s => s.outlet === outletName);
-            if(shiftTersedia.length === 0) { shiftSelect.innerHTML = '<option value="" disabled selected>Jadwal Kosong</option>'; } 
+            
+            if(shiftTersedia.length === 0) { shiftSelect.innerHTML = '<option value="" disabled selected>Belum ada jadwal</option>'; } 
             else {
-                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift</option>';
-                shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}" data-jamm="${s.jamMasuk}" data-jamk="${s.jamKeluar}" data-tol="${s.toleransi}">${s.kode} (${s.jamMasuk})</option>`; });
+                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift Target</option>';
+                shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}" data-jamm="${s.jamMasuk}" data-jamk="${s.jamKeluar}" data-tol="${s.toleransi}">${s.kode} (${s.jamMasuk}-${s.jamKeluar})</option>`; });
             }
         }
 
         function cariShiftOtomatis(outletName) {
             const shifts = dbShift.filter(s => s.outlet === outletName);
             if (shifts.length === 0) return null;
+            
             const now = new Date(); const currentMins = now.getHours() * 60 + now.getMinutes();
             let bestShift = shifts[0], minDiff = Infinity;
+
             shifts.forEach(s => {
                 const mMasuk = parseInt(s.jamMasuk.split(':')[0]) * 60 + parseInt(s.jamMasuk.split(':')[1]);
                 const mKeluar = parseInt(s.jamKeluar.split(':')[0]) * 60 + parseInt(s.jamKeluar.split(':')[1]);
@@ -341,11 +159,12 @@
         function cekJarak() {
             const outName = document.getElementById('sel-outlet').value, alertBox = document.getElementById('dist-alert');
             if(!outName || userLat === 0) return;
+
             const outlet = dbOutlet.find(o => o.nama === outName);
             if(!outlet) return; distance = hitungJarak(userLat, userLng, outlet.lat, outlet.lng);
             
-            if (distance > outlet.radius) { isLocValid = false; alertBox.classList.remove('hidden'); alertBox.innerHTML = `⚠️ Jarak melenceng ${Math.round(distance)}m. Maks ${outlet.radius}m`; updateUI(currentFace !== null, "ERROR"); } 
-            else { isLocValid = true; alertBox.classList.add('hidden'); updateUI(currentFace !== null, isLivenessPassed ? "READY" : "LIVENESS_WAIT"); }
+            if (distance > outlet.radius) { isLocValid = false; alertBox.classList.remove('hidden'); alertBox.innerHTML = `⚠️ Jarak ${Math.round(distance)}m. Maks. ${outlet.radius}m dari Toko!`; } 
+            else { isLocValid = true; alertBox.classList.add('hidden'); } updateUI(currentFace !== null);
         }
 
         video.addEventListener('loadedmetadata', () => { canvas.width = video.videoWidth; canvas.height = video.videoHeight; });
@@ -356,115 +175,109 @@
             
             setInterval(async () => {
                 if(isPrompting) return;
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
+
+                // Memanggil deteksi ekspresi (Senyum)
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
                 const resized = faceapi.resizeResults(detections, size); canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
 
                 if (!document.getElementById('panel-absen').classList.contains('hidden') && detections.length > 0 && faceMatcher) {
-                    
-                    const faceWidth = resized[0].detection.box.width;
-                    if(faceWidth < 120) { updateUI(true, "TOO_FAR"); return; }
-                    if(faceWidth > 280) { updateUI(true, "TOO_CLOSE"); return; }
-
                     const match = faceMatcher.findBestMatch(resized[0].descriptor);
                     if (match.label !== 'unknown') {
                         const info = JSON.parse(match.label);
                         
+                        // FITUR LIVENESS DETECTION: Wajib Tersenyum!
                         const expressions = resized[0].expressions;
-                        if (expressions && expressions.happy > 0.35) { isLivenessPassed = true; }
+                        if (expressions.happy > 0.6) { // Jika tingkat senyum > 60%, Liveness Lolos
+                            isLivenessPassed = true;
+                        }
 
-                        if (!isLivenessPassed) { currentFace = info; updateUI(true, "LIVENESS_WAIT"); return; }
+                        if (!isLivenessPassed) {
+                            currentFace = info;
+                            updateUI(true, "LIVENESS_WAIT");
+                            return; // Hentikan eksekusi sampai ia tersenyum
+                        }
                         
+                        // Jika Lolos Liveness & Wajah Baru Dikenali
                         if(lastRecognizedName !== info.n) { 
-                            lastRecognizedName = info.n; currentFace = info; 
+                            lastRecognizedName = info.n;
+                            currentFace = info; 
                             const outSel = document.getElementById('sel-outlet'); 
                             if(info.o) { outSel.value = info.o; loadShiftDropdown(); } 
                             
                             const autoShift = cariShiftOtomatis(info.o);
                             if(autoShift) {
-                                document.getElementById('sel-shift').value = autoShift.kode; updateUI(true, isLocValid ? "READY" : "ERROR");
+                                document.getElementById('sel-shift').value = autoShift.kode;
+                                updateUI(true);
                                 munculkanPopupAutoAbsen(info, autoShift);
-                            } else { updateUI(true, isLocValid ? "READY" : "ERROR"); }
-                        } else { currentFace = info; updateUI(true, isLocValid ? "READY" : "ERROR"); }
+                            } else { updateUI(true); }
+                        } else { currentFace = info; updateUI(true); }
                     } else { lastRecognizedName = null; isLivenessPassed = false; updateUI(false); }
                 } else { lastRecognizedName = null; isLivenessPassed = false; updateUI(false); if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); } }
-            }, 500); 
+            }, 800);
         });
 
-        function updateUI(found, state = "SEARCHING") {
-            const box = document.getElementById('face-guide-box'), camInst = document.getElementById('cam-instruction'), card = document.getElementById('greeting-card'), nameEl = document.getElementById('ai-name'), statusEl = document.getElementById('ai-status');
+        function updateUI(found, state = "READY") {
+            const nameEl = document.getElementById('ai-name'), outSel = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift').value;
             const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out'), btnIzin = document.getElementById('btn-izin');
-            const outSel = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift').value;
+            const camInstruction = document.getElementById('cam-instruction');
             
-            const isReg = !document.getElementById('panel-reg').classList.contains('hidden');
-            const baseShape = isReg ? 'shape-rect' : 'shape-oval';
-            
-            if (found && currentFace && !isReg) {
-                card.classList.remove('translate-y-12', 'opacity-0'); nameEl.innerText = currentFace.n;
-
-                if (state === "TOO_FAR") {
-                    box.className = `relative ${baseShape} box-proximity overflow-hidden`;
-                    camInst.innerText = "⬆️ MAJU SEDIKIT"; camInst.className = "mt-8 glass-panel border-orange-500 px-6 py-2.5 rounded-full text-orange-400 text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(249,115,22,0.4)]";
-                    statusEl.innerHTML = `Terlalu Jauh`; statusEl.className = "text-[11px] font-bold text-orange-400 mt-1";
+            if (found && currentFace) {
+                if (state === "LIVENESS_WAIT") {
+                    nameEl.innerHTML = `${currentFace.n} <br><span class="text-amber-500 text-sm animate-pulse">😊 SILAKAN TERSENYUM UNTUK VERIFIKASI!</span>`;
+                    nameEl.className = "text-lg font-black text-slate-800";
+                    camInstruction.innerText = "TERSENYUMLAH KE KAMERA"; camInstruction.className = "mt-4 bg-amber-500 px-4 py-1.5 rounded-full text-white text-[10px] font-black tracking-widest text-center animate-bounce";
                     btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
-                } else if (state === "TOO_CLOSE") {
-                    box.className = `relative ${baseShape} box-proximity overflow-hidden`;
-                    camInst.innerText = "⬇️ MUNDUR SEDIKIT"; camInst.className = "mt-8 glass-panel border-orange-500 px-6 py-2.5 rounded-full text-orange-400 text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(249,115,22,0.4)]";
-                    statusEl.innerHTML = `Terlalu Dekat`; statusEl.className = "text-[11px] font-bold text-orange-400 mt-1";
-                    btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
-                } else if (state === "LIVENESS_WAIT") {
-                    box.className = `relative ${baseShape} box-liveness overflow-hidden`;
-                    camInst.innerText = "😊 TERSENYUMLAH"; camInst.className = "mt-8 glass-panel border-amber-500 px-6 py-2.5 rounded-full text-amber-400 text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(251,191,36,0.4)]";
-                    statusEl.innerHTML = `<span class="animate-pulse">Menunggu senyum...</span>`; statusEl.className = "text-[11px] font-bold text-amber-400 mt-1 flex items-center gap-1";
-                    btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
-                } else if (state === "ERROR") {
-                    box.className = `relative ${baseShape} box-error overflow-hidden`;
-                    camInst.innerText = "⛔ LOKASI DITOLAK"; camInst.className = "mt-8 bg-rose-500/80 px-6 py-2.5 rounded-full text-white text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(244,63,94,0.4)]";
-                    statusEl.innerText = "Di luar area Outlet!"; statusEl.className = "text-[11px] font-bold text-rose-400 mt-1 flex items-center gap-1";
-                    btnIn.disabled = true; btnOut.disabled = true; if(outSel) btnIzin.disabled = false;
                 } else {
-                    box.className = `relative ${baseShape} box-success overflow-hidden`;
-                    camInst.innerText = "✅ IDENTITAS DIKUNCI"; camInst.className = "mt-8 bg-emerald-500/80 px-6 py-2.5 rounded-full text-white text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.4)]";
-                    statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_5px_#34d399]"></span> ${shf ? 'Target: '+shf : 'Pilih Shift Anda'}`; statusEl.className = "text-[11px] font-bold text-emerald-400 mt-1 flex items-center gap-1";
+                    nameEl.innerHTML = `${currentFace.n} <span class="text-emerald-500">✅</span>`;
+                    nameEl.className = "text-lg font-black text-emerald-600";
+                    camInstruction.innerText = "VERIFIKASI SUKSES"; camInstruction.className = "mt-4 bg-emerald-600 px-4 py-1.5 rounded-full text-white text-[10px] font-black tracking-widest text-center";
+                    
                     if(outSel) btnIzin.disabled = false; else btnIzin.disabled = true;
                     if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
                 }
             } else { 
-                card.classList.add('translate-y-12', 'opacity-0');
-                box.className = `relative ${baseShape} box-searching overflow-hidden backdrop-brightness-110`; 
-                if(isReg) {
-                    box.innerHTML = `<div class="viewfinder-corners"><div class="corner corner-tl"></div><div class="corner corner-tr"></div><div class="corner corner-bl"></div><div class="corner corner-br"></div></div>`;
-                    camInst.innerText = "POSISIKAN WAJAH BINGKAI"; 
-                } else {
-                    box.innerHTML = '<div class="laser-line"></div>';
-                    camInst.innerText = "SEJAJARKAN WAJAH"; 
-                }
-                camInst.className = "mt-8 glass-panel px-6 py-2.5 rounded-full text-white text-[10px] font-black tracking-widest shadow-xl";
+                nameEl.innerText = "Mencari Wajah..."; nameEl.className = "text-lg font-black text-slate-300 italic"; 
+                camInstruction.innerText = "SEJAJARKAN WAJAH DI SINI"; camInstruction.className = "mt-4 bg-slate-900/70 backdrop-blur px-4 py-1.5 rounded-full text-white text-[9px] font-black tracking-widest text-center";
                 currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true; 
             }
         }
 
-        document.getElementById('sel-shift').addEventListener('change', () => updateUI(currentFace !== null, isLocValid ? "READY" : "ERROR"));
+        document.getElementById('sel-shift').addEventListener('change', () => updateUI(currentFace !== null));
 
         function munculkanPopupAutoAbsen(faceInfo, shift) {
             isPrompting = true; cekJarak();
-            if(!isLocValid) { Swal.fire({ icon: 'warning', title: 'GPS Meleset', text: 'Sistem mengenali Anda, tapi koordinat HP jauh dari toko.', confirmButtonText: 'Tutup', background: '#0f172a', color: '#fff' }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); return; }
+            if(!isLocValid) {
+                Swal.fire({ icon: 'warning', title: 'Di Luar Radius!', text: 'Sistem mengenali Anda, tapi GPS HP Anda di luar radius toko.', confirmButtonText: 'Tutup' }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); return;
+            }
             Swal.fire({
-                title: `<span class="text-blue-400 text-2xl font-black">Halo, ${faceInfo.n}!</span>`,
-                html: `<div class="text-slate-300 text-sm">Penempatan: <b class="text-white">${faceInfo.o}</b><br><br>Target Shift Anda:<br><div class="glass-input rounded-xl py-3 mt-2 font-black text-2xl text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] border-emerald-500/30">${shift.kode} <span class="text-[10px] uppercase font-bold text-emerald-200/50 block tracking-widest">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
-                showDenyButton: true, showCancelButton: true, background: '#0f172a', color: '#fff',
-                confirmButtonText: 'MASUK KERJA', confirmButtonColor: '#2563eb', denyButtonText: 'PULANG KERJA', denyButtonColor: '#1e293b', cancelButtonText: 'Manual', allowOutsideClick: false,
-                customClass: { popup: 'rounded-[2rem] border border-slate-700/50 shadow-2xl', confirmButton: 'rounded-xl font-black w-full mb-2 tracking-widest text-xs', denyButton: 'rounded-xl font-black border border-slate-600 w-full mb-2 tracking-widest text-xs', cancelButton: 'rounded-xl w-full tracking-widest text-xs', actions: 'flex-col w-full px-4' }
+                title: `Hai, ${faceInfo.n}! 👋`,
+                html: `Anda terdeteksi berada di <b>${faceInfo.o}</b>.<br><br>Shift saat ini:<br><b class="text-xl text-blue-600">${shift.kode} (${shift.jamMasuk} - ${shift.jamKeluar})</b><br><br>Pilih aksi cepat:`,
+                showDenyButton: true, showCancelButton: true,
+                confirmButtonText: '✅ MASUK', confirmButtonColor: '#2563eb',
+                denyButtonText: '🛑 PULANG', denyButtonColor: '#0f172a',
+                cancelButtonText: '⚙️ Manual', allowOutsideClick: false
             }).then((result) => {
-                if (result.isConfirmed) { kirimAbsen('Masuk'); } else if (result.isDenied) { kirimAbsen('Pulang'); } else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; } 
+                if (result.isConfirmed) { kirimAbsen('Masuk'); } 
+                else if (result.isDenied) { kirimAbsen('Pulang'); } 
+                else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; } 
             });
         }
 
-        function ambilFotoKamera() { const tempCanvas = document.createElement('canvas'); const scale = 480 / video.videoWidth; tempCanvas.width = 480; tempCanvas.height = video.videoHeight * scale; const ctx = tempCanvas.getContext('2d'); ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height); return tempCanvas.toDataURL('image/jpeg', 0.6); }
+        function ambilFotoKamera() {
+            const tempCanvas = document.createElement('canvas'); const scale = 480 / video.videoWidth; 
+            tempCanvas.width = 480; tempCanvas.height = video.videoHeight * scale;
+            const ctx = tempCanvas.getContext('2d'); ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1); 
+            ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+            return tempCanvas.toDataURL('image/jpeg', 0.6);
+        }
 
         async function kirimAbsen(tipe) {
-            isPrompting = true; const out = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift'); const shfM = shf.options[shf.selectedIndex].getAttribute('data-jamm'), shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk'), shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol'); const fotoData = ambilFotoKamera();
+            isPrompting = true; 
+            const out = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift');
+            const shfM = shf.options[shf.selectedIndex].getAttribute('data-jamm'), shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk'), shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
+            const fotoData = ambilFotoKamera();
 
-            Swal.fire({ title: 'Sinkronisasi...', html: '<span class="text-xs text-blue-300">Menyimpan log ke pangkalan data</span>', allowOutsideClick: false, background: '#0f172a', color: '#fff', didOpen: () => Swal.showLoading(), customClass:{popup:'rounded-[2rem]'} });
+            Swal.fire({ title: 'Merekam Foto & Log...', html: 'Tunggu sebentar...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, tipe: tipe, jarak: distance, foto: fotoData } }) });
                 const result = await res.json();
@@ -473,64 +286,55 @@
                     const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}`;
                     const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
-                    Swal.fire({ icon: 'success', title: 'Berhasil!', background: '#0f172a', color: '#fff', html: `<div class="text-sm text-slate-300">Terima kasih, <b>${currentFace.n}</b>.<br><br>Status Log: <b class="text-emerald-400 px-3 py-1 bg-emerald-900/30 rounded-lg border border-emerald-500/30">${result.statusWaktu}</b></div><br><a href="${waLink}" target="_blank" class="mt-4 bg-emerald-500 text-white px-4 py-3.5 rounded-xl font-black block text-center uppercase tracking-widest text-[10px] shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all">💬 Kirim ke Grup WA</a>`, showConfirmButton: false, timer: 15000, customClass: { popup: 'rounded-[2rem] border border-slate-700/50' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
-                } else { Swal.fire({title: 'Ditolak', text: result.message, icon: 'error', background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-3xl' }}).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
-            } catch (e) { Swal.fire({title: 'Offline', text: 'Gagal menghubungi server.', icon: 'error', background: '#0f172a', color: '#fff', customClass:{popup:'rounded-3xl'}}).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+                    Swal.fire({
+                        icon: 'success', title: 'Absen Berhasil!',
+                        html: `<b>${currentFace.n}</b> berhasil ${tipe}.<br>Status: <b class="text-blue-600">${result.statusWaktu}</b><br><br><a href="${waLink}" target="_blank" class="bg-emerald-500 text-white px-4 py-3 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all shadow-emerald-500/50">💬 LAPORKAN KE GRUP WA</a>`,
+                        showConfirmButton: false, timer: 15000
+                    }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
+                } else { Swal.fire('Ditolak Sistem', result.message, 'error').then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+            } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error').then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
         }
 
         async function ajukanIzin() {
-            isPrompting = true; const out = document.getElementById('sel-outlet').value;
-            const { value: alasan } = await Swal.fire({ title: 'Form Izin / Sakit', input: 'text', inputLabel: 'Tuliskan alasan yang jelas', showCancelButton: true, background: '#0f172a', color: '#fff', inputValidator: (value) => { if (!value) return 'Alasan wajib diisi!' }, customClass: { popup: 'rounded-[2rem] border border-slate-700/50', input: 'glass-input text-white rounded-xl', confirmButton: 'bg-amber-500 rounded-xl font-black text-xs tracking-widest', cancelButton: 'rounded-xl text-xs tracking-widest' } });
+            isPrompting = true;
+            const out = document.getElementById('sel-outlet').value;
+            const { value: alasan } = await Swal.fire({ title: 'Pengajuan Izin', input: 'text', inputLabel: 'Keterangan Izin', showCancelButton: true, inputValidator: (value) => { if (!value) return 'Wajib diisi!' } });
             if (alasan) {
                 const fotoData = ambilFotoKamera();
-                Swal.fire({ title: 'Merekam Izin...', allowOutsideClick: false, background: '#0f172a', color: '#fff', didOpen: () => Swal.showLoading(), customClass:{popup:'rounded-[2rem]'} });
+                Swal.fire({ title: 'Merekam Izin & Foto...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 try {
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
                     const result = await res.json();
-                    if (result.status === 'success') Swal.fire({title: 'Validasi Sukses', html: `Izin <b>${currentFace.n}</b> telah diserahkan ke HRD.`, icon: 'success', background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-[2rem] border border-slate-700/50' }}).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
-                } catch (e) { Swal.fire({title:'Gagal', text:'Server Sibuk', icon:'error', background:'#0f172a', color:'#fff', customClass:{popup:'rounded-3xl'}}).then(() => { isPrompting = false; }); }
+                    if (result.status === 'success') Swal.fire('Terekam!', `Izin <b>${currentFace.n}</b> dicatat.`, 'success').then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
+                } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error').then(() => { isPrompting = false; }); }
             } else { isPrompting = false; }
         }
 
         async function daftarkan() {
-            isPrompting = true; const nama = document.getElementById('reg-nama').value, role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
-            if(!nama || !outlet) { isPrompting = false; return Swal.fire({title:'Peringatan', text:'Data tidak lengkap', icon:'warning', background: '#0f172a', color: '#fff', customClass:{popup:'rounded-3xl'}}); }
+            isPrompting = true;
+            const nama = document.getElementById('reg-nama').value, role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
+            if(!nama || !outlet) { isPrompting = false; return Swal.fire('Error', 'Nama dan Outlet wajib diisi!', 'warning'); }
 
-            Swal.fire({ title: 'Analisis Biometrik', html: '<span class="text-xs text-blue-300">Jangan bergerak...</span>', allowOutsideClick: false, background: '#0f172a', color: '#fff', didOpen: () => Swal.showLoading(), customClass:{popup:'rounded-[2rem]'} });
-            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })).withFaceLandmarks().withFaceDescriptor();
-            
-            if(!detection) { isPrompting = false; return Swal.fire({title:'Gagal', text:'Wajah kabur atau kurang jelas. Pastikan cahaya cukup.', icon:'error', background: '#0f172a', color: '#fff', customClass:{popup:'rounded-3xl'}}); }
+            Swal.fire({ title: 'Menganalisis Biometrik...', text: 'Tahan Posisi Wajah di Dalam Garis', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+            if(!detection) { isPrompting = false; return Swal.fire('Gagal', 'Wajah tidak jelas. Sejajarkan di dalam garis.', 'error'); }
 
             if (faceMatcher) {
                 const match = faceMatcher.findBestMatch(detection.descriptor);
                 if (match.label !== 'unknown') {
-                    const existData = JSON.parse(match.label); isPrompting = false; return Swal.fire({ icon: 'error', title: 'Akses Ditolak', html: `Wajah diidentifikasi sebagai:<br><br><b class="text-2xl text-rose-400 bg-rose-500/10 px-4 py-2 rounded-xl border border-rose-500/30 inline-block">${existData.n}</b>`, background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-[2rem] border border-slate-700/50' } });
+                    const existData = JSON.parse(match.label);
+                    isPrompting = false; return Swal.fire({ icon: 'error', title: 'Registrasi Ditolak', html: `Wajah ini sudah terdaftar atas nama:<br><b class="text-xl text-blue-600">${existData.n}</b><br>di ${existData.o}` });
                 }
             }
 
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'enroll', payload: { nama, role, outlet, descriptor: Array.from(detection.descriptor) } }) });
                 const data = await res.json();
-                if(data.status === 'success') Swal.fire({title:'Biometrik Terkunci!', html:`Identitas <b>${nama}</b> aktif.`, icon:'success', background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-[2rem] border border-slate-700/50' }}).then(() => location.reload());
-            } catch(e) { Swal.fire('Error', 'Gagal komunikasi server', 'error').then(() => { isPrompting = false; }); }
+                if(data.status === 'success') Swal.fire('Tersimpan!', `Wajah ${nama} dikunci.`, 'success').then(() => location.reload());
+            } catch(e) { Swal.fire('Error', 'Gagal menyimpan.', 'error').then(() => { isPrompting = false; }); }
         }
 
-        function switchTab(t) { 
-            const pAbsen = document.getElementById('panel-absen'), pReg = document.getElementById('panel-reg');
-            const guideBox = document.getElementById('face-guide-box');
-            
-            if (t === 'reg') {
-                guideBox.classList.remove('shape-oval'); guideBox.classList.add('shape-rect');
-                pAbsen.classList.add('scale-95', 'opacity-0'); setTimeout(() => { pAbsen.classList.add('hidden'); pReg.classList.remove('hidden'); setTimeout(() => pReg.classList.remove('scale-95', 'opacity-0'), 50); }, 300);
-            } else {
-                guideBox.classList.remove('shape-rect'); guideBox.classList.add('shape-oval');
-                pReg.classList.add('scale-95', 'opacity-0'); setTimeout(() => { pReg.classList.add('hidden'); pAbsen.classList.remove('hidden'); setTimeout(() => pAbsen.classList.remove('scale-95', 'opacity-0'), 50); }, 300);
-            }
-            updateUI(false);
-            
-            document.getElementById('tab-absen').classList.toggle('text-blue-400', t === 'absen'); document.getElementById('tab-absen').classList.toggle('text-slate-500', t === 'reg'); 
-            document.getElementById('tab-reg').classList.toggle('text-blue-400', t === 'reg'); document.getElementById('tab-reg').classList.toggle('text-slate-500', t === 'absen'); 
-        }
+        function switchTab(t) { document.getElementById('panel-absen').classList.toggle('hidden', t === 'reg'); document.getElementById('panel-reg').classList.toggle('hidden', t === 'absen'); document.getElementById('tab-absen').classList.toggle('active', t === 'absen'); document.getElementById('tab-absen').classList.toggle('text-slate-400', t === 'reg'); document.getElementById('tab-reg').classList.toggle('active', t === 'reg'); document.getElementById('tab-reg').classList.toggle('text-slate-400', t === 'absen'); }
     </script>
 </body>
 </html>
