@@ -16,7 +16,6 @@
     <style>
         body { background: #020617; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; touch-action: manipulation; }
         
-        /* Orb Kosmik Ambien (Sentuhan Magis) */
         @keyframes blob { 0% { transform: translate(0px, 0px) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0px, 0px) scale(1); } }
         .animate-blob { animation: blob 7s infinite; }
         .animation-delay-2000 { animation-delay: 2s; }
@@ -30,17 +29,14 @@
         .glass-input { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: white; transition: all 0.3s; }
         .glass-input:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); outline: none; }
         
-        /* Animasi Pemindai Dinamis & Laser */
         @keyframes pulse-white { 0%, 100% { border-color: rgba(255,255,255,0.2); box-shadow: 0 0 10px rgba(255,255,255,0.05); } 50% { border-color: rgba(255,255,255,0.7); box-shadow: 0 0 25px rgba(255,255,255,0.3); } }
         @keyframes pulse-yellow { 0%, 100% { border-color: rgba(251,191,36,0.6); box-shadow: 0 0 20px rgba(251,191,36,0.3); transform: scale(1); } 50% { border-color: rgba(251,191,36,1); box-shadow: 0 0 40px rgba(251,191,36,0.6); transform: scale(1.02); } }
         @keyframes pulse-orange { 0%, 100% { border-color: rgba(249,115,22,0.6); box-shadow: 0 0 20px rgba(249,115,22,0.3); } 50% { border-color: rgba(249,115,22,1); box-shadow: 0 0 40px rgba(249,115,22,0.6); } }
         @keyframes scan-laser { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
-        /* BENTUK WAJAH (SHAPE SHIFTING) */
         .shape-oval { width: 210px; height: 290px; border-radius: 11rem; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .shape-rect { width: 230px; height: 230px; border-radius: 1.5rem; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        /* Sudut Viewfinder untuk Registrasi */
         .viewfinder-corners { position: absolute; inset: -4px; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
         .shape-rect .viewfinder-corners { opacity: 1; }
         .corner { position: absolute; width: 30px; height: 30px; border-color: #3b82f6; border-style: solid; }
@@ -49,7 +45,6 @@
         .corner-bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-bottom-left-radius: 1.5rem; }
         .corner-br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-bottom-right-radius: 1.5rem; }
 
-        /* Status Warna Border */
         .box-searching { animation: pulse-white 2.5s infinite ease-in-out; border-style: dashed; border-width: 3px; }
         .box-liveness { animation: pulse-yellow 1.5s infinite ease-in-out; border-style: solid; border-width: 4px; }
         .box-proximity { animation: pulse-orange 1.2s infinite ease-in-out; border-style: dashed; border-width: 4px; }
@@ -59,7 +54,6 @@
         .laser-line { position: absolute; width: 100%; height: 3px; background: #3b82f6; box-shadow: 0 0 20px 2px #3b82f6; display: none; }
         .box-searching .laser-line { display: block; animation: scan-laser 2.5s infinite linear; }
 
-        /* Loader Kustom */
         #loader-screen { transition: opacity 0.6s ease; }
         .spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -73,26 +67,24 @@
     <!-- LAYAR LOADING KOSMIK -->
     <div id="loader-screen" class="absolute inset-0 z-50 bg-[#020617] flex flex-col items-center justify-center">
         <div class="spinner mb-4"></div>
-        <h2 class="text-lg font-black tracking-widest animate-pulse text-blue-400">MENYIAPKAN AI...</h2>
-        <p class="text-xs text-slate-500 font-bold mt-2">Memuat Sistem Biometrik</p>
+        <h2 class="text-lg font-black tracking-widest animate-pulse text-blue-400">MEMUAT SISTEM...</h2>
+        <p id="loader-text" class="text-xs text-slate-500 font-bold mt-2">Membaca memori lokal</p>
     </div>
 
     <!-- RANGKA MESIN KIOSK -->
     <div class="relative w-full max-w-md mx-auto h-full sm:h-[95vh] sm:rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_-12px_rgba(59,130,246,0.3)] sm:border-[6px] sm:border-slate-800 flex flex-col transition-all bg-[#020617]">
         
-        <!-- 1. KAMERA BACKGROUND -->
+        <!-- KAMERA BACKGROUND -->
         <div class="camera-container">
             <video id="video" autoplay muted playsinline></video>
             <canvas id="overlay" class="z-10"></canvas>
-            
-            <!-- OVERLAY AMBIEN MAGIS -->
             <div class="absolute inset-0 bg-gradient-to-b from-slate-900/90 via-slate-900/10 to-slate-900/95 z-20 pointer-events-none"></div>
             <!-- Orb Bergerak -->
             <div class="absolute top-0 left-[-20%] w-64 h-64 bg-blue-600/20 rounded-full mix-blend-screen filter blur-[60px] animate-blob z-20 pointer-events-none"></div>
             <div class="absolute bottom-[20%] right-[-20%] w-64 h-64 bg-emerald-600/15 rounded-full mix-blend-screen filter blur-[60px] animate-blob animation-delay-4000 z-20 pointer-events-none"></div>
         </div>
 
-        <!-- 2. TOP BAR (FULLSCREEN & GPS REFRESH) -->
+        <!-- TOP BAR -->
         <div class="relative z-30 flex justify-between items-start p-6">
             <div>
                 <h1 class="text-2xl font-black tracking-tighter text-white drop-shadow-lg">AiMoy</h1>
@@ -111,17 +103,16 @@
             </button>
         </div>
 
-        <!-- 3. JAM DIGITAL -->
+        <!-- JAM DIGITAL -->
         <div class="relative z-30 flex flex-col items-center mt-2 pointer-events-none drop-shadow-2xl">
             <div id="real-time-clock" class="text-[5rem] leading-none font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">00:00</div>
             <div id="real-time-date" class="text-xs font-bold text-blue-400 tracking-widest uppercase mt-2 bg-blue-900/30 px-4 py-1 rounded-full border border-blue-500/30 backdrop-blur-md">Memuat Waktu...</div>
         </div>
 
-        <!-- 4. PEMINDAI WAJAH MAGIS (MORPHING SHAPE) -->
+        <!-- PEMINDAI WAJAH -->
         <div class="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none mt-14">
             <div id="face-guide-box" class="relative shape-oval box-searching overflow-hidden backdrop-brightness-110">
                 <div class="laser-line"></div>
-                <!-- Viewfinder khusus mode registrasi -->
                 <div class="viewfinder-corners">
                     <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
                     <div class="corner corner-bl"></div><div class="corner corner-br"></div>
@@ -132,7 +123,7 @@
             </div>
         </div>
 
-        <!-- 5. KARTU GREETING -->
+        <!-- KARTU GREETING -->
         <div class="absolute bottom-[230px] left-5 right-5 z-40 flex justify-center pointer-events-none">
             <div id="greeting-card" class="glass-card w-full rounded-2xl p-4 transform translate-y-12 opacity-0 transition-all duration-500 ease-out flex items-center gap-4">
                 <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
@@ -146,7 +137,7 @@
             </div>
         </div>
 
-        <!-- 6. GLASS DOCK BAWAH -->
+        <!-- GLASS DOCK BAWAH -->
         <div class="relative z-40 mt-auto w-full px-5 pb-8 pt-10">
             <div id="dist-alert" class="hidden mb-4 glass-card bg-rose-500/20 border-rose-500/50 text-rose-300 p-2.5 rounded-xl text-[11px] font-black text-center shadow-rose-500/20 shadow-lg"></div>
 
@@ -184,16 +175,69 @@
         </div>
     </div>
 
+    <!-- POP-UP INSTALL APP (PWA) -->
+    <div id="install-prompt" class="fixed bottom-0 left-0 right-0 z-50 p-4 transform translate-y-full transition-transform duration-500">
+        <div class="glass-card bg-blue-900/80 border-blue-500/30 rounded-[2rem] p-5 shadow-[0_0_40px_rgba(37,99,235,0.3)] flex flex-col items-center text-center">
+            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg mb-3">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Icon" class="w-8 h-8">
+            </div>
+            <h3 class="text-white font-black text-lg">Install AiMoy Kiosk</h3>
+            <p id="install-instruction" class="text-blue-200 text-xs font-medium mt-1 mb-4 leading-relaxed">
+                Tambahkan aplikasi ini ke layar utama HP Anda agar kamera lebih stabil dan bisa diakses lebih cepat!
+            </p>
+            <div class="flex gap-2 w-full">
+                <button onclick="closeInstallPrompt()" class="flex-1 py-3 rounded-xl bg-slate-800/80 text-white font-bold text-xs">Nanti Saja</button>
+                <button id="btn-install" class="flex-1 py-3 rounded-xl bg-blue-500 text-white font-black text-xs shadow-lg shadow-blue-500/50">INSTALL SEKARANG</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- UPDATE URL GOOGLE APPS SCRIPT
+        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- JANGAN LUPA UPDATE
         
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('overlay');
+        // --- 1. LOGIKA INSTALL PWA (ANDROID & IOS) ---
+        let deferredPrompt;
+        const installPopup = document.getElementById('install-prompt');
+        const btnInstall = document.getElementById('btn-install');
+        const instructionText = document.getElementById('install-instruction');
+
+        // Deteksi iOS (Apple)
+        const isIos = () => { const userAgent = window.navigator.userAgent.toLowerCase(); return /iphone|ipad|ipod/.test(userAgent); };
+        // Deteksi apakah sudah terinstall / dibuka sebagai aplikasi mandiri
+        const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+
+        if (!isInStandaloneMode()) {
+            if (isIos()) {
+                // Instruksi Manual untuk iOS
+                instructionText.innerHTML = `Tekan tombol <b>Share (Bagikan)</b> <span class="text-lg">⍐</span> di bawah layar, lalu pilih<br><b>"Tambahkan ke Layar Utama" ⊞</b>.`;
+                btnInstall.style.display = 'none'; // Sembunyikan tombol install karena iOS tidak mendukung auto-install
+                setTimeout(() => installPopup.classList.remove('translate-y-full'), 3000);
+            } else {
+                // Tangkap Event Android
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault(); deferredPrompt = e;
+                    setTimeout(() => installPopup.classList.remove('translate-y-full'), 3000);
+                });
+
+                btnInstall.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        if (outcome === 'accepted') { closeInstallPrompt(); }
+                        deferredPrompt = null;
+                    }
+                });
+            }
+        }
+
+        function closeInstallPrompt() { installPopup.classList.add('translate-y-full'); }
+
+        // --- 2. LOGIKA KIOSK & AI ---
+        const video = document.getElementById('video'), canvas = document.getElementById('overlay');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
         let userLat = 0, userLng = 0, distance = 0, isLocValid = false, lastRecognizedName = null;
         let isPrompting = false, isLivenessPassed = false;
 
-        // JAM DIGITAL
         setInterval(() => {
             const now = new Date();
             document.getElementById('real-time-clock').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(/\./g, ':');
@@ -205,7 +249,6 @@
             else { if (document.exitFullscreen) document.exitFullscreen(); }
         }
 
-        // GPS MANUAL REFRESH
         function forceRefreshGPS() {
             document.getElementById('geo-status').innerHTML = `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span><span class="text-blue-400 text-[10px] tracking-widest font-bold">MENYEGARKAN...</span>`;
             navigator.geolocation.getCurrentPosition(pos => {
@@ -215,7 +258,11 @@
             }, err => { Swal.fire({title:'GPS Gagal', text:'Pastikan izin lokasi HP aktif', background:'#0f172a', color:'#fff', icon:'warning'}); }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
         }
 
-        window.addEventListener('load', () => { forceRefreshGPS(); setTimeout(initApp, 500); });
+        // --- DAFTARKAN SERVICE WORKER & MULAI APLIKASI ---
+        window.addEventListener('load', () => { 
+            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+            forceRefreshGPS(); setTimeout(initApp, 500); 
+        });
 
         function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
             const lat2 = parseFloat(lat2Str), lon2 = parseFloat(lon2Str);
@@ -225,9 +272,19 @@
         }
 
         async function initApp() {
-            const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            // PERUBAHAN PENTING: Mengubah URL otak AI ke server lokal / folder sendiri
+            const URL = './models'; 
+            
             try {
-                await Promise.all([ faceapi.nets.tinyFaceDetector.loadFromUri(URL), faceapi.nets.faceLandmark68Net.loadFromUri(URL), faceapi.nets.faceRecognitionNet.loadFromUri(URL), faceapi.nets.faceExpressionNet.loadFromUri(URL) ]);
+                document.getElementById('loader-text').innerText = "Mengaktifkan AI (Cepat)";
+                // Lazy Loading Tahap 1: Muat pendeteksi dasar agar kamera cepat terbuka
+                await Promise.all([ 
+                    faceapi.nets.tinyFaceDetector.loadFromUri(URL), 
+                    faceapi.nets.faceLandmark68Net.loadFromUri(URL), 
+                    faceapi.nets.faceRecognitionNet.loadFromUri(URL) 
+                ]);
+                
+                document.getElementById('loader-text').innerText = "Sinkronisasi Master Karyawan...";
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                 const data = await res.json();
                 
@@ -244,10 +301,15 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: {ideal: 720} } });
                 video.srcObject = stream;
                 
+                // Hilangkan layar loading
                 const loader = document.getElementById('loader-screen');
                 loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 600);
+
+                // Lazy Loading Tahap 2: Muat detektor ekspresi (senyum) di latar belakang secara diam-diam
+                faceapi.nets.faceExpressionNet.loadFromUri(URL);
+
             } catch (e) { 
-                document.getElementById('loader-screen').innerHTML = `<h2 class="text-rose-500 font-black">KONEKSI GAGAL</h2><p class="text-white mt-2">Cek internet Anda</p>`;
+                document.getElementById('loader-screen').innerHTML = `<div class="p-6 text-center"><h2 class="text-rose-500 font-black text-xl mb-2">ERROR SISTEM</h2><p class="text-white text-xs">Pastikan Anda sudah mendownload folder <b>models</b> dan internet stabil.</p></div>`;
             }
         }
 
@@ -299,7 +361,6 @@
 
                 if (!document.getElementById('panel-absen').classList.contains('hidden') && detections.length > 0 && faceMatcher) {
                     
-                    // SENSOR JARAK KEDEKATAN (PROXIMITY MAGIC TOUCH)
                     const faceWidth = resized[0].detection.box.width;
                     if(faceWidth < 120) { updateUI(true, "TOO_FAR"); return; }
                     if(faceWidth > 280) { updateUI(true, "TOO_CLOSE"); return; }
@@ -308,9 +369,8 @@
                     if (match.label !== 'unknown') {
                         const info = JSON.parse(match.label);
                         
-                        // LIVENESS SENSOR
                         const expressions = resized[0].expressions;
-                        if (expressions.happy > 0.35) { isLivenessPassed = true; }
+                        if (expressions && expressions.happy > 0.35) { isLivenessPassed = true; }
 
                         if (!isLivenessPassed) { currentFace = info; updateUI(true, "LIVENESS_WAIT"); return; }
                         
@@ -335,7 +395,6 @@
             const btnIn = document.getElementById('btn-in'), btnOut = document.getElementById('btn-out'), btnIzin = document.getElementById('btn-izin');
             const outSel = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift').value;
             
-            // Jaga bentuk base (Oval untuk Absen, Rect untuk Reg)
             const isReg = !document.getElementById('panel-reg').classList.contains('hidden');
             const baseShape = isReg ? 'shape-rect' : 'shape-oval';
             
@@ -467,7 +526,7 @@
                 guideBox.classList.remove('shape-rect'); guideBox.classList.add('shape-oval');
                 pReg.classList.add('scale-95', 'opacity-0'); setTimeout(() => { pReg.classList.add('hidden'); pAbsen.classList.remove('hidden'); setTimeout(() => pAbsen.classList.remove('scale-95', 'opacity-0'), 50); }, 300);
             }
-            updateUI(false); // Reset status box saat ganti tab
+            updateUI(false);
             
             document.getElementById('tab-absen').classList.toggle('text-blue-400', t === 'absen'); document.getElementById('tab-absen').classList.toggle('text-slate-500', t === 'reg'); 
             document.getElementById('tab-reg').classList.toggle('text-blue-400', t === 'reg'); document.getElementById('tab-reg').classList.toggle('text-slate-500', t === 'absen'); 
