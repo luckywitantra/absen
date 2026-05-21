@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AiMoy Smart Kiosk</title>
+    <title>AiMoy Absen</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
@@ -26,7 +26,6 @@
         .matte-input { background: #1e293b; border: 1px solid #334155; color: white; transition: all 0.3s; }
         .matte-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); outline: none; }
         
-        /* TRACKING BOX HUD */
         #tracking-box {
             position: absolute; border-radius: 1rem; z-index: 30; pointer-events: none;
             transition: all 0.1s ease-out; opacity: 0;
@@ -42,7 +41,6 @@
         @keyframes scan-laser { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
         .laser-line { position: absolute; width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 10px 2px #3b82f6; animation: scan-laser 2s infinite linear; }
 
-        /* JARING MATRIX KHUSUS REGISTRASI (EFEK REKAM 3D) */
         .matrix-grid { 
             position: absolute; inset: 0; border-radius: 1.5rem; opacity: 0; transition: opacity 0.4s;
             background-size: 15px 15px;
@@ -54,6 +52,9 @@
         .track-liveness .corner { border-color: #f59e0b; } 
         .track-success .corner { border-color: #10b981; } 
         .track-error .corner { border-color: #f43f5e; }
+
+        .shape-oval { width: 210px; height: 290px; border-radius: 11rem; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .shape-rect { width: 230px; height: 230px; border-radius: 1.5rem; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
         .spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -77,7 +78,6 @@
         
         <div class="camera-container" id="cam-container">
             <video id="video" autoplay muted playsinline></video>
-            
             <div id="tracking-box" class="track-search">
                 <div class="matrix-grid"></div> 
                 <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
@@ -221,7 +221,6 @@
         
         function closeInstallPrompt() { 
             installPopup.classList.add('translate-y-full'); 
-            // Munculkan tombol floating ketika pop-up utama di-"Nanti Saja"
             floatInstallBtn.classList.remove('hidden');
         }
         
@@ -334,8 +333,15 @@
                         if(lastRecognizedName !== info.n) { 
                             lastRecognizedName = info.n; currentFace = info; const outSel = document.getElementById('sel-outlet'); if(info.o) { outSel.value = info.o; loadShiftDropdown(); } 
                             const autoShift = cariShiftOtomatis(info.o);
-                            if(autoShift) { document.getElementById('sel-shift').value = autoShift.kode; updateUI(true, isLocValid ? "READY" : "ERROR"); munculkanPopupAutoAbsen(info, autoShift); } 
-                            else { updateUI(true, isLocValid ? "READY" : "ERROR"); }
+                            
+                            // PERBAIKAN LOGIKA LOOPING: Hanya munculkan popup jika GPS Valid
+                            if(autoShift && isLocValid) { 
+                                document.getElementById('sel-shift').value = autoShift.kode; 
+                                updateUI(true, "READY"); 
+                                munculkanPopupAutoAbsen(info, autoShift); 
+                            } else { 
+                                updateUI(true, isLocValid ? "READY" : "ERROR"); 
+                            }
                         } else { currentFace = info; updateUI(true, isLocValid ? "READY" : "ERROR"); }
                     } else { lastRecognizedName = null; isLivenessPassed = false; updateUI(false); }
                 } else { if(document.getElementById('panel-reg').classList.contains('hidden')) { trackingBox.style.opacity = '0'; } lastRecognizedName = null; isLivenessPassed = false; updateUI(false); }
@@ -367,7 +373,7 @@
                     trackingBox.className = "track-error"; document.getElementById('laser').style.display = "none";
                     camInst.innerText = "DI LUAR RADIUS"; camInst.className = "absolute top-10 bg-rose-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest";
                     statusEl.innerText = "Gagal validasi kordinat GPS!"; statusEl.className = "text-[10px] font-bold text-rose-400"; icon.innerText = "📍";
-                    btnIn.disabled = true; btnOut.disabled = true; if(outSel) btnIzin.disabled = false;
+                    btnIn.disabled = true; btnOut.disabled = true; if(outSel) btnIzin.disabled = false; // Tombol Izin diizinkan jika sedang sakit di rumah
                 } else {
                     trackingBox.className = "track-success"; document.getElementById('laser').style.display = "none";
                     camInst.innerText = "BERHASIL DIKUNCI"; camInst.className = "absolute top-10 bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest";
@@ -388,17 +394,25 @@
         document.getElementById('sel-shift').addEventListener('change', () => updateUI(currentFace !== null, isLocValid ? "READY" : "ERROR"));
 
         function munculkanPopupAutoAbsen(faceInfo, shift) {
-            isPrompting = true; cekJarak();
-            if(!isLocValid) { Swal.fire({ icon: 'warning', title: 'GPS Meleset', text: 'GPS HP Anda jauh dari lokasi outlet.', confirmButtonText: 'Tutup', background: '#0f172a', color: '#fff' }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); return; }
+            isPrompting = true;
             Swal.fire({
                 title: `<span class="text-blue-400 text-xl font-black">Halo, ${faceInfo.n}!</span>`,
                 html: `<div class="text-slate-300 text-xs">Penempatan: <b class="text-white">${faceInfo.o}</b><br><br>Target Jadwal:<br><div class="bg-[#1e293b] rounded-lg py-2 mt-2 font-black text-lg text-emerald-400 border border-slate-700">${shift.kode} <span class="text-[9px] uppercase font-bold text-slate-400 block">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
                 showDenyButton: true, showCancelButton: true, background: '#0f172a', color: '#fff',
-                confirmButtonText: 'KONFIRMASI MASUK', confirmButtonColor: '#2563eb', denyButtonText: 'KONFIRMASI PULANG', denyButtonColor: '#334155', cancelButtonText: 'Manual', allowOutsideClick: false,
+                confirmButtonText: 'KONFIRMASI MASUK', confirmButtonColor: '#2563eb', denyButtonText: 'KONFIRMASI PULANG', denyButtonColor: '#334155', cancelButtonText: 'Absen Manual / Izin', allowOutsideClick: false,
                 customClass: { popup: 'rounded-3xl border border-slate-700', confirmButton: 'rounded-lg font-black w-full mb-2 text-xs', denyButton: 'rounded-lg font-black w-full mb-2 text-xs', cancelButton: 'rounded-lg w-full text-xs bg-slate-800', actions: 'flex-col w-full px-4' }
-            }).then((result) => { if (result.isConfirmed) { kirimAbsen('Masuk'); } else if (result.isDenied) { kirimAbsen('Pulang'); } else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; } });
+            }).then((result) => { 
+                if (result.isConfirmed) { kirimAbsen('Masuk'); } 
+                else if (result.isDenied) { kirimAbsen('Pulang'); } 
+                else { 
+                    isPrompting = false; 
+                    // PERBAIKAN: Kami sengaja tidak mereset lastRecognizedName 
+                    // agar pengguna mendarat di layar dengan tombol Izin yang aktif.
+                } 
+            });
         }
 
+        // AMBIL FOTO + PROSES REKAP PAYLOAD KOMPRESI EKSTREM
         function ambilFotoKamera() { 
             const tempCanvas = document.createElement('canvas'); const MAX_WIDTH = 320; const scale = MAX_WIDTH / video.videoWidth; 
             tempCanvas.width = MAX_WIDTH; tempCanvas.height = video.videoHeight * scale; 
@@ -434,7 +448,13 @@
                 try {
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
                     const result = await res.json();
-                    if (result.status === 'success') Swal.fire({title: 'Sukses', text: `Data izin diserahkan.`, icon: 'success', background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-3xl' }}).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
+                    if (result.status === 'success') {
+                        // Tautan WhatsApp khusus Izin agar melampirkan foto wajah sedih
+                        const textWA = `*PENGAJUAN IZIN / SAKIT AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* IZIN / SAKIT%0A📝 *Alasan:* ${alasan}%0A%0A📸 *Bukti Foto Pengajuan:*%0A${result.linkFoto}`;
+                        const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
+                        
+                        Swal.fire({title: 'Sukses', html: `Data izin diserahkan.<br><a href="${waLink}" target="_blank" class="mt-4 bg-amber-500 text-white px-4 py-3 rounded-lg font-black block text-center text-xs">💬 Laporkan Izin ke Grup WA</a>`, icon: 'success', background: '#0f172a', color: '#fff', customClass: { popup: 'rounded-3xl' }}).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
+                    }
                 } catch (e) { Swal.fire({title:'Gagal', text:'Server Sibuk', icon:'error', background:'#0f172a', color:'#fff', customClass:{popup:'rounded-3xl'}}).then(() => { isPrompting = false; }); }
             } else { isPrompting = false; }
         }
@@ -463,38 +483,34 @@
             } catch(e) { Swal.fire('Error', 'Gagal memproses data biometrik.', 'error').then(() => { isPrompting = false; }); }
         }
 
-        // FUNGSI SWITCH TAB (PERBAIKAN LOGIKA TRACKING BOX REGISTRASI)
         function switchTab(t) { 
             const pAbsen = document.getElementById('panel-absen'), pReg = document.getElementById('panel-reg');
-            const trackingBox = document.getElementById('tracking-box'); 
+            const guideBox = document.getElementById('tracking-box'); 
             const camInst = document.getElementById('cam-instruction');
             
             if (t === 'reg') {
-                // Berubah menjadi kotak (Shape-Rect) dengan Jaring Matrix 3D
-                trackingBox.className = "track-success shape-rect"; 
+                guideBox.className = "track-success shape-rect"; 
                 document.getElementById('laser').style.display = 'none';
                 camInst.innerText = "PAS PAS-KAN WAJAH ANDA DI KOTAK"; 
                 camInst.className = "absolute top-10 bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase";
                 
-                // Set posisi kotak registrasi statis di tengah kamera
-                trackingBox.style.opacity = '1'; 
-                trackingBox.style.width = '240px'; 
-                trackingBox.style.height = '240px'; 
-                trackingBox.style.top = '32%'; 
-                trackingBox.style.left = '50%'; 
-                trackingBox.style.transform = 'translate(-50%, -50%)';
+                guideBox.style.opacity = '1'; 
+                guideBox.style.width = '240px'; 
+                guideBox.style.height = '240px'; 
+                guideBox.style.top = '32%'; 
+                guideBox.style.left = '50%'; 
+                guideBox.style.transform = 'translate(-50%, -50%)';
                 
                 pAbsen.classList.add('hidden'); pReg.classList.remove('hidden');
             } else {
-                // Kembali ke mode Oval Tracking Box untuk absen
-                trackingBox.className = "track-search";
-                trackingBox.classList.remove('shape-rect'); 
+                guideBox.className = "track-search";
+                guideBox.classList.remove('shape-rect'); 
                 document.getElementById('laser').style.display = 'block';
                 camInst.innerText = "Pindai Wajah..."; 
                 camInst.className = "absolute top-10 bg-slate-800/80 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest";
                 
-                trackingBox.style.opacity = '0'; 
-                trackingBox.style.transform = 'none'; // Kembalikan agar bisa ditransform mengikuti pergerakan wajah
+                guideBox.style.opacity = '0'; 
+                guideBox.style.transform = 'none'; 
                 pReg.classList.add('hidden'); pAbsen.classList.remove('hidden');
                 updateUI(false);
             }
