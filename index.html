@@ -82,7 +82,8 @@
             <video id="video" autoplay muted playsinline></video>
             
             <div id="tracking-box" class="track-search">
-                <div class="matrix-grid"></div> <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+                <div class="matrix-grid"></div> 
+                <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
                 <div class="corner corner-bl"></div><div class="corner corner-br"></div>
                 <div class="laser-line" id="laser"></div>
             </div>
@@ -207,7 +208,7 @@
         function forceRefreshGPS() {
             document.getElementById('geo-status').innerHTML = `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span><span class="text-blue-400">KOORDINASI...</span>`;
             navigator.geolocation.getCurrentPosition(pos => {
-                userLat = pos.coords.latitude; userLng = pos.coords.longitude; document.getElementById('geo-status').innerHTML = `<span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_10px_#10b981]"></span></span><span class="text-emerald-400">TERKUNCI</span>`;确定 cekJarak();
+                userLat = pos.coords.latitude; userLng = pos.coords.longitude; document.getElementById('geo-status').innerHTML = `<span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_10px_#10b981]"></span></span><span class="text-emerald-400">TERKUNCI</span>`; cekJarak();
             }, err => { Swal.fire({title:'GPS Gagal', text:'Pastikan izin lokasi HP aktif', background:'#0f172a', color:'#fff', icon:'warning'}); }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
         }
 
