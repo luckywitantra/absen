@@ -55,9 +55,6 @@
         .track-success .corner { border-color: #10b981; } 
         .track-error .corner { border-color: #f43f5e; }
 
-        .shape-oval { width: 210px; height: 290px; border-radius: 11rem; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .shape-rect { width: 230px; height: 230px; border-radius: 1.5rem; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-
         .spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -89,8 +86,8 @@
             </div>
         </div>
 
-        <div class="relative z-40 flex justify-between items-start p-5 bg-gradient-to-b from-slate-900/90 to-transparent">
-            <div class="flex items-center gap-3">
+        <div class="relative z-40 flex justify-between items-start p-5 bg-gradient-to-b from-slate-900/90 to-transparent pointer-events-none">
+            <div class="flex items-center gap-3 pointer-events-auto">
                 <img src="./logoaimoy.png" alt="Logo mini" class="w-9 h-9 rounded-xl border border-slate-700 shadow-md">
                 <div>
                     <h1 class="text-base font-black tracking-tighter text-white">AiMoy Kiosk</h1>
@@ -102,7 +99,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 pointer-events-auto">
                 <button onclick="syncDataManual()" class="bg-slate-800 p-2 rounded-full hover:bg-slate-700 transition shadow-md" title="Sinkronisasi Karyawan Baru">
                     <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
                 </button>
@@ -111,6 +108,11 @@
                 </button>
             </div>
         </div>
+
+        <button id="floating-install-btn" onclick="openInstallPrompt()" class="hidden absolute top-[80px] right-4 z-40 bg-blue-600/90 backdrop-blur-md border border-blue-400/50 text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center gap-1.5 transition-all animate-bounce">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            INSTALL
+        </button>
 
         <div class="relative z-40 flex flex-col items-center mt-2 pointer-events-none drop-shadow-md">
             <div id="real-time-clock" class="text-5xl font-black tracking-tighter text-white">00:00</div>
@@ -174,26 +176,61 @@
                 Tambahkan ke Layar Utama HP Anda untuk kecepatan & stabilitas maksimal harian.
             </p>
             <div class="flex gap-2 w-full">
-                <button onclick="closeInstallPrompt()" class="flex-1 py-2.5 rounded-lg bg-slate-700 text-white font-bold text-xs">Nanti</button>
-                <button id="btn-install" class="flex-1 py-2.5 rounded-lg bg-blue-600 text-white font-black text-xs">INSTALL</button>
+                <button onclick="closeInstallPrompt()" class="flex-1 py-2.5 rounded-lg bg-slate-700 text-white font-bold text-xs">Nanti Saja</button>
+                <button id="btn-install" class="flex-1 py-2.5 rounded-lg bg-blue-600 text-white font-black text-xs">INSTALL SEKARANG</button>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- UPDATE URL LENGKAP WEBAPP ANDA
+        const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- JANGAN LUPA UPDATE URL GAS
         
-        // PWA INSTALL LOGIC
-        let deferredPrompt; const installPopup = document.getElementById('install-prompt'), btnInstall = document.getElementById('btn-install'), instructionText = document.getElementById('install-instruction');
+        // --- 1. PWA INSTALL LOGIC ---
+        let deferredPrompt; 
+        const installPopup = document.getElementById('install-prompt');
+        const btnInstall = document.getElementById('btn-install');
+        const floatInstallBtn = document.getElementById('floating-install-btn');
+        const instructionText = document.getElementById('install-instruction');
+        
         const isIos = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
         const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
 
         if (!isInStandaloneMode()) {
-            if (isIos()) { instructionText.innerHTML = `Tekan tombol <b>Share (Bagikan)</b> di browser Safari bawah, lalu pilih<br><b>"Tambahkan ke Layar Utama" ⊞</b>.`; btnInstall.style.display = 'none'; setTimeout(() => installPopup.classList.remove('translate-y-full'), 3000); } 
-            else { window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; setTimeout(() => installPopup.classList.remove('translate-y-full'), 3000); }); btnInstall.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') closeInstallPrompt(); deferredPrompt = null; } }); }
+            if (isIos()) { 
+                instructionText.innerHTML = `Tekan tombol <b>Share (Bagikan)</b> di browser Safari bawah, lalu pilih<br><b>"Tambahkan ke Layar Utama" ⊞</b>.`; 
+                btnInstall.style.display = 'none'; 
+                setTimeout(() => installPopup.classList.remove('translate-y-full'), 3000); 
+            } else { 
+                window.addEventListener('beforeinstallprompt', (e) => { 
+                    e.preventDefault(); deferredPrompt = e; 
+                    setTimeout(() => installPopup.classList.remove('translate-y-full'), 3000); 
+                }); 
+                btnInstall.addEventListener('click', async () => { 
+                    if (deferredPrompt) { 
+                        deferredPrompt.prompt(); 
+                        const { outcome } = await deferredPrompt.userChoice; 
+                        if (outcome === 'accepted') {
+                            installPopup.classList.add('translate-y-full'); 
+                            floatInstallBtn.classList.add('hidden');
+                        }
+                        deferredPrompt = null; 
+                    } 
+                }); 
+            }
         }
-        function closeInstallPrompt() { installPopup.classList.add('translate-y-full'); }
+        
+        function closeInstallPrompt() { 
+            installPopup.classList.add('translate-y-full'); 
+            // Munculkan tombol floating ketika pop-up utama di-"Nanti Saja"
+            floatInstallBtn.classList.remove('hidden');
+        }
+        
+        function openInstallPrompt() {
+            installPopup.classList.remove('translate-y-full');
+            floatInstallBtn.classList.add('hidden');
+        }
 
+        // --- 2. LOGIKA KIOSK & AI ---
         const video = document.getElementById('video'), trackingBox = document.getElementById('tracking-box');
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
         let userLat = 0, userLng = 0, distance = 0, isLocValid = false, lastRecognizedName = null;
@@ -318,7 +355,6 @@
             const icon = document.getElementById('avatar-icon');
             
             const isReg = !document.getElementById('panel-reg').classList.contains('hidden');
-            const baseShape = isReg ? 'shape-rect' : 'shape-oval';
             
             if (found && currentFace && !isReg) {
                 nameEl.innerText = currentFace.n;
@@ -363,12 +399,11 @@
             }).then((result) => { if (result.isConfirmed) { kirimAbsen('Masuk'); } else if (result.isDenied) { kirimAbsen('Pulang'); } else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; } });
         }
 
-        // AMBIL FOTO + PROSES REKAP PAYLOAD KOMPRESI EKSTREM
         function ambilFotoKamera() { 
             const tempCanvas = document.createElement('canvas'); const MAX_WIDTH = 320; const scale = MAX_WIDTH / video.videoWidth; 
             tempCanvas.width = MAX_WIDTH; tempCanvas.height = video.videoHeight * scale; 
             const ctx = tempCanvas.getContext('2d'); ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height); 
-            return tempCanvas.toDataURL('image/jpeg', 0.4); // Hanya 20KB agar GAS berputar super cepat kurang dari 1 detik
+            return tempCanvas.toDataURL('image/jpeg', 0.4); 
         }
 
         async function kirimAbsen(tipe) {
@@ -381,8 +416,8 @@
                 const result = await res.json();
                 
                 if (result.status === 'success') {
-                    // TAHAP 3: MENYEMPURNAKAN LINK STRUKTUR PAYLOAD AGAR FOTO MUNCUL DAN TAMPIL DI PREVIEW WA
-                    const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A%0A📸 *Bukti Foto Kehadiran (Klik Link):*%0A${result.linkFoto}`;
+                    // LINK WHATSAPP DI BAWAH AGAR MUNCUL PREVIEW GAMBAR
+                    const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A%0A📸 *Bukti Foto Kehadiran:*%0A${result.linkFoto}`;
                     const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
                     Swal.fire({ icon: 'success', title: 'Sukses Terekam', background: '#0f172a', color: '#fff', html: `<div class="text-xs text-slate-300">Terima kasih. Log Anda tervalidasi: <b class="text-emerald-400">${result.statusWaktu}</b></div><br><a href="${waLink}" target="_blank" class="mt-2 bg-emerald-600 text-white px-4 py-3 rounded-lg font-black block text-center text-xs">💬 Laporkan ke Grup WhatsApp</a>`, showConfirmButton: false, timer: 15000, customClass: { popup: 'rounded-3xl' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
@@ -428,31 +463,46 @@
             } catch(e) { Swal.fire('Error', 'Gagal memproses data biometrik.', 'error').then(() => { isPrompting = false; }); }
         }
 
+        // FUNGSI SWITCH TAB (PERBAIKAN LOGIKA TRACKING BOX REGISTRASI)
         function switchTab(t) { 
             const pAbsen = document.getElementById('panel-absen'), pReg = document.getElementById('panel-reg');
-            const guideBox = document.getElementById('face-guide-box'); const camInst = document.getElementById('cam-instruction');
+            const trackingBox = document.getElementById('tracking-box'); 
+            const camInst = document.getElementById('cam-instruction');
             
             if (t === 'reg') {
-                guideBox.className = "relative shape-rect track-success overflow-hidden backdrop-brightness-110";
+                // Berubah menjadi kotak (Shape-Rect) dengan Jaring Matrix 3D
+                trackingBox.className = "track-success shape-rect"; 
                 document.getElementById('laser').style.display = 'none';
-                camInst.innerText = "PAS PAS-KAN WAJAH ANDA DI KOTAK"; camInst.className = "absolute top-10 bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase";
+                camInst.innerText = "PAS PAS-KAN WAJAH ANDA DI KOTAK"; 
+                camInst.className = "absolute top-10 bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase";
                 
-                // Set posisi kotak registrasi presisi statis di tengah area kamera
-                trackingBox.style.opacity = '1'; trackingBox.style.width = '240px'; trackingBox.style.height = '240px'; trackingBox.style.top = '32%'; trackingBox.style.left = '50%'; trackingBox.style.transform = 'translate(-50%, -50%)';
+                // Set posisi kotak registrasi statis di tengah kamera
+                trackingBox.style.opacity = '1'; 
+                trackingBox.style.width = '240px'; 
+                trackingBox.style.height = '240px'; 
+                trackingBox.style.top = '32%'; 
+                trackingBox.style.left = '50%'; 
+                trackingBox.style.transform = 'translate(-50%, -50%)';
                 
                 pAbsen.classList.add('hidden'); pReg.classList.remove('hidden');
             } else {
-                guideBox.className = "relative shape-oval box-searching overflow-hidden backdrop-brightness-110";
+                // Kembali ke mode Oval Tracking Box untuk absen
+                trackingBox.className = "track-search";
+                trackingBox.classList.remove('shape-rect'); 
                 document.getElementById('laser').style.display = 'block';
-                camInst.innerText = "Pindai Wajah..."; camInst.className = "absolute top-10 bg-slate-800/80 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest";
+                camInst.innerText = "Pindai Wajah..."; 
+                camInst.className = "absolute top-10 bg-slate-800/80 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest";
                 
-                trackingBox.style.opacity = '0'; trackingBox.style.transform = 'none';
+                trackingBox.style.opacity = '0'; 
+                trackingBox.style.transform = 'none'; // Kembalikan agar bisa ditransform mengikuti pergerakan wajah
                 pReg.classList.add('hidden'); pAbsen.classList.remove('hidden');
                 updateUI(false);
             }
             
-            document.getElementById('tab-absen').classList.toggle('text-blue-400', t === 'absen'); document.getElementById('tab-absen').classList.toggle('text-slate-500', t === 'reg'); 
-            document.getElementById('tab-reg').classList.toggle('text-blue-400', t === 'reg'); document.getElementById('tab-reg').classList.toggle('text-slate-500', t === 'absen'); 
+            document.getElementById('tab-absen').classList.toggle('text-blue-400', t === 'absen'); 
+            document.getElementById('tab-absen').classList.toggle('text-slate-500', t === 'reg'); 
+            document.getElementById('tab-reg').classList.toggle('text-blue-400', t === 'reg'); 
+            document.getElementById('tab-reg').classList.toggle('text-slate-500', t === 'absen'); 
         }
     </script>
 </body>
