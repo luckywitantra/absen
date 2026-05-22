@@ -8,35 +8,50 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-       body { background: #020617; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; touch-action: manipulation; }
+      /* TEMA MAROON & KREM */
+        body { background: #4a0404; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; touch-action: manipulation; color: #F8F1E5; }
         
-        .camera-container { position: relative; width: 100%; aspect-ratio: 3/4; background: #000; border-radius: 2rem; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .camera-container { position: relative; width: 100%; aspect-ratio: 3/4; background: #2d0202; border-radius: 2rem; overflow: hidden; border: 2px solid rgba(248, 241, 229, 0.15); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); }
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         
-        /* Tema Dark Glassmorphism */
-        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .glass-input { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: white; transition: all 0.3s; }
-        .glass-input:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); outline: none; }
+        /* Glassmorphism Panel (Latar Belakang Krem Transparan) */
+        .glass-panel { background: rgba(248, 241, 229, 0.03); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(248, 241, 229, 0.1); }
         
-        /* HUD Scanner (Menggantikan face-guide lama) */
+        /* Input & Dropdown */
+        .glass-input { background: rgba(45, 2, 2, 0.6); border: 1px solid rgba(248, 241, 229, 0.2); color: #F8F1E5; transition: all 0.3s; }
+        .glass-input:focus { border-color: #F8F1E5; box-shadow: 0 0 15px rgba(248, 241, 229, 0.2); outline: none; }
+        
+        /* HUD Scanner */
         .hud-box { position: absolute; width: 200px; height: 260px; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 20; }
-        .corner { position: absolute; width: 30px; height: 30px; border-color: rgba(255,255,255,0.5); border-style: solid; transition: all 0.3s; }
+        .corner { position: absolute; width: 30px; height: 30px; border-color: rgba(248, 241, 229, 0.4); border-style: solid; transition: all 0.3s; }
         .corner-tl { top: 0; left: 0; border-width: 4px 0 0 4px; border-top-left-radius: 1rem; }
         .corner-tr { top: 0; right: 0; border-width: 4px 4px 0 0; border-top-right-radius: 1rem; }
         .corner-bl { bottom: 0; left: 0; border-width: 0 0 4px 4px; border-bottom-left-radius: 1rem; }
         .corner-br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-bottom-right-radius: 1rem; }
 
-        /* Animasi Status HUD */
         @keyframes scan-laser { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        .laser-line { position: absolute; width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 15px 2px #3b82f6; animation: scan-laser 2.5s infinite linear; }
+        .laser-line { position: absolute; width: 100%; height: 2px; background: #F8F1E5; box-shadow: 0 0 15px 2px #F8F1E5; animation: scan-laser 2.5s infinite linear; }
         
-        .status-search .corner { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59,130,246,0.3); }
-        .status-wait .corner { border-color: #f59e0b; box-shadow: 0 0 15px rgba(245,158,11,0.5); transform: scale(1.05); }
-        .status-success .corner { border-color: #10b981; box-shadow: 0 0 20px rgba(16,185,129,0.5); transform: scale(1.05); }
+        .status-search .corner { border-color: #F8F1E5; box-shadow: 0 0 10px rgba(248,241,229,0.2); }
+        .status-wait .corner { border-color: #D4AF37; box-shadow: 0 0 15px rgba(212,175,55,0.4); transform: scale(1.05); }
+        .status-success .corner { border-color: #10b981; box-shadow: 0 0 20px rgba(16,185,129,0.4); transform: scale(1.05); }
 
-        .tab-btn.active { color: #60a5fa; border-bottom: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.1); }
-        select option { background: #0f172a; color: white; padding: 10px; }
-        div:where(.swal2-container) .swal2-popup { border-radius: 1.5rem; border: 1px solid rgba(255,255,255,0.1); background: #0f172a !important; color: white; }
+        .tab-btn.active { color: #F8F1E5; border-bottom: 3px solid #F8F1E5; background: rgba(248, 241, 229, 0.05); }
+        select option { background: #4a0404; color: #F8F1E5; padding: 10px; }
+
+        /* MAGIS: SWEETALERT2 PREMIUM GLASSMORPHISM */
+        div:where(.swal2-container) .swal2-popup { 
+            border-radius: 2rem !important; 
+            border: 1px solid rgba(248, 241, 229, 0.15) !important; 
+            background: rgba(45, 2, 2, 0.75) !important; /* Maroon gelap transparan */
+            backdrop-filter: blur(24px) !important; 
+            -webkit-backdrop-filter: blur(24px) !important;
+            color: #F8F1E5 !important; 
+            box-shadow: 0 30px 60px -12px rgba(0,0,0,0.8) !important;
+        }
+        div:where(.swal2-container) .swal2-title { color: #F8F1E5 !important; }
+        div:where(.swal2-container) .swal2-html-container { color: #e8d5c4 !important; }
+        div:where(.swal2-container) .swal2-input { color: #F8F1E5 !important; border: 1px solid rgba(248, 241, 229, 0.3) !important; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -306,28 +321,68 @@
         function munculkanPopupAutoAbsen(faceInfo, shift) {
             isPrompting = true; cekJarak();
             if(!isLocValid) {
-                Swal.fire({ icon: 'warning', title: 'Di Luar Radius!', text: 'Sistem mengenali Anda, tapi GPS HP Anda di luar radius toko.', confirmButtonText: 'Tutup' }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); return;
+                Swal.fire({ 
+                    icon: 'warning', 
+                    title: '<span class="text-[#F8F1E5]">Di Luar Radius!</span>', 
+                    html: '<span class="text-[#e8d5c4] text-xs">Sistem mengenali Anda, tapi GPS HP Anda di luar radius toko.</span>', 
+                    confirmButtonText: 'Tutup',
+                    background: 'transparent',
+                    customClass: {
+                        popup: 'swal2-popup',
+                        confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest'
+                    }
+                }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); 
+                return;
             }
+            
             Swal.fire({
-                title: `Hai, ${faceInfo.n}! 👋`,
-                html: `Anda terdeteksi berada di <b>${faceInfo.o}</b>.<br><br>Shift saat ini:<br><b class="text-xl text-blue-600">${shift.kode} (${shift.jamMasuk} - ${shift.jamKeluar})</b><br><br>Pilih aksi cepat:`,
-                showDenyButton: true, showCancelButton: true,
-                confirmButtonText: '✅ MASUK', confirmButtonColor: '#2563eb',
-                denyButtonText: '🛑 PULANG', denyButtonColor: '#0f172a',
-                cancelButtonText: '⚙️ Manual', allowOutsideClick: false
+                title: `<span class="text-[#F8F1E5] text-xl font-black">Hai, ${faceInfo.n}! 👋</span>`,
+                html: `<div class="text-[#e8d5c4] text-xs">Anda terdeteksi berada di <b class="text-white">${faceInfo.o}</b>.<br><br>Target Shift:<br><div class="bg-[#2d0202] rounded-xl py-3 mt-2 font-black text-xl text-[#D4AF37] border border-[#F8F1E5]/20 shadow-inner">${shift.kode} <span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
+                showDenyButton: true, 
+                showCancelButton: true,
+                background: 'transparent',
+                confirmButtonText: '✅ MASUK', 
+                denyButtonText: '🛑 PULANG', 
+                cancelButtonText: 'Manual / Izin', 
+                allowOutsideClick: false,
+                customClass: { 
+                    popup: 'swal2-popup', 
+                    confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(248,241,229,0.2)]', 
+                    denyButton: 'bg-transparent border-2 border-[#F8F1E5]/40 text-[#F8F1E5] rounded-xl font-black w-full mb-2 text-xs py-3 tracking-wider hover:bg-[#F8F1E5]/10', 
+                    cancelButton: 'bg-[#2d0202] text-[#F8F1E5]/70 rounded-xl w-full text-xs py-3 border border-[#F8F1E5]/10', 
+                    actions: 'flex-col w-full px-4' 
+                }
             }).then((result) => {
                 if (result.isConfirmed) { kirimAbsen('Masuk'); } 
                 else if (result.isDenied) { kirimAbsen('Pulang'); } 
-                else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; } 
+                else { 
+                    isPrompting = false; 
+                    // Sengaja tidak mereset lastRecognizedName agar tidak looping
+                    // dan pengguna bisa menekan tombol izin di layar utama
+                } 
             });
         }
-
         function ambilFotoKamera() {
-            const tempCanvas = document.createElement('canvas'); const scale = 480 / video.videoWidth; 
-            tempCanvas.width = 480; tempCanvas.height = video.videoHeight * scale;
-            const ctx = tempCanvas.getContext('2d'); ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1); 
+            const tempCanvas = document.createElement('canvas'); 
+            
+            // 1. OPTIMASI RESOLUSI: Turunkan lebar maksimal menjadi 320px (sebelumnya 480)
+            const MAX_WIDTH = 320; 
+            const scale = MAX_WIDTH / video.videoWidth; 
+            
+            tempCanvas.width = MAX_WIDTH; 
+            tempCanvas.height = video.videoHeight * scale;
+            
+            const ctx = tempCanvas.getContext('2d'); 
+            
+            // 2. EFEK CERMIN: Membalikkan gambar agar tidak terbalik secara horizontal
+            ctx.translate(tempCanvas.width, 0); 
+            ctx.scale(-1, 1); 
+            
             ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-            return tempCanvas.toDataURL('image/jpeg', 0.6);
+            
+            // 3. KOMPRESI EKSTREM: Turunkan kualitas JPEG menjadi 40% (0.4)
+            // Hasil: Ukuran file foto anjlok menjadi hanya sekitar ~15 KB hingga 20 KB saja!
+            return tempCanvas.toDataURL('image/jpeg', 0.4); 
         }
 
         async function kirimAbsen(tipe) {
@@ -371,28 +426,91 @@
 
         async function daftarkan() {
             isPrompting = true;
-            const nama = document.getElementById('reg-nama').value, role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
-            if(!nama || !outlet) { isPrompting = false; return Swal.fire('Error', 'Nama dan Outlet wajib diisi!', 'warning'); }
+            const nama = document.getElementById('reg-nama').value, 
+                  role = document.getElementById('reg-role').value, 
+                  outlet = document.getElementById('reg-outlet').value;
+            
+            if(!nama || !outlet) { 
+                isPrompting = false; 
+                return Swal.fire({
+                    icon: 'warning',
+                    title: '<span class="text-[#F8F1E5]">Peringatan</span>',
+                    html: '<span class="text-[#e8d5c4] text-xs">Nama dan Penempatan wajib diisi!</span>',
+                    background: 'transparent',
+                    customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' }
+                }); 
+            }
 
-            Swal.fire({ title: 'Menganalisis Biometrik...', text: 'Tahan Posisi Wajah di Dalam Garis', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            // EFEK JEPRETAN KAMERA (Flash)
+            const flash = document.getElementById('flash-overlay');
+            if(flash) {
+                flash.style.opacity = '1';
+                setTimeout(() => { flash.style.opacity = '0'; }, 150);
+            }
+
+            Swal.fire({ 
+                title: '<span class="text-[#F8F1E5] text-lg font-black">Mengunci Wajah...</span>', 
+                html: '<span class="text-[#D4AF37] text-[10px] font-bold uppercase tracking-widest animate-pulse">Analisis 3D Biometrik Berjalan</span>', 
+                allowOutsideClick: false, 
+                background: 'transparent',
+                customClass: { popup: 'swal2-popup' },
+                didOpen: () => Swal.showLoading() 
+            });
+            
             const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-            if(!detection) { isPrompting = false; return Swal.fire('Gagal', 'Wajah tidak jelas. Sejajarkan di dalam garis.', 'error'); }
+            
+            if(!detection) { 
+                isPrompting = false; 
+                return Swal.fire({
+                    icon: 'error',
+                    title: '<span class="text-[#F8F1E5]">Gagal Membaca</span>',
+                    html: '<span class="text-[#e8d5c4] text-xs">Wajah kabur atau kurang pencahayaan. Coba lagi.</span>',
+                    background: 'transparent',
+                    customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' }
+                }); 
+            }
 
             if (faceMatcher) {
                 const match = faceMatcher.findBestMatch(detection.descriptor);
                 if (match.label !== 'unknown') {
                     const existData = JSON.parse(match.label);
-                    isPrompting = false; return Swal.fire({ icon: 'error', title: 'Registrasi Ditolak', html: `Wajah ini sudah terdaftar atas nama:<br><b class="text-xl text-blue-600">${existData.n}</b><br>di ${existData.o}` });
+                    isPrompting = false; 
+                    return Swal.fire({ 
+                        icon: 'error', 
+                        title: '<span class="text-[#F8F1E5]">Registrasi Ditolak</span>', 
+                        html: `<span class="text-[#e8d5c4] text-xs">Biometrik wajah sudah terdaftar atas nama:</span><br><div class="bg-[#2d0202] rounded-xl py-3 mt-2 font-black text-lg text-[#D4AF37] border border-[#F8F1E5]/20 shadow-inner">${existData.n}<br><span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">DI ${existData.o}</span></div>`, 
+                        background: 'transparent',
+                        customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' }
+                    });
                 }
             }
 
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'enroll', payload: { nama, role, outlet, descriptor: Array.from(detection.descriptor) } }) });
                 const data = await res.json();
-                if(data.status === 'success') Swal.fire('Tersimpan!', `Wajah ${nama} dikunci.`, 'success').then(() => location.reload());
-            } catch(e) { Swal.fire('Error', 'Gagal menyimpan.', 'error').then(() => { isPrompting = false; }); }
+                if(data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '<span class="text-[#F8F1E5]">Biometrik Terkunci!</span>',
+                        html: `<span class="text-[#e8d5c4] text-xs">Akun <b>${nama}</b> resmi diaktifkan.</span>`,
+                        background: 'transparent',
+                        customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' }
+                    }).then(() => {
+                        // Hapus cache lokal (jika Anda pakai fitur cache) agar wajah baru langsung bisa dipakai absen
+                        localStorage.removeItem('aimoy_master_data'); 
+                        location.reload();
+                    });
+                }
+            } catch(e) { 
+                Swal.fire({
+                    icon: 'error',
+                    title: '<span class="text-[#F8F1E5]">Gangguan Server</span>',
+                    html: '<span class="text-[#e8d5c4] text-xs">Gagal menyimpan ke pangkalan data.</span>',
+                    background: 'transparent',
+                    customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' }
+                }).then(() => { isPrompting = false; }); 
+            }
         }
-
         function switchTab(t) { document.getElementById('panel-absen').classList.toggle('hidden', t === 'reg'); document.getElementById('panel-reg').classList.toggle('hidden', t === 'absen'); document.getElementById('tab-absen').classList.toggle('active', t === 'absen'); document.getElementById('tab-absen').classList.toggle('text-slate-400', t === 'reg'); document.getElementById('tab-reg').classList.toggle('active', t === 'reg'); document.getElementById('tab-reg').classList.toggle('text-slate-400', t === 'absen'); }
     </script>
 </body>
