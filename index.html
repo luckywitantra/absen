@@ -19,8 +19,12 @@
         body { background: #0f172a; font-family: 'Segoe UI', Roboto, sans-serif; overflow: hidden; touch-action: manipulation; }
         
         .camera-container { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; z-index: 0; overflow: hidden; }
-        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        #overlay { display: none; } 
+        video { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    object-fit: cover; 
+    transform: scaleX(-1) translateZ(0); /* Hardware Acceleration */
+    will-change: transform; 
+}
 
         .matte-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid rgba(255, 255, 255, 0.1); }
         .matte-input { background: #1e293b; border: 1px solid #334155; color: white; transition: all 0.3s; }
@@ -275,13 +279,17 @@
 
         function hitungJarak(lat1, lon1, lat2Str, lon2Str) { const lat2 = parseFloat(lat2Str), lon2 = parseFloat(lon2Str); const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180, Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180; const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2) * Math.sin(Δλ/2)*Math.sin(Δλ/2); return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
 
-        async function initApp() {
+       async function initApp() {
             const URL = './models'; 
             try {
                 document.getElementById('loader-text').innerText = "Mengaktifkan AI...";
                 await Promise.all([ faceapi.nets.tinyFaceDetector.loadFromUri(URL), faceapi.nets.faceLandmark68Net.loadFromUri(URL), faceapi.nets.faceRecognitionNet.loadFromUri(URL) ]);
                 const data = await fetchMasterData(); setupDropdownsAndMatcher(data);
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: {ideal: 720} } }); video.srcObject = stream;
+                
+                // --- PERUBAHAN: Resolusi ideal diturunkan ke 480 agar ringan ---
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: {ideal: 480} } }); 
+                video.srcObject = stream;
+                
                 const loader = document.getElementById('loader-screen'); loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 400);
                 faceapi.nets.faceExpressionNet.loadFromUri(URL); 
             } catch (e) { document.getElementById('loader-screen').innerHTML = `<div class="p-6 text-center"><h2 class="text-rose-500 font-black mb-2">SISTEM GAGAL</h2><p class="text-slate-400 text-xs">Pastikan folder <b>models</b> sudah ditaruh di dalam direktori repositori Anda.</p></div>`; }
@@ -294,9 +302,33 @@
         }
 
         function cariShiftOtomatis(outletName) {
-            const shifts = dbShift.filter(s => s.outlet === outletName); if (shifts.length === 0) return null;
-            const now = new Date(); const currentMins = now.getHours() * 60 + now.getMinutes(); let bestShift = shifts[0], minDiff = Infinity;
-            shifts.forEach(s => { const mMasuk = parseInt(s.jamMasuk.split(':')[0]) * 60 + parseInt(s.jamMasuk.split(':')[1]); const mKeluar = parseInt(s.jamKeluar.split(':')[0]) * 60 + parseInt(s.jamKeluar.split(':')[1]); const closest = Math.min(Math.abs(currentMins - mMasuk), Math.abs(currentMins - mKeluar)); if(closest < minDiff) { minDiff = closest; bestShift = s; } }); return bestShift;
+            const shifts = dbShift.filter(s => s.outlet === outletName); 
+            if (shifts.length === 0) return null;
+            const now = new Date(); const currentMins = now.getHours() * 60 + now.getMinutes(); 
+            let bestShift = shifts[0], minDiff = Infinity;
+            
+            shifts.forEach(s => { 
+                const mMasuk = parseInt(s.jamMasuk.split(':')[0]) * 60 + parseInt(s.jamMasuk.split(':')[1]); 
+                const mKeluar = parseInt(s.jamKeluar.split(':')[0]) * 60 + parseInt(s.jamKeluar.split(':')[1]); 
+                
+                // Mendukung jika shift malam (misal 22:00 - 06:00 lintas hari)
+                let adjustedKeluar = mKeluar < mMasuk ? mKeluar + (24 * 60) : mKeluar;
+                let adjustedCurrent = currentMins;
+                if (mKeluar < mMasuk && currentMins < mMasuk && currentMins <= mKeluar + 60) {
+                    adjustedCurrent += (24 * 60);
+                }
+
+                // Cari yang paling dekat dengan Jam Masuk ATAU Jam Keluar shift tersebut
+                const diffMasuk = Math.abs(adjustedCurrent - mMasuk);
+                const diffKeluar = Math.abs(adjustedCurrent - adjustedKeluar);
+                const closestToThisShift = Math.min(diffMasuk, diffKeluar);
+
+                if(closestToThisShift < minDiff) { 
+                    minDiff = closestToThisShift; 
+                    bestShift = s; 
+                } 
+            }); 
+            return bestShift;
         }
 
         function cekJarak() {
@@ -306,48 +338,76 @@
             else { isLocValid = true; alertBox.classList.add('hidden'); updateUI(currentFace !== null, isLivenessPassed ? "READY" : "LIVENESS_WAIT"); }
         }
 
-        video.addEventListener('play', () => {
-            setInterval(async () => {
-                if(isPrompting) return;
-                const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
-                const resized = faceapi.resizeResults(detections, { width: video.videoWidth, height: video.videoHeight });
+        video.addEventListener('play', async () => {
+            const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
+            // faceapi.matchDimensions(video, displaySize); // (Opsional, praktik baik face-api)
 
-                if (!document.getElementById('panel-absen').classList.contains('hidden') && detections.length > 0 && faceMatcher) {
-                    const boxData = resized[0].detection.box;
-                    const scaleX = displaySize.width / video.videoWidth; const scaleY = displaySize.height / video.videoHeight;
-                    const mirroedX = video.videoWidth - boxData.x - boxData.width;
+            async function deteksiWajahLoop() {
+                if(!isPrompting && video.readyState === 4) {
+                    try {
+                        // --- PERUBAHAN: detectSingleFace & inputSize 160 (Fokus 1 wajah & Super Ringan) ---
+                        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 160 })).withFaceLandmarks().withFaceExpressions().withFaceDescriptor();
 
-                    trackingBox.style.opacity = '1';
-                    trackingBox.style.width = (boxData.width * scaleX * 1.25) + 'px';
-                    trackingBox.style.height = (boxData.height * scaleY * 1.35) + 'px';
-                    trackingBox.style.left = (mirroedX * scaleX - (boxData.width * scaleX * 0.12)) + 'px';
-                    trackingBox.style.top = (boxData.y * scaleY - (boxData.height * scaleY * 0.18)) + 'px';
+                        if (!document.getElementById('panel-absen').classList.contains('hidden') && detection && faceMatcher) {
+                            // Karena detectSingleFace, result bukan array (tidak perlu pakai index [0])
+                            const resized = faceapi.resizeResults(detection, { width: video.videoWidth, height: video.videoHeight });
+                            const boxData = resized.detection.box;
 
-                    const match = faceMatcher.findBestMatch(resized[0].descriptor);
-                    if (match.label !== 'unknown') {
-                        const info = JSON.parse(match.label); const expressions = resized[0].expressions;
-                        if (expressions && expressions.happy > 0.35) { isLivenessPassed = true; }
-                        if (!isLivenessPassed) { currentFace = info; updateUI(true, "LIVENESS_WAIT"); return; }
-                        
-                        if(lastRecognizedName !== info.n) { 
-                            lastRecognizedName = info.n; currentFace = info; const outSel = document.getElementById('sel-outlet'); if(info.o) { outSel.value = info.o; loadShiftDropdown(); } 
-                            const autoShift = cariShiftOtomatis(info.o);
-                            
-                            // PERBAIKAN LOGIKA LOOPING: Hanya munculkan popup jika GPS Valid
-                            if(autoShift && isLocValid) { 
-                                document.getElementById('sel-shift').value = autoShift.kode; 
-                                updateUI(true, "READY"); 
-                                munculkanPopupAutoAbsen(info, autoShift); 
+                            const scaleX = displaySize.width / video.videoWidth; 
+                            const scaleY = displaySize.height / video.videoHeight;
+                            const mirroedX = video.videoWidth - boxData.x - boxData.width;
+
+                            trackingBox.style.opacity = '1';
+                            trackingBox.style.width = (boxData.width * scaleX * 1.25) + 'px';
+                            trackingBox.style.height = (boxData.height * scaleY * 1.35) + 'px';
+                            trackingBox.style.left = (mirroedX * scaleX - (boxData.width * scaleX * 0.12)) + 'px';
+                            trackingBox.style.top = (boxData.y * scaleY - (boxData.height * scaleY * 0.18)) + 'px';
+
+                            const match = faceMatcher.findBestMatch(resized.descriptor);
+                            if (match.label !== 'unknown') {
+                                const info = JSON.parse(match.label); 
+                                const expressions = resized.expressions;
+                                if (expressions && expressions.happy > 0.35) { isLivenessPassed = true; }
+                                
+                                if (!isLivenessPassed) { 
+                                    currentFace = info; updateUI(true, "LIVENESS_WAIT"); 
+                                } else {
+                                    if(lastRecognizedName !== info.n) { 
+                                        lastRecognizedName = info.n; currentFace = info; 
+                                        const outSel = document.getElementById('sel-outlet'); 
+                                        if(info.o) { outSel.value = info.o; loadShiftDropdown(); } 
+                                        const autoShift = cariShiftOtomatis(info.o);
+                                        
+                                        if(autoShift && isLocValid) { 
+                                            document.getElementById('sel-shift').value = autoShift.kode; 
+                                            updateUI(true, "READY"); 
+                                            munculkanPopupAutoAbsen(info, autoShift); 
+                                        } else { 
+                                            updateUI(true, isLocValid ? "READY" : "ERROR"); 
+                                        }
+                                    } else { 
+                                        currentFace = info; updateUI(true, isLocValid ? "READY" : "ERROR"); 
+                                    }
+                                }
                             } else { 
-                                updateUI(true, isLocValid ? "READY" : "ERROR"); 
+                                lastRecognizedName = null; isLivenessPassed = false; updateUI(false); 
                             }
-                        } else { currentFace = info; updateUI(true, isLocValid ? "READY" : "ERROR"); }
-                    } else { lastRecognizedName = null; isLivenessPassed = false; updateUI(false); }
-                } else { if(document.getElementById('panel-reg').classList.contains('hidden')) { trackingBox.style.opacity = '0'; } lastRecognizedName = null; isLivenessPassed = false; updateUI(false); }
-            }, 500); 
-        });
+                        } else { 
+                            if(document.getElementById('panel-reg').classList.contains('hidden')) { trackingBox.style.opacity = '0'; } 
+                            lastRecognizedName = null; isLivenessPassed = false; updateUI(false); 
+                        }
+                    } catch (err) {
+                        console.warn("Deteksi tertunda...", err);
+                    }
+                }
+                
+                // --- PERUBAHAN: Loop terkontrol, jeda 400ms setelah frame sebelumnya benar-benar selesai ---
+                setTimeout(() => requestAnimationFrame(deteksiWajahLoop), 400);
+            }
 
+            // Mulai looping
+            deteksiWajahLoop();
+        });
         function triggerFlash() {
             const flash = document.getElementById('flash-overlay');
             flash.style.opacity = '1';
