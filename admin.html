@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AiMoy Super HC - Admin</title>
     
-    <!-- PWA META TAGS (PENTING UNTUK INSTALL APLIKASI) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,7 +38,7 @@
     <div class="max-w-7xl mx-auto">
         <header class="mb-4 md:mb-6 border-b border-slate-200 pb-4">
             <h1 class="text-2xl md:text-3xl font-black text-slate-900 tracking-tighter">AIMOY HQ MANAGER</h1>
-            <p class="text-slate-500 font-bold text-xs md:text-sm">Super App V20.0 (PWA & Akumulasi Penggajian)</p>
+            <p class="text-slate-500 font-bold text-xs md:text-sm">Super App V20.1 (PWA, Gaji & Alpha Report)</p>
             
             <div class="flex gap-4 md:gap-6 mt-4 overflow-x-auto pb-2 scroll-smooth">
                 <button onclick="changeTab('tab-laporan')" class="tab-btn active pb-2 font-bold text-slate-400 uppercase text-[10px] md:text-xs tracking-wider transition-all whitespace-nowrap" id="btn-laporan">Laporan & Riwayat</button>
@@ -50,14 +49,12 @@
         </header>
 
         <div id="tab-laporan" class="tab-content active space-y-4">
-            <!-- PANEL FILTER ADVANCED -->
             <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200">
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 items-end">
                     
-                    <!-- FITUR BARU: MODE LAPORAN (RINCI VS REKAP) -->
                     <div class="col-span-2 lg:col-span-2">
                         <label class="text-[9px] md:text-[10px] font-bold text-blue-600 uppercase">MODE TAMPILAN</label>
-                        <select id="mode-laporan" onchange="generateAnalytics()" class="w-full bg-blue-50 border border-blue-200 p-2.5 md:p-3 rounded-lg font-black text-blue-700 outline-none text-xs">
+                        <select id="mode-laporan" onchange="generateAnalytics()" class="w-full bg-blue-50 border border-blue-200 p-2.5 md:p-3 rounded-lg font-black text-blue-700 outline-none text-xs shadow-sm">
                             <option value="rekap">📊 Rekap Total (Akumulasi Gaji)</option>
                             <option value="rinci">📋 Log Rinci (Satu Per Satu)</option>
                         </select>
@@ -71,65 +68,68 @@
                     <div class="col-span-1 lg:col-span-1"><label class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Sampai Tgl</label><input type="date" id="filter-end" class="w-full bg-slate-50 border p-2.5 md:p-3 rounded-lg font-bold outline-none text-[10px]"></div>
                 </div>
                 
-                <div class="flex gap-2 mt-3">
-                    <button onclick="generateAnalytics()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow-md hover:bg-blue-700 text-xs">Analisis Data</button>
-                    <button onclick="exportPDF()" class="w-full bg-rose-600 text-white p-3 rounded-lg font-bold shadow-md hover:bg-rose-700 text-xs">Download PDF</button>
+                <div class="flex gap-2 mt-4 border-t border-slate-100 pt-4">
+                    <button onclick="generateAnalytics()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-black shadow-[0_4px_15px_rgba(37,99,235,0.3)] hover:bg-blue-700 hover:-translate-y-0.5 transition-all text-sm tracking-wide">Analisis Data</button>
+                    <button onclick="exportPDF()" class="w-full bg-gradient-to-r from-rose-500 to-red-600 text-white p-3 rounded-xl font-black shadow-[0_4px_15px_rgba(225,29,72,0.3)] hover:from-rose-600 hover:to-red-700 hover:-translate-y-0.5 transition-all text-sm tracking-wide flex items-center justify-center gap-2"><i class="fas fa-file-pdf"></i> Download PDF</button>
                 </div>
             </div>
             
             <div class="flex flex-col sm:flex-row gap-2">
-                <button onclick="bukaModalManual()" class="w-full sm:w-auto bg-amber-500 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:bg-amber-600 text-xs">✍️ Input 1 Data Manual</button>
-                <button onclick="bukaModalImport()" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-bold shadow-md hover:bg-indigo-700 text-xs">📥 Import Bulk Excel</button>
+                <button onclick="bukaModalManual()" class="w-full sm:w-auto bg-amber-500 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-amber-600 hover:-translate-y-0.5 transition-all text-xs">✍️ Input 1 Data Manual</button>
+                <button onclick="bukaModalImport()" class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 hover:-translate-y-0.5 transition-all text-xs">📥 Import Bulk Excel</button>
             </div>
 
-            <!-- KOTAK SUMMARY -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-2">
                 <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-emerald-500 uppercase">🌟 Hadir/Rajin</h3><div id="box-rajin" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
                 <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-rose-500 uppercase">⏰ Telat</h3><div id="box-telat" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
                 <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-amber-500 uppercase">📝 Izin/Sakit</h3><div id="box-izin" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
                 <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-indigo-500 uppercase">🏖️ Libur (Off)</h3><div id="box-libur" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
-                <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-slate-400 uppercase">❓ Alpa</h3><div id="box-alpa" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
+                <div class="bg-white p-3 md:p-4 rounded-2xl border-slate-200 shadow-[0_0_15px_rgba(225,29,72,0.1)] flex flex-col justify-between border-l-4 border-l-red-500"><h3 class="text-[9px] md:text-[10px] font-black text-red-500 uppercase">⚠️ Alpa / Bolos</h3><div id="box-alpa" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
                 <div class="bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"><h3 class="text-[9px] md:text-[10px] font-black text-blue-500 uppercase">⏱️ Total Lembur</h3><div id="box-lembur" class="mt-1 md:mt-2 text-slate-400 text-[10px] font-bold">Pilih rentang...</div></div>
             </div>
 
-            <!-- TABEL DUA MODE (RINCI & REKAP) -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mt-4">
                 <div class="bg-slate-900 text-white p-3 md:p-4 font-black text-xs md:text-sm uppercase tracking-widest flex justify-between items-center">
-                    <span id="judul-tabel">📋 Laporan Rinci</span><span id="log-count" class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">0 Data</span>
+                    <span id="judul-tabel">📋 Laporan Rinci</span><span id="log-count" class="text-[10px] md:text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded border border-slate-700">0 Data</span>
                 </div>
                 <div class="overflow-x-auto max-h-[500px]">
                     
-                    <!-- TABEL 1: MODE RINCI -->
                     <table id="tabel-mode-rinci" class="w-full text-left text-xs md:text-sm whitespace-nowrap">
                         <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px] sticky top-0 z-10"><tr><th class="px-3 py-3 md:p-4">Tgl & Jam</th><th class="px-3 py-3 md:p-4">Karyawan</th><th class="px-3 py-3 md:p-4">Shift & Outlet</th><th class="px-3 py-3 md:p-4">Tipe</th><th class="px-3 py-3 md:p-4">Status & Info</th><th class="px-3 py-3 md:p-4 text-center">Aksi</th></tr></thead>
                         <tbody id="body-rinci" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="6" class="p-6 text-center italic text-slate-400 text-xs">Klik "Analisis" untuk memuat data.</td></tr></tbody>
                     </table>
 
-                    <!-- TABEL 2: MODE REKAP TOTAL -->
                     <table id="tabel-mode-rekap" class="hidden w-full text-left text-xs md:text-sm whitespace-nowrap">
-                        <thead class="bg-blue-50 text-blue-800 font-bold uppercase text-[9px] md:text-[10px] sticky top-0 z-10">
-                            <tr><th class="px-3 py-3 md:p-4">Karyawan</th><th class="px-3 py-3 md:p-4">Penempatan Outlet</th><th class="px-3 py-3 md:p-4 text-center">Hadir (On-Time)</th><th class="px-3 py-3 md:p-4 text-center">Terlambat</th><th class="px-3 py-3 md:p-4 text-center">Izin / Sakit</th><th class="px-3 py-3 md:p-4 text-center">Libur (Off)</th><th class="px-3 py-3 md:p-4 text-center">Total Lembur</th></tr>
+                        <thead class="sticky top-0 z-10 font-black uppercase text-[9px] md:text-[10px]">
+                            <tr>
+                                <th class="px-3 py-4 md:p-4 bg-slate-100 text-slate-600 border-b border-slate-200">Karyawan</th>
+                                <th class="px-3 py-4 md:p-4 bg-slate-100 text-slate-600 border-b border-slate-200">Penempatan</th>
+                                <th class="px-3 py-4 md:p-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-center shadow-inner">⭐ TOTAL MASUK</th>
+                                <th class="px-3 py-4 md:p-4 bg-emerald-50 text-emerald-700 text-center border-b border-emerald-100">On-Time</th>
+                                <th class="px-3 py-4 md:p-4 bg-orange-50 text-orange-700 text-center border-b border-orange-100">Terlambat</th>
+                                <th class="px-3 py-4 md:p-4 bg-amber-50 text-amber-700 text-center border-b border-amber-100">Izin/Sakit</th>
+                                <th class="px-3 py-4 md:p-4 bg-indigo-50 text-indigo-700 text-center border-b border-indigo-100">Libur (Off)</th>
+                                <th class="px-3 py-4 md:p-4 bg-gradient-to-r from-rose-500 to-red-600 text-white text-center shadow-inner">⚠️ ALPA</th>
+                                <th class="px-3 py-4 md:p-4 bg-blue-50 text-blue-700 text-center border-b border-blue-100">Lembur</th>
+                            </tr>
                         </thead>
-                        <tbody id="body-rekap" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="7" class="p-6 text-center italic text-slate-400 text-xs">Pilih mode Rekap dan klik Analisis.</td></tr></tbody>
+                        <tbody id="body-rekap" class="text-slate-700 font-medium divide-y divide-slate-100"><tr><td colspan="9" class="p-6 text-center italic text-slate-400 text-xs">Pilih mode Rekap dan klik Analisis.</td></tr></tbody>
                     </table>
 
                 </div>
             </div>
         </div>
 
-        <!-- TAB KARYAWAN, OUTLET, SHIFT TETAP SAMA -->
         <div id="tab-karyawan" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Tgl Daftar</th><th class="px-3 py-3 md:p-4">Nama Lengkap</th><th class="px-3 py-3 md:p-4">Jabatan</th><th class="px-3 py-3 md:p-4">Penempatan</th><th class="px-3 py-3 md:p-4 text-right">Aksi HRD</th></tr></thead><tbody id="table-karyawan" class="divide-y divide-slate-100"></tbody></table></div></div>
         <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><button onclick="bukaModalOutlet()" class="w-full md:w-auto bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Tambah Outlet</button><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Nama Outlet</th><th class="px-3 py-3 md:p-4">Titik GPS & Radius</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table></div></div>
         <div id="tab-shift" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><button onclick="bukaModalShift()" class="w-full md:w-auto bg-emerald-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Buat Jadwal Shift</button><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Outlet</th><th class="px-3 py-3 md:p-4">Kode Shift</th><th class="px-3 py-3 md:p-4">Jam Kerja</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-shift" class="divide-y divide-slate-100"></tbody></table></div></div>
     </div>
 
-    <!-- SEMUA MODAL POP-UP (Sama seperti sebelumnya, disembunyikan agar hemat ruang code) -->
-    <!-- (Modal Import CSV, Manual, Karyawan, Outlet, Shift - TETAP PERTAHANKAN KODE DARI V19.1 ANDA DI SINI) -->
-    <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl"><h2 class="text-base md:text-lg font-black mb-3 md:mb-4">Import Data Masal (CSV)</h2><p class="text-[10px] md:text-xs text-slate-500 mb-4 font-bold leading-relaxed">1. Download Template, isi data menggunakan Excel, lalu simpan dalam format (.csv).<br>2. Upload file tersebut di sini.</p><button onclick="downloadTemplateCSV()" class="w-full py-2.5 md:py-3 bg-slate-100 text-blue-600 border border-blue-200 font-black rounded-lg mb-4 hover:bg-blue-50 text-xs md:text-sm">⬇ DOWNLOAD TEMPLATE CSV</button><input type="file" id="file-csv" accept=".csv" class="w-full p-2.5 md:p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-import')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-slate-700 text-xs md:text-sm">Batal</button><button onclick="prosesImportCSV()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg text-xs md:text-sm">Upload Data</button></div></div></div>
-    <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"><h2 class="text-base md:text-lg font-black mb-4">Input 1 Data Manual</h2><div class="grid grid-cols-2 gap-2 mb-3"><div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">TANGGAL</label><input type="date" id="man-tgl" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div><div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">JAM</label><input type="time" id="man-jam" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div></div><select id="man-nama" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"></select><div class="grid grid-cols-2 gap-2 mb-3"><select id="man-outlet" onchange="loadShiftManual()" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></select><select id="man-shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"><option value="-" selected>Pilih Shift</option></select></div><select id="man-tipe" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none border-blue-500"><option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option><option value="Izin">Izin / Sakit</option><option value="Libur" class="text-indigo-600 font-bold">Jadwal Libur (Day Off)</option></select><input type="text" id="man-ket" placeholder="Alasan (Cth: Lupa Bawa HP)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-manual')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanManual()" class="w-full py-3 bg-amber-500 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
-    <div id="modal-karyawan" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-sm shadow-2xl"><h2 class="text-base md:text-lg font-black mb-4">Edit Data Karyawan</h2><input type="hidden" id="kar-oldnama"><input type="text" id="kar-nama" placeholder="Nama Lengkap" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><select id="kar-role" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><option value="Staff">Staff</option><option value="Senior">Senior</option></select><select id="kar-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"></select><div class="flex gap-2"><button onclick="tutupModal('modal-karyawan')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('edit_karyawan')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
-    <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"><h2 id="title-modal-out" class="text-base md:text-lg font-black mb-2">Form Outlet</h2><div id="map" class="h-[200px] md:h-[250px]"></div><input type="hidden" id="out-oldnama"><input type="text" id="out-nama" placeholder="Nama Outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-2 text-xs md:text-sm font-bold outline-none"><div class="grid grid-cols-2 gap-2 mb-2"><input type="text" id="out-lat" readonly placeholder="Latitude" class="w-full p-2 bg-slate-100 rounded-lg text-[10px] md:text-xs outline-none"><input type="text" id="out-lng" readonly placeholder="Longitude" class="w-full p-2 bg-slate-100 rounded-lg text-[10px] md:text-xs outline-none"></div><input type="number" id="out-rad" placeholder="Radius (Meter)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-outlet')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
-    <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-2xl w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]"><h2 id="title-modal-shf" class="text-base md:text-lg font-black mb-4">Form Shift</h2><input type="hidden" id="shf-oldoutlet"><input type="hidden" id="shf-oldkode"><select id="shf-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"></select><input type="text" id="shf-nama" placeholder="Kode Shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-3 text-xs md:text-sm font-bold outline-none"><div class="grid grid-cols-2 gap-2 mb-3"><input type="time" id="shf-masuk" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"><input type="time" id="shf-keluar" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg text-xs md:text-sm font-bold outline-none"></div><input type="number" id="shf-tol" placeholder="Toleransi Telat (Menit)" value="15" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-lg mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-lg text-xs md:text-sm">Batal</button><button onclick="simpanData('shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-lg text-xs md:text-sm">Simpan</button></div></div></div>
+    <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-3xl w-full max-w-md shadow-2xl"><h2 class="text-base md:text-lg font-black mb-3 md:mb-4">Import Data Masal (CSV)</h2><p class="text-[10px] md:text-xs text-slate-500 mb-4 font-bold leading-relaxed">1. Download Template, isi data menggunakan Excel, lalu simpan dalam format (.csv).<br>2. Upload file tersebut di sini.</p><button onclick="downloadTemplateCSV()" class="w-full py-2.5 md:py-3 bg-slate-100 text-blue-600 border border-blue-200 font-black rounded-xl mb-4 hover:bg-blue-50 text-xs md:text-sm">⬇ DOWNLOAD TEMPLATE CSV</button><input type="file" id="file-csv" accept=".csv" class="w-full p-2.5 md:p-3 bg-slate-50 border border-slate-200 rounded-xl mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-import')" class="w-full py-3 bg-slate-200 font-bold rounded-xl text-slate-700 text-xs md:text-sm">Batal</button><button onclick="prosesImportCSV()" class="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl text-xs md:text-sm">Upload Data</button></div></div></div>
+    <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-3xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"><h2 class="text-base md:text-lg font-black mb-4">Input 1 Data Manual</h2><div class="grid grid-cols-2 gap-2 mb-3"><div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">TANGGAL</label><input type="date" id="man-tgl" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl text-xs md:text-sm font-bold outline-none"></div><div><label class="text-[9px] md:text-[10px] font-bold text-slate-400">JAM</label><input type="time" id="man-jam" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl text-xs md:text-sm font-bold outline-none"></div></div><select id="man-nama" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-3 text-xs md:text-sm font-bold outline-none"></select><div class="grid grid-cols-2 gap-2 mb-3"><select id="man-outlet" onchange="loadShiftManual()" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl text-xs md:text-sm font-bold outline-none"></select><select id="man-shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl text-xs md:text-sm font-bold outline-none"><option value="-" selected>Pilih Shift</option></select></div><select id="man-tipe" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-3 text-xs md:text-sm font-bold outline-none border-blue-500"><option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option><option value="Izin">Izin / Sakit</option><option value="Libur" class="text-indigo-600 font-bold">Jadwal Libur (Day Off)</option></select><input type="text" id="man-ket" placeholder="Alasan (Cth: Lupa Bawa HP)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-manual')" class="w-full py-3 bg-slate-200 font-bold rounded-xl text-xs md:text-sm">Batal</button><button onclick="simpanManual()" class="w-full py-3 bg-amber-500 text-white font-bold rounded-xl text-xs md:text-sm">Simpan</button></div></div></div>
+    <div id="modal-karyawan" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-3xl w-full max-w-sm shadow-2xl"><h2 class="text-base md:text-lg font-black mb-4">Edit Data Karyawan</h2><input type="hidden" id="kar-oldnama"><input type="text" id="kar-nama" placeholder="Nama Lengkap" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-3 text-xs md:text-sm font-bold outline-none"><select id="kar-role" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-3 text-xs md:text-sm font-bold outline-none"><option value="Staff">Staff</option><option value="Senior">Senior</option></select><select id="kar-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-4 text-xs md:text-sm font-bold outline-none"></select><div class="flex gap-2"><button onclick="tutupModal('modal-karyawan')" class="w-full py-3 bg-slate-200 font-bold rounded-xl text-xs md:text-sm">Batal</button><button onclick="simpanData('edit_karyawan')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl text-xs md:text-sm">Simpan</button></div></div></div>
+    <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-3xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]"><h2 id="title-modal-out" class="text-base md:text-lg font-black mb-2">Form Outlet</h2><div id="map" class="h-[200px] md:h-[250px]"></div><input type="hidden" id="out-oldnama"><input type="text" id="out-nama" placeholder="Nama Outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-2 text-xs md:text-sm font-bold outline-none"><div class="grid grid-cols-2 gap-2 mb-2"><input type="text" id="out-lat" readonly placeholder="Latitude" class="w-full p-2 bg-slate-100 rounded-xl text-[10px] md:text-xs outline-none"><input type="text" id="out-lng" readonly placeholder="Longitude" class="w-full p-2 bg-slate-100 rounded-xl text-[10px] md:text-xs outline-none"></div><input type="number" id="out-rad" placeholder="Radius (Meter)" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-outlet')" class="w-full py-3 bg-slate-200 font-bold rounded-xl text-xs md:text-sm">Batal</button><button onclick="simpanData('outlet')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl text-xs md:text-sm">Simpan</button></div></div></div>
+    <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white p-5 md:p-6 rounded-3xl w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]"><h2 id="title-modal-shf" class="text-base md:text-lg font-black mb-4">Form Shift</h2><input type="hidden" id="shf-oldoutlet"><input type="hidden" id="shf-oldkode"><select id="shf-outlet" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-3 text-xs md:text-sm font-bold outline-none"></select><input type="text" id="shf-nama" placeholder="Kode Shift" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-3 text-xs md:text-sm font-bold outline-none"><div class="grid grid-cols-2 gap-2 mb-3"><input type="time" id="shf-masuk" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl text-xs md:text-sm font-bold outline-none"><input type="time" id="shf-keluar" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl text-xs md:text-sm font-bold outline-none"></div><input type="number" id="shf-tol" placeholder="Toleransi Telat (Menit)" value="15" class="w-full p-2.5 md:p-3 bg-slate-50 border rounded-xl mb-4 text-xs md:text-sm font-bold outline-none"><div class="flex gap-2"><button onclick="tutupModal('modal-shift')" class="w-full py-3 bg-slate-200 font-bold rounded-xl text-xs md:text-sm">Batal</button><button onclick="simpanData('shift')" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl text-xs md:text-sm">Simpan</button></div></div></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; // <--- JANGAN LUPA UPDATE
@@ -142,11 +142,10 @@
             telat: { textMain: 'text-rose-600', bgBtn: 'bg-rose-50', hoverBtn: 'hover:bg-rose-100', textBtn: 'text-rose-700', pillBg: 'bg-rose-100', pillBorder: 'border-rose-200' },
             izin: { textMain: 'text-amber-500', bgBtn: 'bg-amber-50', hoverBtn: 'hover:bg-amber-100', textBtn: 'text-amber-700', pillBg: 'bg-amber-100', pillBorder: 'border-amber-200' },
             libur: { textMain: 'text-indigo-600', bgBtn: 'bg-indigo-50', hoverBtn: 'hover:bg-indigo-100', textBtn: 'text-indigo-700', pillBg: 'bg-indigo-100', pillBorder: 'border-indigo-200' },
-            alpa: { textMain: 'text-slate-600', bgBtn: 'bg-slate-50', hoverBtn: 'hover:bg-slate-100', textBtn: 'text-slate-700', pillBg: 'bg-slate-100', pillBorder: 'border-slate-200' },
+            alpa: { textMain: 'text-red-500', bgBtn: 'bg-red-50', hoverBtn: 'hover:bg-red-100', textBtn: 'text-red-700', pillBg: 'bg-red-100', pillBorder: 'border-red-200' },
             lembur: { textMain: 'text-blue-600', bgBtn: 'bg-blue-50', hoverBtn: 'hover:bg-blue-100', textBtn: 'text-blue-700', pillBg: 'bg-blue-100', pillBorder: 'border-blue-200' }
         };
 
-        // PWA SERVICE WORKER REGISTRATION
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); });
         }
@@ -187,7 +186,7 @@
         }
 
         function showDetailModal(key) {
-            const titleMap = { rajin: '🌟 Daftar Hadir', telat: '⏰ Daftar Terlambat', izin: '📝 Daftar Izin / Sakit', libur: '🏖️ Daftar Libur', alpa: '❓ Daftar Alpa', lembur: '⏱️ Daftar Lembur' };
+            const titleMap = { rajin: '🌟 Daftar Hadir', telat: '⏰ Daftar Terlambat', izin: '📝 Daftar Izin / Sakit', libur: '🏖️ Daftar Libur', alpa: '⚠️ Daftar Alpa / Bolos', lembur: '⏱️ Daftar Lembur' };
             const data = summaryData[key] || []; const c = uiColors[key];
             let htmlContent = '';
             if(data.length === 0) { htmlContent = `<div class="p-4 text-center text-slate-400 italic text-sm">Tidak ada data karyawan.</div>`; } 
@@ -195,7 +194,6 @@
             Swal.fire({ title: `<span class="${c.textMain} font-black text-base md:text-lg uppercase tracking-wider">${titleMap[key]}</span>`, html: htmlContent, showCloseButton: true, showConfirmButton: false, customClass: { popup: 'rounded-3xl' } });
         }
 
-        // FUNGSI MODAL LAINNYA TETAP (Saya sembunyikan untuk hemat space, letakkan script modal biasa di sini)
         function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; document.getElementById('modal-manual').classList.remove('hidden'); }
         function bukaModalImport() { document.getElementById('file-csv').value = ""; document.getElementById('modal-import').classList.remove('hidden'); }
         function loadShiftManual() { const outlet = document.getElementById('man-outlet').value, shiftSelect = document.getElementById('man-shift'); const shiftTersedia = gShift.filter(s => s.outlet === outlet); shiftSelect.innerHTML = '<option value="-" selected>Pilih Shift (Abaikan jika Libur/Izin)</option>'; shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}">${s.kode}</option>`; }); }
@@ -234,7 +232,7 @@
             // Inisialisasi Master Karyawan agar yang Alpa tetap muncul di Rekap
             const masterRoster = gKaryawan.filter(k => (outlet === "Semua" || k.outlet === outlet) && (karyawan === "Semua" || k.nama === karyawan));
             masterRoster.forEach(emp => {
-                rekapAkumulasi[emp.nama] = { outlet: emp.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0 };
+                rekapAkumulasi[emp.nama] = { outlet: emp.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0, alpa: 0, total_masuk: 0 };
             });
 
             // 1. Tally/Hitung untuk Summary Boxes & Rekap Akumulasi
@@ -242,7 +240,7 @@
                 const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
                 
                 // Pastikan nama ada di rekap (jika ada data nyasar dari karyawan yg sudah dihapus, buat objek baru)
-                if(!rekapAkumulasi[r.nama]) rekapAkumulasi[r.nama] = { outlet: r.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0 };
+                if(!rekapAkumulasi[r.nama]) rekapAkumulasi[r.nama] = { outlet: r.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0, alpa: 0, total_masuk: 0 };
 
                 if(isIzin) { izinList.push(r.nama); rekapAkumulasi[r.nama].izin++; }
                 else if(isLibur) { liburList.push(r.nama); rekapAkumulasi[r.nama].libur++; }
@@ -310,10 +308,18 @@
                 document.getElementById('judul-tabel').innerText = "📊 Rekap Akumulasi Gaji";
 
                 // Ubah Objek ke Array untuk di-Sort
-                let arrRekap = Object.keys(rekapAkumulasi).map(nama => ({
-                    nama: nama, outlet: rekapAkumulasi[nama].outlet, rajin: rekapAkumulasi[nama].rajin, telat: rekapAkumulasi[nama].telat, 
-                    izin: rekapAkumulasi[nama].izin, libur: rekapAkumulasi[nama].libur, lembur: rekapAkumulasi[nama].lembur
-                }));
+                let arrRekap = Object.keys(rekapAkumulasi).map(nama => {
+                    let alpaCount = alpaList.includes(nama) ? 1 : 0;
+                    let totalMasuk = rekapAkumulasi[nama].rajin + rekapAkumulasi[nama].telat;
+                    return {
+                        nama: nama, outlet: rekapAkumulasi[nama].outlet, 
+                        total_masuk: totalMasuk,
+                        rajin: rekapAkumulasi[nama].rajin, telat: rekapAkumulasi[nama].telat, 
+                        izin: rekapAkumulasi[nama].izin, libur: rekapAkumulasi[nama].libur, 
+                        alpa: alpaCount,
+                        lembur: rekapAkumulasi[nama].lembur
+                    }
+                });
 
                 // Sorting Rekap
                 arrRekap.sort((a, b) => {
@@ -329,19 +335,21 @@
                     htmlRekap += `<tr class="hover:bg-slate-50 border-b border-slate-50">
                         <td class="px-3 py-3 md:p-4 font-black text-slate-800">${r.nama}</td>
                         <td class="px-3 py-3 md:p-4 font-bold text-blue-600">${r.outlet}</td>
-                        <td class="px-3 py-3 md:p-4 text-center font-bold text-emerald-600 bg-emerald-50/30">${r.rajin}x</td>
-                        <td class="px-3 py-3 md:p-4 text-center font-bold text-rose-600 bg-rose-50/30">${r.telat}x</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-black text-white bg-gradient-to-r from-emerald-500 to-teal-500 text-sm shadow-md">${r.total_masuk} Hari</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-bold text-emerald-600">${r.rajin}x</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-bold text-orange-600">${r.telat}x</td>
                         <td class="px-3 py-3 md:p-4 text-center font-bold text-amber-500">${r.izin}x</td>
                         <td class="px-3 py-3 md:p-4 text-center font-bold text-indigo-500">${r.libur}x</td>
+                        <td class="px-3 py-3 md:p-4 text-center font-black text-white bg-gradient-to-r from-rose-500 to-red-500 shadow-md">${r.alpa}x</td>
                         <td class="px-3 py-3 md:p-4 text-center font-black text-blue-600 bg-blue-50/30">${r.lembur} Mnt</td>
                     </tr>`;
                 });
-                document.getElementById('body-rekap').innerHTML = htmlRekap || `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic font-bold text-xs md:text-sm">Tidak ada data.</td></tr>`;
+                document.getElementById('body-rekap').innerHTML = htmlRekap || `<tr><td colspan="9" class="p-6 text-center text-slate-400 italic font-bold text-xs md:text-sm">Tidak ada data.</td></tr>`;
                 document.getElementById('log-count').innerText = `${arrRekap.length} Karyawan`;
             }
 
             // Update UI Summary Boxes
-            const renderBox = (count, unit, key, colorConfig) => `<div class="mt-1 md:mt-2 text-xl md:text-2xl font-black ${colorConfig.textMain}">${count} <span class="text-[9px] md:text-[10px] text-slate-400 font-bold">${unit}</span></div><button onclick="showDetailModal('${key}')" class="mt-2 w-full ${colorConfig.bgBtn} ${colorConfig.hoverBtn} ${colorConfig.textBtn} text-[9px] md:text-[10px] font-bold py-1.5 rounded-lg transition-all">👁️ Lihat Detail</button>`;
+            const renderBox = (count, unit, key, colorConfig) => `<div class="mt-1 md:mt-2 text-xl md:text-2xl font-black ${colorConfig.textMain}">${count} <span class="text-[9px] md:text-[10px] text-slate-400 font-bold">${unit}</span></div><button onclick="showDetailModal('${key}')" class="mt-2 w-full ${colorConfig.bgBtn} ${colorConfig.hoverBtn} ${colorConfig.textBtn} text-[9px] md:text-[10px] font-bold py-1.5 rounded-lg transition-all border ${colorConfig.pillBorder}">👁️ Lihat Detail</button>`;
             document.getElementById('box-rajin').innerHTML = renderBox(summaryData.rajin.length, 'Orang', 'rajin', uiColors.rajin); document.getElementById('box-telat').innerHTML = renderBox(summaryData.telat.length, 'Orang', 'telat', uiColors.telat); document.getElementById('box-izin').innerHTML = renderBox(summaryData.izin.length, 'Orang', 'izin', uiColors.izin); document.getElementById('box-libur').innerHTML = renderBox(summaryData.libur.length, 'Orang', 'libur', uiColors.libur); document.getElementById('box-alpa').innerHTML = renderBox(summaryData.alpa.length, 'Orang', 'alpa', uiColors.alpa); document.getElementById('box-lembur').innerHTML = renderBox(totalLemburMnt, 'Menit', 'lembur', uiColors.lembur);
 
             Swal.close();
@@ -369,9 +377,28 @@
                 if(gLaporanRekap.length === 0) return Swal.fire('Kosong', 'Tidak ada data rekap.', 'warning');
                 doc.text(`Tipe: Rekapitulasi Akumulasi Gaji | Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
                 
-                const headers = [["Nama Karyawan", "Outlet", "Total Hadir", "Total Telat", "Total Izin/Sakit", "Total Libur (Off)", "Total Lembur (Menit)"]];
-                const dataRow = gLaporanRekap.map(r => [r.nama, r.outlet, `${r.rajin}x`, `${r.telat}x`, `${r.izin}x`, `${r.libur}x`, r.lembur]);
-                doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [37, 99, 235] }, styles: { fontSize: 9 } });
+                const headers = [["Nama Karyawan", "Outlet", "TOTAL MASUK", "On-Time", "Terlambat", "Izin/Sakit", "Libur", "ALPA", "Lembur (Mnt)"]];
+                const dataRow = gLaporanRekap.map(r => [r.nama, r.outlet, `${r.total_masuk} Hari`, `${r.rajin}x`, `${r.telat}x`, `${r.izin}x`, `${r.libur}x`, `${r.alpa}x`, `${r.lembur}`]);
+                
+                doc.autoTable({ 
+                    head: headers, 
+                    body: dataRow, 
+                    startY: 36, 
+                    theme: 'grid', 
+                    headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center' },
+                    columnStyles: {
+                        0: { halign: 'left', fontStyle: 'bold' },
+                        1: { halign: 'center' },
+                        2: { halign: 'center', fillColor: [209, 250, 229], textColor: [4, 120, 87], fontStyle: 'bold' }, // Total Masuk (Eye-catching)
+                        3: { halign: 'center' },
+                        4: { halign: 'center' },
+                        5: { halign: 'center' },
+                        6: { halign: 'center' },
+                        7: { halign: 'center', fillColor: [255, 228, 230], textColor: [225, 29, 72], fontStyle: 'bold' }, // Alpa (Eye-catching)
+                        8: { halign: 'center' }
+                    },
+                    styles: { fontSize: 9, valign: 'middle' } 
+                });
                 doc.save(`Rekap_Gaji_${dStart}_to_${dEnd}.pdf`);
             }
         }
