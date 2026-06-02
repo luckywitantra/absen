@@ -401,6 +401,153 @@
         }
         function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
+        // ==========================================
+        // FITUR MATRIX JADWAL OFF (LIBUR)
+        // ==========================================
+        function bukaModalJadwalOff() {
+            // Set default ke bulan saat ini
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('off-bulan').value = `${yyyy}-${mm}`;
+            
+            // Isi dropdown outlet
+            let outOpts = '<option value="" disabled selected>Pilih Outlet...</option>';
+            gOutlet.forEach(o => { outOpts += `<option value="${o.nama}">${o.nama}</option>`; });
+            document.getElementById('off-outlet').innerHTML = outOpts;
+            
+            // Kosongkan tabel
+            document.getElementById('thead-jadwal-off').innerHTML = '';
+            document.getElementById('tbody-jadwal-off').innerHTML = '<tr><td class="p-8 text-center text-slate-400 italic font-medium">Silakan pilih Outlet & Bulan terlebih dahulu.</td></tr>';
+            
+            document.getElementById('modal-jadwal-off').classList.remove('hidden');
+        }
+
+        function renderTabelJadwalOff() {
+            const bulanVal = document.getElementById('off-bulan').value; // Format: "YYYY-MM"
+            const outletVal = document.getElementById('off-outlet').value;
+            
+            if (!bulanVal || !outletVal) return;
+
+            const [yyyy, mm] = bulanVal.split('-');
+            const daysInMonth = new Date(yyyy, mm, 0).getDate();
+            
+            // Filter Karyawan khusus cabang terpilih
+            const karFiltered = gKaryawan.filter(k => k.outlet === outletVal);
+            
+            if (karFiltered.length === 0) {
+                document.getElementById('tbody-jadwal-off').innerHTML = '<tr><td class="p-8 text-center text-rose-500 italic font-bold">Tidak ada staf yang terdaftar di cabang ini.</td></tr>';
+                return;
+            }
+
+            // --- 1. RENDER HEADER TANGGAL ---
+            // z-30 untuk pojok kiri atas agar tumpang tindih rapi saat scroll vertikal & horizontal
+            let theadHtml = '<tr><th class="py-3 px-4 bg-slate-200 text-slate-700 uppercase tracking-widest sticky left-0 z-30 border-r border-slate-300 shadow-[2px_0_5px_rgba(0,0,0,0.05)] text-xs">Nama Staf</th>';
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dateObj = new Date(yyyy, mm - 1, i);
+                let dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'short' }); // Cth: Sen, Sel
+                let isSunday = dateObj.getDay() === 0; // Deteksi Hari Minggu
+                
+                let textCol = isSunday ? 'text-rose-600' : 'text-slate-500';
+                let bgCol = isSunday ? 'bg-rose-50' : 'bg-slate-100';
+                
+                theadHtml += `<th class="py-2 px-2 text-center border-l border-slate-200 ${bgCol}">
+                                <div class="${textCol} text-[9px] uppercase tracking-widest">${dayName}</div>
+                                <div class="font-black text-sm ${textCol}">${i}</div>
+                              </th>`;
+            }
+            theadHtml += '</tr>';
+            document.getElementById('thead-jadwal-off').innerHTML = theadHtml;
+
+            // --- 2. RENDER BARIS KARYAWAN & CHECKBOX ---
+            let tbodyHtml = '';
+            karFiltered.forEach(k => {
+                // Kolom Nama (Tetap lengket di kiri saat di-scroll)
+                tbodyHtml += `<tr class="hover:bg-indigo-50/50 transition-colors group">
+                    <td class="py-3 px-4 font-black text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-200 shadow-[2px_0_5px_rgba(0,0,0,0.02)] group-hover:bg-indigo-50/80 transition-colors">${k.nama}</td>`;
+                
+                // Kolom Kotak Centang Tanggal
+                for (let i = 1; i <= daysInMonth; i++) {
+                    let safeDate = `${yyyy}-${mm}-${String(i).padStart(2, '0')}`;
+                    let dateObj = new Date(yyyy, mm - 1, i);
+                    let isSunday = dateObj.getDay() === 0;
+                    let bgColCell = isSunday ? 'bg-rose-50/30' : '';
+                    
+                    // Desain Checkbox Estetik (Memanfaatkan elemen Label & Peer Tailwind)
+                    tbodyHtml += `<td class="p-1.5 text-center border-l border-slate-100 ${bgColCell}">
+                        <label class="cursor-pointer relative flex items-center justify-center w-full h-full group/cb hover:scale-110 transition-transform">
+                            <input type="checkbox" class="cb-off peer sr-only" data-nama="${k.nama}" data-tanggal="${safeDate}">
+                            <div class="w-7 h-7 rounded-xl border-2 border-slate-200 bg-slate-50 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 transition-all flex items-center justify-center shadow-sm peer-checked:shadow-indigo-300">
+                                <i class="fas fa-check text-white opacity-0 peer-checked:opacity-100 text-[11px] font-black scale-50 peer-checked:scale-100 transition-all"></i>
+                            </div>
+                        </label>
+                    </td>`;
+                }
+                tbodyHtml += '</tr>';
+            });
+            
+            document.getElementById('tbody-jadwal-off').innerHTML = tbodyHtml;
+        }
+
+        function simpanJadwalOff() {
+            const checkedBoxes = document.querySelectorAll('.cb-off:checked');
+            if (checkedBoxes.length === 0) {
+                return Swal.fire('Informasi', 'Tidak ada hari off yang dicentang di tabel. Silakan pilih minimal 1 hari libur.', 'info');
+            }
+
+            const outletVal = document.getElementById('off-outlet').value;
+            const dataToImport = [];
+
+            // Kumpulkan semua data yang dicentang dan ubah formatnya menyerupai Excel (CSV)
+            checkedBoxes.forEach(cb => {
+                dataToImport.push({
+                    tanggal: cb.getAttribute('data-tanggal'),
+                    jam: '00:00', // Jam dikosongkan karena seharian libur
+                    nama: cb.getAttribute('data-nama'),
+                    outlet: outletVal,
+                    shift: '-', // Shift bebas jika day off
+                    tipe: 'Libur',
+                    keterangan: 'Jadwal Off Bulanan (Otorisasi HRD)'
+                });
+            });
+
+            Swal.fire({
+                title: `Unggah ${dataToImport.length} Jadwal Off?`,
+                html: "Sistem akan menyimpan tanggal-tanggal tersebut sebagai <b>Libur (Day Off)</b> di log kehadiran agar otomatis mengurangi Alpa.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5',
+                cancelButtonColor: '#e2e8f0',
+                confirmButtonText: '<i class="fas fa-paper-plane mr-2"></i>Ya, Simpan Jadwal!',
+                cancelButtonText: '<span class="text-slate-600 font-bold">Batal</span>',
+                customClass: { confirmButton: 'shadow-lg', popup: 'rounded-3xl' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // MENGGUNAKAN ENDPOINT IMPORT CSV ANDA YANG SUDAH ADA!
+                    Swal.fire({ title: 'Menyimpan Jadwal...', html: 'Mengamankan data ke sistem...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    
+                    fetch(API_URL, { 
+                        method: 'POST', 
+                        body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) 
+                    })
+                    .then(res => res.json())
+                    .then(data => { 
+                        if(data.status === 'success') { 
+                            Swal.fire('Berhasil!', `${data.count} log jadwal off berhasil dimasukkan ke sistem.`, 'success'); 
+                            tutupModal('modal-jadwal-off'); 
+                            
+                            // Segarkan layar agar laporannya langsung update
+                            syncDatabase(true); 
+                        } else { 
+                            Swal.fire('Gagal', data.message, 'error'); 
+                        } 
+                    })
+                    .catch(err => Swal.fire('Error Server', 'Pastikan koneksi internet stabil.', 'error'));
+                }
+            });
+        }
+        
         // --- CORE ANALYTICS (RINCI VS REKAP) ---
         async function generateAnalytics() {
             const mode = document.getElementById('mode-laporan').value;
