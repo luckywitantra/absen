@@ -268,9 +268,9 @@
             <!-- VIEW: KARYAWAN -->
             <div id="view-karyawan" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <button onclick="bukaModalJadwalOff()" class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-[0_4px_15px_rgba(79,70,229,0.3)] hover:bg-indigo-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2">
-                        <i class="fas fa-calendar-alt text-indigo-200"></i> Atur Jadwal Off Staf
-                    </button>
+                   <button onclick="bukaModalMatrix()" class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2">
+            <i class="fas fa-calendar-alt text-indigo-200"></i> Atur Jadwal & Absen Masal
+        </button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
@@ -430,44 +430,43 @@
     </div>
 
     <!-- MODAL MATRIX JADWAL OFF (LIBUR) -->
-    <div id="modal-jadwal-off" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden modal-enter">
+    <div id="modal-jadwal-shift" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-[95vw] lg:max-w-7xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden modal-enter">
             
-            <div class="bg-gradient-to-r from-indigo-600 to-blue-700 p-5 sm:p-6 lg:p-8 text-white flex justify-between items-center shrink-0 relative overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 p-5 sm:p-6 lg:p-8 text-white flex justify-between items-center shrink-0 relative overflow-hidden">
                 <i class="fas fa-calendar-alt absolute -right-4 -bottom-4 text-8xl opacity-20 transform -rotate-12"></i>
                 <div class="relative z-10">
-                    <h2 class="text-xl sm:text-2xl font-black flex items-center gap-3 tracking-tight"><i class="fas fa-calendar-check text-indigo-200"></i> Manajer Jadwal Off</h2>
-                    <p class="text-[10px] sm:text-xs text-indigo-100 font-medium mt-1.5">Atur hari libur karyawan per bulan dengan antarmuka Drag & Drop.</p>
+                    <h2 class="text-xl sm:text-2xl font-black flex items-center gap-3 tracking-tight"><i class="fas fa-calendar-check text-indigo-200"></i> Manajer Jadwal & Absen Masal</h2>
+                    <p class="text-[10px] sm:text-xs text-indigo-100 font-medium mt-1.5">Atur Shift, Off, Izin, atau rapel data absen masa lalu dengan antarmuka Matriks.</p>
                 </div>
-                <button onclick="tutupModal('modal-jadwal-off')" class="text-white hover:text-rose-200 transition bg-white/20 hover:bg-rose-500 w-10 h-10 rounded-full flex items-center justify-center relative z-10 active:scale-90"><i class="fas fa-times text-lg"></i></button>
+                <button onclick="tutupModal('modal-jadwal-shift')" class="text-white hover:text-rose-200 transition bg-white/20 hover:bg-rose-500 w-10 h-10 rounded-full flex items-center justify-center relative z-10 active:scale-90 shadow-sm"><i class="fas fa-times text-lg"></i></button>
             </div>
             
             <div class="p-4 sm:p-5 lg:p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
                 <div class="flex-1">
                     <label class="text-[10px] font-black text-indigo-600 uppercase tracking-widest block mb-1.5"><i class="fas fa-calendar-day mr-1"></i> Pilih Bulan</label>
-                    <input type="month" id="off-bulan" class="w-full p-3.5 bg-white border border-indigo-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-indigo-800 transition cursor-pointer" onchange="renderTabelJadwalOff()">
+                    <input type="month" id="matrix-bulan" class="w-full p-3.5 bg-white border border-indigo-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-indigo-800 transition cursor-pointer" onchange="renderTabelMatrix()">
                 </div>
                 <div class="flex-1">
                     <label class="text-[10px] font-black text-indigo-600 uppercase tracking-widest block mb-1.5"><i class="fas fa-store mr-1"></i> Pilih Cabang</label>
-                    <select id="off-outlet" class="w-full p-3.5 bg-white border border-indigo-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-indigo-800 transition cursor-pointer" onchange="renderTabelJadwalOff()">
+                    <select id="matrix-outlet" class="w-full p-3.5 bg-white border border-indigo-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-indigo-800 transition cursor-pointer" onchange="renderTabelMatrix()">
                     </select>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-auto custom-scroll relative bg-white" id="container-tabel-off">
+            <div class="flex-1 overflow-auto custom-scroll relative bg-white" id="container-tabel-matrix">
                 <table class="w-full text-left text-xs whitespace-nowrap border-collapse">
-                    <thead class="text-slate-500 font-bold sticky top-0 z-20 shadow-sm" id="thead-jadwal-off">
-                    </thead>
-                    <tbody id="tbody-jadwal-off" class="divide-y divide-slate-100 text-slate-700">
+                    <thead class="text-slate-500 font-bold sticky top-0 z-20 shadow-sm" id="thead-matrix"></thead>
+                    <tbody id="tbody-matrix" class="divide-y divide-slate-100 text-slate-700">
                         <tr><td class="p-10 text-center text-slate-400 italic font-medium">Silakan pilih Cabang dan Bulan terlebih dahulu.</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="p-5 lg:p-6 border-t border-slate-200 bg-slate-50 shrink-0 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <p class="text-[10px] text-slate-500 font-bold leading-relaxed text-center sm:text-left bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm"><i class="fas fa-info-circle text-indigo-500 mr-1 text-sm align-middle"></i> Anda dapat menggeser nama staf ke atas/bawah. Jadwal yang dicentang akan otomatis tersimpan sebagai <b class="text-indigo-600">Libur (Day Off)</b>.</p>
-                <button onclick="simpanJadwalOff()" class="w-full sm:w-auto bg-indigo-600 text-white px-8 py-4 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm tracking-wide">
-                    <i class="fas fa-cloud-upload-alt text-indigo-200 text-xl"></i> SIMPAN JADWAL
+                <p class="text-[10px] text-slate-500 font-bold leading-relaxed text-center sm:text-left bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm flex-1"><i class="fas fa-info-circle text-indigo-500 mr-1 text-sm align-middle"></i> Anda dapat menggeser nama staf ke atas/bawah. Jika Anda mengganti jadwal yang sudah ada (misal dari Shift ke Off), <b class="text-rose-500">absen lama akan tertimpa otomatis</b>.</p>
+                <button onclick="simpanMatrix()" class="w-full sm:w-auto bg-indigo-600 text-white px-8 py-4 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm tracking-wide">
+                    <i class="fas fa-cloud-upload-alt text-indigo-200 text-xl"></i> SIMPAN MATRIKS
                 </button>
             </div>
         </div>
@@ -621,56 +620,94 @@
         }
 
         // ==========================================
-        // FITUR MATRIX JADWAL OFF (VIEW, EDIT, DRAG)
+        // FITUR MATRIX JADWAL & ABSEN (SUPER WFM)
         // ==========================================
-        function bukaModalJadwalOff() {
+        function bukaModalMatrix() {
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
-            document.getElementById('off-bulan').value = `${yyyy}-${mm}`;
+            document.getElementById('matrix-bulan').value = `${yyyy}-${mm}`;
             
             let outOpts = '<option value="" disabled selected>Pilih Outlet...</option>';
             gOutlet.forEach(o => { outOpts += `<option value="${o.nama}">${o.nama}</option>`; });
-            document.getElementById('off-outlet').innerHTML = outOpts;
+            document.getElementById('matrix-outlet').innerHTML = outOpts;
             
-            document.getElementById('thead-jadwal-off').innerHTML = '';
-            document.getElementById('tbody-jadwal-off').innerHTML = '<tr><td class="p-10 text-center text-slate-400 italic font-medium">Silakan pilih Cabang & Bulan terlebih dahulu.</td></tr>';
+            document.getElementById('thead-matrix').innerHTML = '';
+            document.getElementById('tbody-matrix').innerHTML = '<tr><td class="p-10 text-center text-slate-400 italic font-medium">Silakan pilih Cabang & Bulan terlebih dahulu.</td></tr>';
             
-            document.getElementById('modal-jadwal-off').classList.remove('hidden');
+            document.getElementById('modal-jadwal-shift').classList.remove('hidden');
         }
 
-        async function renderTabelJadwalOff() {
-            const bulanVal = document.getElementById('off-bulan').value; // "YYYY-MM"
-            const outletVal = document.getElementById('off-outlet').value;
+        // Pewarnaan Otomatis pada Dropdown Matrix
+        function warnaiSelect(sel) {
+            sel.classList.remove('text-slate-400', 'text-emerald-600', 'text-rose-600', 'text-amber-600', 'bg-emerald-50', 'bg-rose-50', 'bg-amber-50', 'bg-transparent', 'border-emerald-200', 'border-rose-200', 'border-amber-200', 'border-transparent');
+            
+            if (sel.value === '') { 
+                sel.classList.add('text-slate-400', 'bg-transparent', 'border-transparent'); 
+            } else if (sel.value === 'OFF') { 
+                sel.classList.add('text-rose-600', 'bg-rose-50', 'border-rose-200'); 
+            } else if (sel.value === 'IZIN') { 
+                sel.classList.add('text-amber-600', 'bg-amber-50', 'border-amber-200'); 
+            } else { 
+                sel.classList.add('text-emerald-600', 'bg-emerald-50', 'border-emerald-200'); 
+            }
+        }
+
+        async function renderTabelMatrix() {
+            const bulanVal = document.getElementById('matrix-bulan').value; // "YYYY-MM"
+            const outletVal = document.getElementById('matrix-outlet').value;
             
             if (!bulanVal || !outletVal) return;
 
             const [yyyy, mm] = bulanVal.split('-');
             const daysInMonth = new Date(yyyy, mm, 0).getDate();
-            
             const karFiltered = gKaryawan.filter(k => k.outlet === outletVal);
             
             if (karFiltered.length === 0) {
-                document.getElementById('tbody-jadwal-off').innerHTML = '<tr><td class="p-10 text-center text-rose-500 italic font-bold text-lg">Tidak ada staf di cabang ini.</td></tr>';
-                if (window.jadwalOffSortable) window.jadwalOffSortable.destroy();
+                document.getElementById('tbody-matrix').innerHTML = '<tr><td class="p-10 text-center text-rose-500 italic font-bold text-lg">Tidak ada staf di cabang ini.</td></tr>';
+                if (window.matrixSortable) window.matrixSortable.destroy();
                 return;
             }
 
-            Swal.fire({ title: 'Memuat Jadwal...', html: 'Sinkronisasi dengan database...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Memuat Matriks...', html: 'Mengambil data dari masa lalu & masa depan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             try {
+                // 1. Tarik Log Data Absen Eksisting
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: outletVal } }) });
                 const result = await res.json();
                 const logs = result.data || [];
 
-                window.originalOffState = {}; 
+                // 2. Tarik Daftar Shift Khusus Untuk Cabang Ini
+                const shiftCabang = gShift.filter(s => s.outlet === outletVal);
+                let optShift = `<option value="">-</option>
+                                <option value="OFF" class="font-black text-rose-500">OFF (Libur)</option>
+                                <option value="IZIN" class="font-black text-amber-500">IZIN / SAKIT</option>`;
+                shiftCabang.forEach(s => {
+                    optShift += `<option value="${s.kode}" class="font-black text-emerald-600">${s.kode}</option>`;
+                });
+
+                // 3. Simpan Ingatan State (Berfungsi ganda: Menampilkan data & Mencegah Duplikasi)
+                window.originalMatrixState = {}; 
                 logs.forEach(r => {
-                    if (r.tipe === 'Libur' && String(r.tanggal).startsWith(bulanVal)) {
+                    if (String(r.tanggal).startsWith(bulanVal)) {
                         let key = `${r.nama}_${r.tanggal}`;
-                        window.originalOffState[key] = r.ts; 
+                        
+                        // Kumpulkan SEMUA timestamp (ts) di hari yang sama agar bisa dihapus bersih jika ditimpa
+                        if (!window.originalMatrixState[key]) {
+                            window.originalMatrixState[key] = { val: '', tsList: [] };
+                        }
+                        window.originalMatrixState[key].tsList.push(r.ts);
+
+                        // Ambil nilai visual yang pertama kali terbaca (Prioritaskan Masuk/Libur/Izin)
+                        if (window.originalMatrixState[key].val === '') {
+                            if (r.tipe === 'Libur') window.originalMatrixState[key].val = 'OFF';
+                            else if (r.tipe === 'Izin') window.originalMatrixState[key].val = 'IZIN';
+                            else if (r.tipe === 'Masuk' || r.tipe === 'Pulang') window.originalMatrixState[key].val = r.shift; 
+                        }
                     }
                 });
 
+                // 4. Render Header Kalender
                 let theadHtml = '<tr><th class="py-4 px-5 bg-slate-200 text-slate-700 uppercase tracking-widest sticky left-0 z-30 border-r border-slate-300 shadow-[2px_0_5px_rgba(0,0,0,0.05)] text-xs"><div class="flex items-center gap-3"><i class="fas fa-sort text-slate-400"></i> Nama Staf</div></th>';
                 for (let i = 1; i <= daysInMonth; i++) {
                     let dateObj = new Date(yyyy, mm - 1, i);
@@ -680,42 +717,48 @@
                     let textCol = isSunday ? 'text-rose-600' : 'text-slate-500';
                     let bgCol = isSunday ? 'bg-rose-50' : 'bg-slate-100';
                     
-                    theadHtml += `<th class="py-2.5 px-2.5 text-center border-l border-slate-200 ${bgCol}"><div class="${textCol} text-[10px] font-black uppercase tracking-widest">${dayName}</div><div class="font-black text-sm md:text-base mt-0.5 ${textCol}">${i}</div></th>`;
+                    theadHtml += `<th class="py-2.5 px-1.5 text-center border-l border-slate-200 ${bgCol} min-w-[70px]"><div class="${textCol} text-[9px] font-black uppercase tracking-widest">${dayName}</div><div class="font-black text-sm md:text-base mt-0.5 ${textCol}">${i}</div></th>`;
                 }
                 theadHtml += '</tr>';
-                document.getElementById('thead-jadwal-off').innerHTML = theadHtml;
+                document.getElementById('thead-matrix').innerHTML = theadHtml;
 
+                // 5. Render Baris Select
                 let tbodyHtml = '';
                 karFiltered.forEach(k => {
                     tbodyHtml += `<tr class="hover:bg-indigo-50/40 transition-colors group bg-white">
-                        <td class="py-2.5 px-5 font-black text-slate-800 text-sm sticky left-0 bg-inherit z-10 border-r border-slate-200 shadow-[2px_0_5px_rgba(0,0,0,0.02)] transition-colors">
+                        <td class="py-2 px-5 font-black text-slate-800 text-xs md:text-sm sticky left-0 bg-inherit z-10 border-r border-slate-200 shadow-[2px_0_5px_rgba(0,0,0,0.02)] transition-colors">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-grip-vertical text-slate-300 cursor-grab hover:text-indigo-600 transition-colors drag-handle py-3 pr-3 active:cursor-grabbing text-lg" title="Tahan & Geser"></i>
-                                <span class="truncate max-w-[120px] md:max-w-[180px]">${k.nama}</span>
+                                <i class="fas fa-grip-vertical text-slate-300 cursor-grab hover:text-indigo-600 transition-colors drag-handle py-3 pr-2 active:cursor-grabbing text-base" title="Tahan & Geser"></i>
+                                <span class="truncate max-w-[100px] md:max-w-[150px]">${k.nama}</span>
                             </div>
                         </td>`;
                     
                     for (let i = 1; i <= daysInMonth; i++) {
                         let safeDate = `${yyyy}-${mm}-${String(i).padStart(2, '0')}`;
                         let keyState = `${k.nama}_${safeDate}`;
-                        let isChecked = window.originalOffState[keyState] ? 'checked' : '';
-                        let bgColCell = (new Date(yyyy, mm - 1, i).getDay() === 0) ? 'bg-rose-50/30' : '';
+                        let currVal = window.originalMatrixState[keyState] ? window.originalMatrixState[keyState].val : '';
                         
-                        tbodyHtml += `<td class="p-2 text-center border-l border-slate-100 ${bgColCell}">
-                            <label class="cursor-pointer relative flex items-center justify-center w-full h-full group/cb hover:scale-110 transition-transform">
-                                <input type="checkbox" class="cb-off peer sr-only" data-nama="${k.nama}" data-tanggal="${safeDate}" ${isChecked}>
-                                <div class="w-8 h-8 rounded-xl border-2 border-slate-200 bg-slate-50 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 transition-all flex items-center justify-center shadow-sm peer-checked:shadow-indigo-300">
-                                    <i class="fas fa-check text-white opacity-0 peer-checked:opacity-100 text-[13px] font-black scale-50 peer-checked:scale-100 transition-all"></i>
-                                </div>
-                            </label>
+                        let bgColCell = (new Date(yyyy, mm - 1, i).getDay() === 0) ? 'bg-rose-50/20' : '';
+                        
+                        // Injeksi nilai terpilih (selected) ke dalam option
+                        let customOpt = optShift.replace(`value="${currVal}"`, `value="${currVal}" selected`);
+
+                        tbodyHtml += `<td class="p-1 text-center border-l border-slate-100 ${bgColCell}">
+                            <select class="sel-matrix w-full h-8 text-[10px] font-bold text-center outline-none cursor-pointer rounded-lg border border-transparent hover:border-indigo-300 transition-colors appearance-none" data-nama="${k.nama}" data-tanggal="${safeDate}" onchange="warnaiSelect(this)">
+                                ${customOpt}
+                            </select>
                         </td>`;
                     }
                     tbodyHtml += '</tr>';
                 });
-                document.getElementById('tbody-jadwal-off').innerHTML = tbodyHtml;
+                document.getElementById('tbody-matrix').innerHTML = tbodyHtml;
 
-                if (window.jadwalOffSortable) window.jadwalOffSortable.destroy();
-                window.jadwalOffSortable = new Sortable(document.getElementById('tbody-jadwal-off'), {
+                // Terapkan warna awal ke semua Select yang sudah terisi
+                document.querySelectorAll('.sel-matrix').forEach(sel => warnaiSelect(sel));
+
+                // 6. Inisiasi Mesin Drag & Drop
+                if (window.matrixSortable) window.matrixSortable.destroy();
+                window.matrixSortable = new Sortable(document.getElementById('tbody-matrix'), {
                     handle: '.drag-handle', animation: 250, ghostClass: 'opacity-40', dragClass: 'shadow-2xl', forceFallback: true
                 });
 
@@ -725,60 +768,100 @@
             }
         }
 
-        function simpanJadwalOff() {
-            const allBoxes = document.querySelectorAll('.cb-off');
-            const outletVal = document.getElementById('off-outlet').value;
+        function simpanMatrix() {
+            const allSelects = document.querySelectorAll('.sel-matrix');
+            const outletVal = document.getElementById('matrix-outlet').value;
+            const shiftRules = gShift.filter(s => s.outlet === outletVal);
             
             let dataToImport = []; 
             let dataToDelete = []; 
 
-            allBoxes.forEach(cb => {
-                let nama = cb.getAttribute('data-nama');
-                let tanggal = cb.getAttribute('data-tanggal');
+            allSelects.forEach(sel => {
+                let nama = sel.getAttribute('data-nama');
+                let tanggal = sel.getAttribute('data-tanggal');
+                let newVal = sel.value;
                 let key = `${nama}_${tanggal}`;
                 
-                let wasChecked = !!window.originalOffState[key]; 
-                let isChecked = cb.checked; 
+                let oldState = window.originalMatrixState[key];
+                let oldVal = oldState ? oldState.val : '';
 
-                if (isChecked && !wasChecked) {
-                    dataToImport.push({ tanggal: tanggal, jam: '00:00', nama: nama, outlet: outletVal, shift: '-', tipe: 'Libur', keterangan: 'Jadwal Off Bulanan (Otorisasi HRD)' });
-                } else if (!isChecked && wasChecked) {
-                    dataToDelete.push({ ts: window.originalOffState[key] });
+                // JIKA NILAI DI UBAH (TIDAK SAMA DENGAN DATA LAMA)
+                if (newVal !== oldVal) {
+                    
+                    // 1. Hapus Semua Data Lama di Hari Itu (Menghindari Double Absen)
+                    if (oldState && oldState.tsList.length > 0) {
+                        oldState.tsList.forEach(ts => {
+                            dataToDelete.push({ ts: ts });
+                        });
+                    }
+
+                    // 2. Buat Rekaman Baru
+                    if (newVal !== '') {
+                        let tipeStr = ''; let jamStr = '00:00'; let shiftStr = '-';
+                        
+                        if (newVal === 'OFF') {
+                            tipeStr = 'Libur';
+                        } else if (newVal === 'IZIN') {
+                            tipeStr = 'Izin';
+                        } else {
+                            // Ini berarti yang dipilih adalah Kode Shift (Cth: PAGI, SIANG)
+                            tipeStr = 'Masuk';
+                            shiftStr = newVal;
+                            let sObj = shiftRules.find(s => s.kode === newVal);
+                            jamStr = sObj ? sObj.jamMasuk : '08:00'; // Ambil jam standar shift tersebut
+                        }
+
+                        dataToImport.push({ 
+                            tanggal: tanggal, 
+                            jam: jamStr, 
+                            nama: nama, 
+                            outlet: outletVal, 
+                            shift: shiftStr, 
+                            tipe: tipeStr, 
+                            keterangan: 'Penyesuaian Matriks HRD' 
+                        });
+                    }
                 }
             });
 
             if (dataToImport.length === 0 && dataToDelete.length === 0) {
-                return Swal.fire('Informasi', 'Tidak ada perubahan jadwal yang dilakukan.', 'info');
+                return Swal.fire('Informasi', 'Tidak ada perubahan matriks yang dilakukan.', 'info');
             }
 
             Swal.fire({
-                title: `Terapkan Perubahan?`,
-                html: `Sistem akan menambahkan <b>${dataToImport.length}</b> hari libur baru, dan membatalkan <b>${dataToDelete.length}</b> libur lama.`,
-                icon: 'question',
+                title: `Eksekusi Matriks?`,
+                html: `Sistem akan membatalkan <b>${dataToDelete.length}</b> data lama, dan menyuntikkan <b>${dataToImport.length}</b> data baru ke riwayat absensi.`,
+                icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#4f46e5',
                 cancelButtonColor: '#e2e8f0',
-                confirmButtonText: '<i class="fas fa-save mr-2"></i>Ya, Eksekusi!',
+                confirmButtonText: '<i class="fas fa-save mr-2"></i>Ya, Jalankan!',
                 cancelButtonText: '<span class="text-slate-600 font-bold">Batal</span>',
                 customClass: { confirmButton: 'shadow-lg', popup: 'rounded-3xl' }
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({ title: 'Memproses...', html: 'Harap jangan tutup aplikasi...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    Swal.fire({ title: 'Memproses WFM...', html: 'Membersihkan data lama dan menyuntikkan data baru...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                     
                     try {
+                        // EKSEKUSI 1: Hapus data bentrok
                         if (dataToDelete.length > 0) {
                             for(let d of dataToDelete) {
                                 await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'hapus_absen', payload: d }) });
                             }
                         }
+
+                        // EKSEKUSI 2: Simpan Data Baru / Masa Lalu (Dilakukan massal sekaligus)
                         if (dataToImport.length > 0) {
                             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
                         }
-                        Swal.fire('Berhasil!', 'Seluruh penyesuaian jadwal off berhasil disimpan.', 'success'); 
-                        tutupModal('modal-jadwal-off'); 
+
+                        Swal.fire('Berhasil!', 'Seluruh Matriks WFM berhasil diimplementasikan.', 'success'); 
+                        tutupModal('modal-jadwal-shift'); 
+                        
+                        // Tarik ulang database untuk menyegarkan tampilan
                         syncDatabase(true); 
                     } catch(err) {
-                        Swal.fire('Error', 'Gagal memproses ke database.', 'error');
+                        Swal.fire('Error', 'Gagal memproses matriks ke database.', 'error');
                     }
                 }
             });
