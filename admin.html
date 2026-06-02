@@ -133,14 +133,14 @@
             </button>
             
             <div class="mt-6 px-4">
-                <button onclick="openDrawer('drawer-matrix')" class="w-full flex justify-center items-center gap-2 px-4 py-3.5 bg-slate-900 text-white rounded-xl transition-all duration-300 text-xs font-black shadow-[0_8px_15px_rgba(15,23,42,0.2)] hover:bg-indigo-600 hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:scale-95 group">
+                <button onclick="bukaModalMatrix()" class="w-full flex justify-center items-center gap-2 px-4 py-3.5 bg-slate-900 text-white rounded-xl transition-all duration-300 text-xs font-black shadow-[0_8px_15px_rgba(15,23,42,0.2)] hover:bg-indigo-600 hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:scale-95 group">
                     <i class="fas fa-calendar-check text-indigo-400 group-hover:text-white transition-colors"></i> Matrix WFM
                 </button>
             </div>
         </nav>
 
-        <div class="p-6 shrink-0 border-t border-slate-800 hidden lg:block">
-            <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-200/60 shadow-sm cursor-pointer hover:bg-white hover:border-slate-300 transition-colors">
+        <div class="p-6 shrink-0 border-t border-slate-100 hidden lg:block">
+            <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-200/60 shadow-sm">
                 <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg border-2 border-white shadow-sm"><i class="fas fa-user-tie"></i></div>
                 <div class="flex flex-col min-w-0">
                     <span class="text-sm font-black text-slate-800 truncate">Sistem HRD</span>
@@ -150,34 +150,33 @@
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0 relative">
+    <main class="flex-1 flex flex-col min-w-0 relative pb-20 lg:pb-0">
         <header class="h-[72px] lg:h-24 glass-header border-b border-slate-200/60 flex items-center justify-between px-4 lg:px-10 shrink-0 z-20">
             <div class="flex items-center gap-4">
                 <button class="lg:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-600 border border-slate-200 shadow-sm hover:text-blue-600 transition active:scale-90" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
                 <div>
                     <h2 class="text-lg md:text-xl font-black text-slate-800" id="header-title">Laporan & Analitik</h2>
-                    <p class="text-[10px] md:text-[11px] font-bold text-slate-400" id="header-date">Tanggal</p>
+                    <p class="text-[10px] md:text-[11px] font-bold text-slate-400 mt-0.5" id="header-date">Tanggal</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="syncDatabase()" class="flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm">
+                <button onclick="syncDatabase()" class="flex items-center gap-2 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-95">
                     <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Refresh Data</span>
                 </button>
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 scroll-smooth">
+        <div class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-10 scroll-smooth">
             
             <div id="view-laporan" class="view-content active flex-col gap-6 w-full max-w-7xl mx-auto">
-                
-                <div class="flex flex-col sm:flex-row justify-end items-center gap-4">
+                <div class="flex flex-col sm:flex-row justify-end items-center gap-3 mb-2">
                     <div class="flex w-full sm:w-auto gap-2">
-                        <button onclick="openDrawer('drawer-manual')" class="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-pen-to-square text-amber-500"></i> Input Manual</button>
-                        <button onclick="openDrawer('drawer-import')" class="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-file-import text-indigo-500"></i> Import Data</button>
+                        <button onclick="bukaModalManual()" class="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-pen-to-square text-amber-500"></i> Input Manual</button>
+                        <button onclick="bukaModalImport()" class="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-file-import text-indigo-500"></i> Import Data</button>
                     </div>
                 </div>
 
-                <div class="bg-white/80 backdrop-blur-xl p-5 lg:p-6 rounded-[2rem] shadow-sm border border-white relative overflow-hidden">
+                <div class="bg-white/80 backdrop-blur-xl p-5 lg:p-8 rounded-[2rem] shadow-sm border border-white relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative z-10">
@@ -188,7 +187,6 @@
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Filter data absensi</p>
                             </div>
                         </div>
-                        
                         <div class="w-full md:w-auto bg-slate-100 p-1.5 rounded-xl flex items-center shadow-inner border border-slate-200/60">
                             <select id="mode-laporan" onchange="generateAnalytics()" class="bg-transparent border-none text-xs font-black text-slate-700 py-2 px-3 outline-none cursor-pointer w-full text-center appearance-none">
                                 <option value="rekap">📊 Rekap Total Gaji</option>
@@ -216,68 +214,40 @@
                 <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mt-2">
                     <div class="card-premium bg-white p-5 rounded-[1.5rem] flex flex-col justify-between relative overflow-hidden group">
                         <div class="absolute -right-4 -bottom-4 text-emerald-50 text-8xl opacity-60 transform rotate-12 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-star"></i></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div><h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Hadir On-Time</h3></div>
-                            <div id="box-rajin" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div>
-                        </div>
+                        <div class="relative z-10"><div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div><h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Hadir On-Time</h3></div><div id="box-rajin" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div></div>
                     </div>
                     <div class="card-premium bg-white p-5 rounded-[1.5rem] flex flex-col justify-between relative overflow-hidden group">
                         <div class="absolute -right-4 -bottom-4 text-rose-50 text-8xl opacity-60 transform -rotate-12 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-clock"></i></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div><h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Terlambat</h3></div>
-                            <div id="box-telat" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div>
-                        </div>
+                        <div class="relative z-10"><div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div><h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Terlambat</h3></div><div id="box-telat" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div></div>
                     </div>
                     <div class="card-premium bg-white p-5 rounded-[1.5rem] flex flex-col justify-between relative overflow-hidden group">
                         <div class="absolute -right-4 -bottom-4 text-amber-50 text-8xl opacity-60 transform rotate-12 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-file-medical"></i></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-amber-500"></div><h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Izin / Sakit</h3></div>
-                            <div id="box-izin" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div>
-                        </div>
+                        <div class="relative z-10"><div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-amber-500"></div><h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Izin / Sakit</h3></div><div id="box-izin" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div></div>
                     </div>
                     <div class="card-premium bg-white p-5 rounded-[1.5rem] flex flex-col justify-between relative overflow-hidden group">
                         <div class="absolute -right-4 -bottom-4 text-indigo-50 text-8xl opacity-60 transform -rotate-12 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-umbrella-beach"></i></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-indigo-500"></div><h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Libur (Day Off)</h3></div>
-                            <div id="box-libur" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div>
-                        </div>
+                        <div class="relative z-10"><div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-indigo-500"></div><h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Libur (Day Off)</h3></div><div id="box-libur" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div></div>
                     </div>
                     <div class="bg-red-50 p-5 rounded-[1.5rem] border border-red-100 shadow-[0_4px_15px_rgba(239,68,68,0.1)] flex flex-col justify-between relative overflow-hidden group">
                         <div class="absolute -right-4 -bottom-4 text-red-100 text-8xl opacity-60 transform rotate-12 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-triangle-exclamation"></i></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-red-600"></div><h3 class="text-[9px] font-black text-red-600 uppercase tracking-widest">Alpa / Bolos</h3></div>
-                            <div id="box-alpa" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div>
-                        </div>
+                        <div class="relative z-10"><div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-red-600"></div><h3 class="text-[9px] font-black text-red-600 uppercase tracking-widest">Alpa / Bolos</h3></div><div id="box-alpa" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div></div>
                     </div>
                     <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-[1.5rem] border border-blue-100 shadow-sm flex flex-col justify-between relative overflow-hidden group">
                         <div class="absolute -right-4 -bottom-4 text-blue-100 text-8xl opacity-60 transform -rotate-12 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-fire"></i></div>
-                        <div class="relative z-10">
-                            <div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-blue-600"></div><h3 class="text-[9px] font-black text-blue-700 uppercase tracking-widest">Total Lembur</h3></div>
-                            <div id="box-lembur" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div>
-                        </div>
+                        <div class="relative z-10"><div class="flex items-center gap-2 mb-2"><div class="w-2 h-2 rounded-full bg-blue-600"></div><h3 class="text-[9px] font-black text-blue-700 uppercase tracking-widest">Total Lembur</h3></div><div id="box-lembur" class="mt-2 text-slate-400 text-xs font-bold">Pilih rentang...</div></div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col min-h-[400px]">
+                <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col min-h-[500px]">
                     <div class="bg-white border-b border-slate-100 p-5 font-black text-sm uppercase tracking-widest flex justify-between items-center shrink-0">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 border border-slate-100 flex items-center justify-center shadow-inner"><i class="fas fa-table text-xs"></i></div>
-                            <span id="judul-tabel" class="text-slate-800 text-sm md:text-base">📋 Laporan Rinci</span>
-                        </div>
-                        <span id="log-count" class="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm uppercase tracking-widest">0 Data</span>
+                        <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 border border-slate-100 flex items-center justify-center shadow-inner"><i class="fas fa-table text-xs"></i></div><span id="judul-tabel" class="text-slate-800 text-base">📋 Laporan Rinci</span></div>
+                        <span id="log-count" class="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm uppercase tracking-widest">0 Data</span>
                     </div>
                     
                     <div class="flex-1 overflow-x-auto custom-scroll relative bg-slate-50/30">
                         <table id="tabel-mode-rinci" class="w-full text-left text-xs md:text-sm whitespace-nowrap">
                             <thead class="bg-slate-100/90 backdrop-blur-md text-slate-500 font-bold uppercase text-[10px] sticky top-0 z-10 shadow-sm tracking-widest">
-                                <tr>
-                                    <th class="px-6 py-5">Tgl & Jam</th>
-                                    <th class="px-6 py-5">Karyawan</th>
-                                    <th class="px-6 py-5">Shift & Outlet</th>
-                                    <th class="px-6 py-5">Tipe</th>
-                                    <th class="px-6 py-5">Status & Info</th>
-                                    <th class="px-6 py-5 text-center">Aksi</th>
-                                </tr>
+                                <tr><th class="px-6 py-5">Tgl & Jam</th><th class="px-6 py-5">Karyawan</th><th class="px-6 py-5">Shift & Outlet</th><th class="px-6 py-5">Tipe</th><th class="px-6 py-5">Status & Info</th><th class="px-6 py-5 text-center">Aksi</th></tr>
                             </thead>
                             <tbody id="body-rinci" class="text-slate-700 font-medium divide-y divide-slate-100/60 bg-white">
                                 <tr><td colspan="6" class="p-12 text-center italic text-slate-400 text-sm">Klik "Proses Analisis" untuk memuat data.</td></tr>
@@ -308,25 +278,13 @@
 
             <div id="view-karyawan" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 class="text-2xl font-black text-slate-800">Direktori Karyawan</h2>
-                        <p class="text-xs font-bold text-slate-400 mt-1">Data master seluruh staf HC.</p>
-                    </div>
-                    <button onclick="openDrawer('drawer-matrix')" class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95">
-                        <i class="fas fa-calendar-check text-indigo-200 text-base"></i> Atur Jadwal & Absen Masal
-                    </button>
+                    <div><h2 class="text-2xl font-black text-slate-800">Direktori Karyawan</h2><p class="text-xs font-bold text-slate-400 mt-1">Data master seluruh staf HC.</p></div>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-slate-50/90 backdrop-blur-md text-slate-500 font-bold uppercase text-[10px] tracking-widest sticky top-0 z-10 shadow-sm">
-                                <tr>
-                                    <th class="px-6 py-5">Tgl Daftar</th>
-                                    <th class="px-6 py-5">Nama Lengkap</th>
-                                    <th class="px-6 py-5">Jabatan</th>
-                                    <th class="px-6 py-5">Penempatan</th>
-                                    <th class="px-6 py-5 text-right">Aksi HRD</th>
-                                </tr>
+                                <tr><th class="px-6 py-5">Tgl Daftar</th><th class="px-6 py-5">Nama Lengkap</th><th class="px-6 py-5">Jabatan</th><th class="px-6 py-5">Penempatan</th><th class="px-6 py-5 text-right">Aksi HRD</th></tr>
                             </thead>
                             <tbody id="table-karyawan" class="divide-y divide-slate-100 font-medium bg-white"></tbody>
                         </table>
@@ -336,21 +294,14 @@
             
             <div id="view-outlet" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 class="text-2xl font-black text-slate-800">Master Outlet</h2>
-                        <p class="text-xs font-bold text-slate-400 mt-1">Titik GPS & Radius Absensi.</p>
-                    </div>
+                    <div><h2 class="text-2xl font-black text-slate-800">Master Outlet</h2><p class="text-xs font-bold text-slate-400 mt-1">Titik GPS & Radius Absensi.</p></div>
                     <button onclick="openDrawer('drawer-outlet')" class="w-full sm:w-auto bg-slate-900 text-white px-6 py-3.5 rounded-xl font-black shadow-lg shadow-slate-900/20 hover:bg-slate-800 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-plus text-slate-400"></i> Tambah Outlet</button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-slate-50/90 backdrop-blur-md text-slate-500 font-bold uppercase text-[10px] tracking-widest sticky top-0 z-10 shadow-sm">
-                                <tr>
-                                    <th class="px-6 py-5">Nama Outlet</th>
-                                    <th class="px-6 py-5">Titik GPS & Radius</th>
-                                    <th class="px-6 py-5 text-right">Aksi</th>
-                                </tr>
+                                <tr><th class="px-6 py-5">Nama Outlet</th><th class="px-6 py-5">Titik GPS & Radius</th><th class="px-6 py-5 text-right">Aksi</th></tr>
                             </thead>
                             <tbody id="table-outlet" class="divide-y divide-slate-100 font-medium bg-white"></tbody>
                         </table>
@@ -360,22 +311,14 @@
             
             <div id="view-shift" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 class="text-2xl font-black text-slate-800">Aturan Waktu & Shift</h2>
-                        <p class="text-xs font-bold text-slate-400 mt-1">Konfigurasi batas telat dan lembur.</p>
-                    </div>
+                    <div><h2 class="text-2xl font-black text-slate-800">Aturan Waktu & Shift</h2><p class="text-xs font-bold text-slate-400 mt-1">Konfigurasi batas telat dan lembur.</p></div>
                     <button onclick="openDrawer('drawer-shift')" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(16,185,129,0.3)] hover:bg-emerald-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-plus text-emerald-200"></i> Buat Shift Baru</button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-slate-50/90 backdrop-blur-md text-slate-500 font-bold uppercase text-[10px] tracking-widest sticky top-0 z-10 shadow-sm">
-                                <tr>
-                                    <th class="px-6 py-5">Outlet</th>
-                                    <th class="px-6 py-5">Kode Shift</th>
-                                    <th class="px-6 py-5">Jam & Aturan Ketat</th>
-                                    <th class="px-6 py-5 text-right">Aksi</th>
-                                </tr>
+                                <tr><th class="px-6 py-5">Outlet</th><th class="px-6 py-5">Kode Shift</th><th class="px-6 py-5">Jam & Aturan Ketat</th><th class="px-6 py-5 text-right">Aksi</th></tr>
                             </thead>
                             <tbody id="table-shift" class="divide-y divide-slate-100 font-medium bg-white"></tbody>
                         </table>
@@ -429,7 +372,7 @@
             <h2 class="text-xl font-black mb-2 text-slate-800">Import Data Excel</h2>
             <p class="text-xs text-slate-500 mb-6 font-medium leading-relaxed">Gunakan format CSV untuk mengunggah data absensi secara massal.</p>
             <button onclick="downloadTemplateCSV()" class="w-full py-3.5 bg-slate-50 text-blue-600 border border-slate-200 font-black rounded-xl mb-5 hover:bg-white hover:border-blue-300 transition text-sm flex justify-center items-center gap-2 shadow-sm"><i class="fas fa-download"></i> Unduh Template CSV</button>
-            <input type="file" id="file-csv" accept=".csv" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl mb-6 text-sm font-bold outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer transition-colors">
+            <input type="file" id="file-csv" accept=".csv" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl mb-6 text-sm font-bold outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer transition-colors">
             <div class="flex gap-3">
                 <button onclick="closeAllDrawers()" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button>
                 <button onclick="prosesImportCSV()" class="flex-[2] py-3.5 bg-indigo-600 text-white font-black rounded-xl text-sm transition hover:bg-indigo-700 shadow-[0_8px_15px_rgba(79,70,229,0.3)] flex justify-center items-center gap-2"><i class="fas fa-upload"></i> Proses Upload</button>
@@ -630,7 +573,6 @@
             activeDrawer = null;
         }
 
-        // Ganti tutupModal lama agar sync dengan Drawer
         function tutupModal(id) {
             closeAllDrawers();
         }
@@ -672,7 +614,6 @@
             const targetView = document.getElementById(viewId);
             if(targetView) targetView.classList.add('active');
 
-            // Reset Desktop Nav
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active', 'bg-blue-50', 'text-blue-700');
                 btn.classList.add('text-slate-600', 'hover:bg-slate-50');
@@ -680,7 +621,6 @@
                 const iconBox = btn.querySelector('.nav-icon-box'); if (iconBox) { iconBox.classList.remove('bg-white', 'text-blue-600', 'shadow-sm'); iconBox.classList.add('bg-slate-100', 'text-slate-500'); }
             });
 
-            // Reset Mobile Nav
             document.querySelectorAll('.nav-mob-btn').forEach(btn => {
                 btn.classList.remove('text-blue-600'); btn.classList.add('text-slate-400');
                 const pill = btn.querySelector('.nav-mob-pill'); if (pill) { pill.classList.remove('bg-blue-100'); pill.classList.add('bg-transparent'); }
@@ -759,7 +699,7 @@
                 tableKar += `<tr class="hover:bg-slate-50/50 transition-colors"><td class="px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">${k.ts.split(' ')[0]}</td><td class="px-6 py-5 font-black text-slate-800 text-sm md:text-base">${k.nama}</td><td class="px-6 py-5">${badgeRole}</td><td class="px-6 py-5 font-bold text-slate-600 flex items-center gap-1.5 mt-1.5"><div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200"><i class="fas fa-map-marker-alt text-blue-500 text-[10px]"></i></div> ${k.outlet}</td><td class="px-6 py-5 text-right"><button onclick="editModalKaryawan('${k.nama}','${k.role}','${k.outlet}')" class="bg-white border border-slate-200 text-amber-500 hover:bg-amber-500 hover:text-white hover:border-amber-500 px-3.5 py-2 rounded-xl text-xs font-bold mr-1.5 transition-all shadow-sm"><i class="fas fa-edit"></i></button><button onclick="deleteRow('hapus_karyawan', {nama: '${k.nama}'})" class="bg-white border border-slate-200 text-rose-500 hover:bg-rose-500 hover:text-white hover:border-rose-500 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"><i class="fas fa-trash"></i></button></td></tr>`; 
             });
 
-            document.getElementById('filter-outlet').innerHTML = outFilter; document.getElementById('shf-outlet').innerHTML = outForm; document.getElementById('kar-outlet').innerHTML = outForm; document.getElementById('man-outlet').innerHTML = outForm; document.getElementById('filter-karyawan').innerHTML = karFilter; document.getElementById('man-nama').innerHTML = karForm;
+            document.getElementById('filter-outlet').innerHTML = outFilter; document.getElementById('matrix-outlet').innerHTML = outForm; document.getElementById('shf-outlet').innerHTML = outForm; document.getElementById('kar-outlet').innerHTML = outForm; document.getElementById('man-outlet').innerHTML = outForm; document.getElementById('filter-karyawan').innerHTML = karFilter; document.getElementById('man-nama').innerHTML = karForm;
             document.getElementById('table-outlet').innerHTML = tableOut || `<tr><td colspan="3" class="text-center py-12 text-sm italic text-slate-400">Belum ada outlet terdaftar.</td></tr>`; document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center py-12 text-sm italic text-slate-400">Belum ada jadwal shift.</td></tr>`; document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center py-12 text-sm italic text-slate-400">Belum ada karyawan terdaftar.</td></tr>`;
         }
 
@@ -824,9 +764,7 @@
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             document.getElementById('matrix-bulan').value = `${yyyy}-${mm}`;
             
-            let outOpts = '<option value="" disabled selected>Pilih Outlet...</option>';
-            gOutlet.forEach(o => { outOpts += `<option value="${o.nama}">${o.nama}</option>`; });
-            document.getElementById('matrix-outlet').innerHTML = outOpts;
+            // Note: matrix-outlet is already populated in renderMasterTables()
             
             document.getElementById('thead-matrix').innerHTML = '';
             document.getElementById('tbody-matrix').innerHTML = '<tr><td class="p-10 text-center text-slate-400 italic font-medium">Silakan pilih Cabang & Bulan terlebih dahulu.</td></tr>';
@@ -1039,7 +977,7 @@
         function simpanManual() { const p = { tanggal: document.getElementById('man-tgl').value, jam: document.getElementById('man-jam').value, nama: document.getElementById('man-nama').value, outlet: document.getElementById('man-outlet').value, shift: document.getElementById('man-shift').value, tipe: document.getElementById('man-tipe').value, keterangan: document.getElementById('man-ket').value }; if(!p.tanggal || !p.jam || !p.nama || !p.outlet) return Swal.fire('Error', 'Data penting wajib diisi!', 'warning'); runAPI('absen_manual', p); }
         function downloadTemplateCSV() { let csv = "Tanggal (YYYY-MM-DD),Jam (HH:MM),Nama Karyawan,Outlet,Shift,Tipe Absen (Masuk/Pulang/Izin/Libur),Keterangan\n"; csv += "2026-05-15,08:00,Rizky Beby Auliana,Outlet Pusat,Pagi,Masuk,Input Masal HRD\n"; const link = document.createElement("a"); link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv)); link.setAttribute("download", "Template_Import_Absen.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
         function prosesImportCSV() { const fileInput = document.getElementById('file-csv'); if (!fileInput.files.length) return Swal.fire('Peringatan', 'Silakan pilih file CSV terlebih dahulu.', 'warning'); const reader = new FileReader(); reader.onload = function(e) { const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r); if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error'); const delimiter = rows[0].includes(';') ? ';' : ','; const dataToImport = []; for(let i=1; i<rows.length; i++) { const cols = rows[i].split(delimiter); if(cols.length >= 6) { const rawDate = cols[0].trim(); let safeDate = rawDate; if (rawDate.includes('/')) { let p = rawDate.split('/'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } else if (rawDate.includes('-') && rawDate.split('-')[0].length <= 2) { let p = rawDate.split('-'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); dataToImport.push({ tanggal: safeDate, jam: cols[1].trim(), nama: cols[2].trim(), outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim() }); } } if(dataToImport.length > 0) { Swal.fire({ title: 'Mengupload Data...', html: 'Mohon tunggu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) }).then(res => res.json()).then(data => { if(data.status === 'success') { Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success'); closeAllDrawers(); generateAnalytics(); } else { Swal.fire('Gagal', data.message, 'error'); } }).catch(err => Swal.fire('Error', 'Gagal server GAS.', 'error')); } else { Swal.fire('Format Salah', 'Sistem tidak dapat membaca baris data.', 'error'); } }; reader.readAsText(fileInput.files[0]); }
-        function initMap(lat, lng) { if(!map) { map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } }
+        function initMap(lat, lng) { if(!map) { map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } setTimeout(() => map.invalidateSize(), 300); }
         
         async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil.', 'success'); syncDatabase(true); closeAllDrawers(); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
         function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value, ambangLembur: document.getElementById('shf-lembur').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
