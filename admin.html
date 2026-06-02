@@ -422,7 +422,7 @@
         <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
         <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
             <h2 id="title-modal-out" class="text-xl font-black mb-4 text-slate-800">Form Outlet</h2>
-            <div id="map"></div>
+            <div id="map" class="h-[220px] w-full rounded-2xl mb-4 border-2 border-slate-200 relative z-10"></div>
             <input type="hidden" id="out-oldnama">
             <div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Nama Outlet</label><input type="text" id="out-nama" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition"></div>
             <div class="grid grid-cols-2 gap-3 mb-4">
@@ -967,8 +967,6 @@
         // FUNGSI MODAL MANUAL, IMPORT, OUTLET, SHIFT, KARYAWAN -> Diubah ke Drawer
         function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; openDrawer('drawer-manual'); }
         function bukaModalImport() { document.getElementById('file-csv').value = ""; openDrawer('drawer-import'); }
-        function bukaModalOutlet() { document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = ""; document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = ""; openDrawer('drawer-outlet'); initMap(-1.269160, 116.825264); }
-        function editModalOutlet(nama, lat, lng, rad) { document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama; document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad; openDrawer('drawer-outlet'); initMap(parseFloat(lat), parseFloat(lng)); }
         function bukaModalShift() { document.getElementById('title-modal-shf').innerText = "Tambah Jadwal Shift"; document.getElementById('shf-oldoutlet').value = ""; document.getElementById('shf-oldkode').value = ""; document.getElementById('shf-outlet').value = ""; document.getElementById('shf-nama').value = ""; document.getElementById('shf-masuk').value = ""; document.getElementById('shf-keluar').value = ""; document.getElementById('shf-tol').value = "15"; document.getElementById('shf-lembur').value = "60"; openDrawer('drawer-shift'); }
         function editModalShift(outlet, kode, jamM, jamK, tol, lembur) { document.getElementById('title-modal-shf').innerText = "Edit Jadwal Shift"; document.getElementById('shf-oldoutlet').value = outlet; document.getElementById('shf-oldkode').value = kode; document.getElementById('shf-outlet').value = outlet; document.getElementById('shf-nama').value = kode; document.getElementById('shf-masuk').value = jamM; document.getElementById('shf-keluar').value = jamK; document.getElementById('shf-tol').value = tol; document.getElementById('shf-lembur').value = lembur || "60"; openDrawer('drawer-shift'); }
         function editModalKaryawan(nama, role, outlet) { document.getElementById('kar-oldnama').value = nama; document.getElementById('kar-nama').value = nama; document.getElementById('kar-role').value = role; document.getElementById('kar-outlet').value = outlet; openDrawer('drawer-karyawan'); }
@@ -977,7 +975,50 @@
         function simpanManual() { const p = { tanggal: document.getElementById('man-tgl').value, jam: document.getElementById('man-jam').value, nama: document.getElementById('man-nama').value, outlet: document.getElementById('man-outlet').value, shift: document.getElementById('man-shift').value, tipe: document.getElementById('man-tipe').value, keterangan: document.getElementById('man-ket').value }; if(!p.tanggal || !p.jam || !p.nama || !p.outlet) return Swal.fire('Error', 'Data penting wajib diisi!', 'warning'); runAPI('absen_manual', p); }
         function downloadTemplateCSV() { let csv = "Tanggal (YYYY-MM-DD),Jam (HH:MM),Nama Karyawan,Outlet,Shift,Tipe Absen (Masuk/Pulang/Izin/Libur),Keterangan\n"; csv += "2026-05-15,08:00,Rizky Beby Auliana,Outlet Pusat,Pagi,Masuk,Input Masal HRD\n"; const link = document.createElement("a"); link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv)); link.setAttribute("download", "Template_Import_Absen.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
         function prosesImportCSV() { const fileInput = document.getElementById('file-csv'); if (!fileInput.files.length) return Swal.fire('Peringatan', 'Silakan pilih file CSV terlebih dahulu.', 'warning'); const reader = new FileReader(); reader.onload = function(e) { const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r); if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error'); const delimiter = rows[0].includes(';') ? ';' : ','; const dataToImport = []; for(let i=1; i<rows.length; i++) { const cols = rows[i].split(delimiter); if(cols.length >= 6) { const rawDate = cols[0].trim(); let safeDate = rawDate; if (rawDate.includes('/')) { let p = rawDate.split('/'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } else if (rawDate.includes('-') && rawDate.split('-')[0].length <= 2) { let p = rawDate.split('-'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); dataToImport.push({ tanggal: safeDate, jam: cols[1].trim(), nama: cols[2].trim(), outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim() }); } } if(dataToImport.length > 0) { Swal.fire({ title: 'Mengupload Data...', html: 'Mohon tunggu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) }).then(res => res.json()).then(data => { if(data.status === 'success') { Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success'); closeAllDrawers(); generateAnalytics(); } else { Swal.fire('Gagal', data.message, 'error'); } }).catch(err => Swal.fire('Error', 'Gagal server GAS.', 'error')); } else { Swal.fire('Format Salah', 'Sistem tidak dapat membaca baris data.', 'error'); } }; reader.readAsText(fileInput.files[0]); }
-        function initMap(lat, lng) { if(!map) { map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } setTimeout(() => map.invalidateSize(), 300); }
+        function initMap(lat, lng) { 
+            if(!map) { 
+                map = L.map('map').setView([lat, lng], 14); 
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); 
+                marker = L.marker([lat, lng]).addTo(map); 
+                map.on('click', e => { 
+                    marker.setLatLng(e.latlng); 
+                    document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); 
+                    document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); 
+                }); 
+            } else { 
+                map.setView([lat, lng], 14); 
+                marker.setLatLng([lat, lng]); 
+            } 
+            
+            // KUNCI PERBAIKAN: Paksa peta menghitung ulang ukurannya setelah animasi drawer selesai
+            setTimeout(() => { map.invalidateSize(); }, 400);
+        }
+        
+        function bukaModalOutlet() { 
+            document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; 
+            document.getElementById('out-oldnama').value = ""; 
+            document.getElementById('out-nama').value = ""; 
+            document.getElementById('out-lat').value = ""; 
+            document.getElementById('out-lng').value = ""; 
+            document.getElementById('out-rad').value = ""; 
+            openDrawer('drawer-outlet'); 
+            
+            // Beri jeda agar laci samping terbuka sempurna, baru peta dimunculkan
+            setTimeout(() => { initMap(-1.269160, 116.825264); }, 300);
+        }
+        
+        function editModalOutlet(nama, lat, lng, rad) { 
+            document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; 
+            document.getElementById('out-oldnama').value = nama; 
+            document.getElementById('out-nama').value = nama; 
+            document.getElementById('out-lat').value = lat; 
+            document.getElementById('out-lng').value = lng; 
+            document.getElementById('out-rad').value = rad; 
+            openDrawer('drawer-outlet'); 
+            
+            // Beri jeda agar laci samping terbuka sempurna, baru peta dimunculkan
+            setTimeout(() => { initMap(parseFloat(lat), parseFloat(lng)); }, 300);
+        }
         
         async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil.', 'success'); syncDatabase(true); closeAllDrawers(); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
         function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value, ambangLembur: document.getElementById('shf-lembur').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
