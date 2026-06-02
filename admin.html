@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AiMoy Super HC - Admin</title>
     
+    <!-- PWA META TAGS -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,14 +41,21 @@
         
         div:where(.swal2-container) .swal2-html-container { margin: 1em 1.6em 0.3em; }
         .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            #bottom-nav-bar { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); }
+        }
     </style>
 </head>
 <body class="flex h-screen text-slate-800 antialiased">
 
+    <!-- MOBILE OVERLAY -->
     <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity" onclick="toggleSidebar()"></div>
 
+    <!-- SIDEBAR NAVIGATION (SUPERAPP STYLE) -->
     <aside id="sidebar" class="fixed lg:static top-0 left-0 h-full w-[280px] bg-slate-900 text-white z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-2xl lg:shadow-none flex flex-col rounded-r-[2rem] lg:rounded-none">
         
+        <!-- Logo Area -->
         <div class="p-6 md:p-8 flex items-center justify-between lg:justify-center border-b border-slate-800 shrink-0">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.5)]">
@@ -61,35 +69,32 @@
             <button class="lg:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()"><i class="fas fa-times text-xl"></i></button>
         </div>
 
+        <!-- Navigation Links -->
         <nav class="flex-1 overflow-y-auto custom-scroll p-4 space-y-2 mt-4">
             <p class="px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Main Menu</p>
             
-            <button onclick="switchView('view-laporan', this)" class="nav-btn active w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold bg-blue-600 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)]">
+            <button id="nav-laporan" onclick="switchView('view-laporan')" class="nav-btn active w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold bg-blue-600 text-white shadow-[0_4px_15px_rgba(37,99,235,0.4)]">
                 <i class="fas fa-chart-pie w-5 text-center text-lg"></i>
                 Laporan & Analitik
             </button>
 
             <p class="px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest mt-6 mb-2">Master Data</p>
 
-            <button onclick="switchView('view-karyawan', this)" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800">
+            <button id="nav-karyawan" onclick="switchView('view-karyawan')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800">
                 <i class="fas fa-users-gear w-5 text-center text-lg"></i>
                 Data Karyawan
             </button>
-            <button onclick="switchView('view-outlet', this)" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800">
+            <button id="nav-outlet" onclick="switchView('view-outlet')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800">
                 <i class="fas fa-store w-5 text-center text-lg"></i>
                 Master Outlet
             </button>
-            <button onclick="switchView('view-shift', this)" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800">
+            <button id="nav-shift" onclick="switchView('view-shift')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800">
                 <i class="fas fa-business-time w-5 text-center text-lg"></i>
                 Aturan Shift
             </button>
-            <button onclick="bukaModalJadwalOff()" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 mt-2">
-                <i class="fas fa-calendar-alt w-5 text-center text-lg text-rose-400"></i>
-                <span class="text-rose-400">Atur Jadwal Off</span>
-            </button>
         </nav>
 
-        <div class="p-6 shrink-0 border-t border-slate-800">
+        <div class="p-6 shrink-0 border-t border-slate-800 hidden lg:block">
             <div class="bg-slate-800 rounded-2xl p-4 flex items-center gap-3">
                 <img src="https://ui-avatars.com/api/?name=Owner&background=3b82f6&color=fff&rounded=true" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-slate-700">
                 <div class="flex flex-col min-w-0">
@@ -100,14 +105,16 @@
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col min-w-0 bg-[#f8fafc] relative">
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col min-w-0 bg-[#f8fafc] relative pb-20 lg:pb-0">
         
+        <!-- Top App Bar -->
         <header class="h-20 glass-panel border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 shrink-0 z-20 shadow-sm">
             <div class="flex items-center gap-4">
                 <button class="lg:hidden text-slate-600 text-2xl hover:text-blue-600 transition" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                <div class="hidden md:block">
-                    <h2 class="text-xl font-black text-slate-800" id="header-title">Laporan & Analitik</h2>
-                    <p class="text-[11px] font-bold text-slate-400" id="header-date">Selasa, 12 Mei 2026</p>
+                <div>
+                    <h2 class="text-lg md:text-xl font-black text-slate-800" id="header-title">Laporan & Analitik</h2>
+                    <p class="text-[10px] md:text-[11px] font-bold text-slate-400" id="header-date">Tanggal</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -117,20 +124,21 @@
             </div>
         </header>
 
+        <!-- SCROLLABLE VIEWS -->
         <div class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-8 scroll-smooth">
             
+            <!-- VIEW: LAPORAN -->
             <div id="view-laporan" class="view-content active flex-col gap-6 w-full max-w-7xl mx-auto">
                 
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div class="md:hidden w-full text-center sm:text-left">
-                        <h2 class="text-2xl font-black text-slate-800">Analitik</h2>
-                    </div>
+                <!-- Quick Actions Top -->
+                <div class="flex flex-col sm:flex-row justify-end items-center gap-4">
                     <div class="flex w-full sm:w-auto gap-2">
                         <button onclick="bukaModalManual()" class="flex-1 sm:flex-none bg-amber-500 text-white px-5 py-3 rounded-xl font-bold shadow-[0_4px_10px_rgba(245,158,11,0.3)] hover:bg-amber-600 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2"><i class="fas fa-pen-to-square"></i> Input Manual</button>
                         <button onclick="bukaModalImport()" class="flex-1 sm:flex-none bg-slate-800 text-white px-5 py-3 rounded-xl font-bold shadow-[0_4px_10px_rgba(30,41,59,0.3)] hover:bg-slate-900 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2"><i class="fas fa-file-import"></i> Import Bulk</button>
                     </div>
                 </div>
 
+                <!-- FILTER PANEL (SaaS Style) -->
                 <div class="bg-white p-5 lg:p-6 rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100">
                     <div class="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100">
                         <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-filter text-sm"></i></div>
@@ -160,6 +168,7 @@
                     </div>
                 </div>
 
+                <!-- KOTAK SUMMARY (NEUMORPHISM STYLE) -->
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     <div class="bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden group">
                         <div class="absolute -right-4 -bottom-4 text-emerald-100 text-7xl opacity-50 transform rotate-12 group-hover:scale-110 transition-transform"><i class="fas fa-star"></i></div>
@@ -205,6 +214,7 @@
                     </div>
                 </div>
 
+                <!-- TABEL DATA -->
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col h-[500px]">
                     <div class="bg-white border-b border-slate-100 p-5 font-black text-sm uppercase tracking-widest flex justify-between items-center shrink-0">
                         <div class="flex items-center gap-3">
@@ -215,6 +225,7 @@
                     </div>
                     
                     <div class="flex-1 overflow-auto custom-scroll relative">
+                        <!-- TABEL 1: MODE RINCI -->
                         <table id="tabel-mode-rinci" class="w-full text-left text-xs md:text-sm whitespace-nowrap">
                             <thead class="bg-slate-50/90 backdrop-blur-sm text-slate-500 font-bold uppercase text-[10px] sticky top-0 z-10 shadow-sm">
                                 <tr>
@@ -231,6 +242,7 @@
                             </tbody>
                         </table>
 
+                        <!-- TABEL 2: MODE REKAP TOTAL (EYE CATCHING) -->
                         <table id="tabel-mode-rekap" class="hidden w-full text-left text-xs md:text-sm whitespace-nowrap border-collapse">
                             <thead class="bg-slate-50/90 backdrop-blur-sm sticky top-0 z-20 shadow-sm font-black uppercase text-[10px] tracking-wider border-b border-slate-200">
                                 <tr>
@@ -253,10 +265,12 @@
                 </div>
             </div>
 
+            <!-- VIEW: KARYAWAN -->
             <div id="view-karyawan" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-black text-slate-800">Master Karyawan</h2>
-                    <button class="bg-blue-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 transition text-sm hidden">Tambah Karyawan</button>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <button onclick="bukaModalJadwalOff()" class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-[0_4px_15px_rgba(79,70,229,0.3)] hover:bg-indigo-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2">
+                        <i class="fas fa-calendar-alt text-indigo-200"></i> Atur Jadwal Off Staf
+                    </button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
@@ -276,10 +290,11 @@
                 </div>
             </div>
             
+            <!-- VIEW: OUTLET -->
             <div id="view-outlet" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-black text-slate-800">Master Outlet</h2>
-                    <button onclick="bukaModalOutlet()" class="bg-slate-900 text-white px-5 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-800 transition text-sm flex items-center gap-2"><i class="fas fa-plus"></i> Tambah Outlet</button>
+                    <div class="md:hidden"></div>
+                    <button onclick="bukaModalOutlet()" class="w-full sm:w-auto bg-slate-900 text-white px-5 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-800 transition text-sm flex items-center justify-center gap-2"><i class="fas fa-plus"></i> Tambah Outlet</button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
@@ -297,10 +312,11 @@
                 </div>
             </div>
             
+            <!-- VIEW: SHIFT -->
             <div id="view-shift" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-black text-slate-800">Master Shift</h2>
-                    <button onclick="bukaModalShift()" class="bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:bg-emerald-700 hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2"><i class="fas fa-plus"></i> Buat Shift Baru</button>
+                    <div class="md:hidden"></div>
+                    <button onclick="bukaModalShift()" class="w-full sm:w-auto bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:bg-emerald-700 hover:-translate-y-0.5 transition-all text-sm flex items-center justify-center gap-2"><i class="fas fa-plus"></i> Buat Shift Baru</button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
@@ -322,6 +338,23 @@
         </div>
     </main>
 
+    <!-- MOBILE BOTTOM NAV BAR -->
+    <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] flex justify-around p-2 lg:hidden z-[50]" id="bottom-nav-bar">
+        <button id="nav-mob-laporan" onclick="switchView('view-laporan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-blue-600 w-full transition-colors relative">
+            <i class="fas fa-chart-pie text-xl mb-1"></i><span class="text-[9px] font-extrabold tracking-wide">Laporan</span>
+        </button>
+        <button id="nav-mob-karyawan" onclick="switchView('view-karyawan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 w-full hover:text-blue-600 transition-colors relative">
+            <i class="fas fa-users-gear text-xl mb-1"></i><span class="text-[9px] font-extrabold tracking-wide">Staf</span>
+        </button>
+        <button id="nav-mob-outlet" onclick="switchView('view-outlet', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 w-full hover:text-blue-600 transition-colors relative">
+            <i class="fas fa-store text-xl mb-1"></i><span class="text-[9px] font-extrabold tracking-wide">Outlet</span>
+        </button>
+        <button id="nav-mob-shift" onclick="switchView('view-shift', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 w-full hover:text-blue-600 transition-colors relative">
+            <i class="fas fa-business-time text-xl mb-1"></i><span class="text-[9px] font-extrabold tracking-wide">Shift</span>
+        </button>
+    </nav>
+
+    <!-- SEMUA MODAL POP-UP (IMPORT, MANUAL, KARYAWAN, OUTLET) -->
     <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4"><div class="bg-white p-6 md:p-8 rounded-[2rem] w-full max-w-md shadow-2xl modal-enter"><div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl mb-5"><i class="fas fa-file-excel"></i></div><h2 class="text-xl font-black mb-2 text-slate-800">Import Data Excel (CSV)</h2><p class="text-xs text-slate-500 mb-6 font-medium leading-relaxed">Download template, isi data menggunakan Excel/Spreadsheet, simpan dalam format (.csv), lalu unggah file tersebut di sini.</p><button onclick="downloadTemplateCSV()" class="w-full py-3.5 bg-slate-50 text-blue-600 border border-blue-200 font-black rounded-xl mb-5 hover:bg-blue-50 transition text-sm flex justify-center items-center gap-2"><i class="fas fa-download"></i> Template CSV</button><input type="file" id="file-csv" accept=".csv" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl mb-6 text-sm font-bold outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"><div class="flex gap-3"><button onclick="tutupModal('modal-import')" class="flex-1 py-3.5 bg-slate-100 font-bold rounded-xl text-slate-500 hover:bg-slate-200 transition text-sm">Batal</button><button onclick="prosesImportCSV()" class="flex-[2] py-3.5 bg-indigo-600 text-white font-black rounded-xl text-sm transition hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex justify-center items-center gap-2"><i class="fas fa-upload"></i> Upload Data</button></div></div></div>
     
     <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4"><div class="bg-white p-6 md:p-8 rounded-[2rem] w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh] custom-scroll modal-enter"><div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-3xl mb-5"><i class="fas fa-pen-to-square"></i></div><h2 class="text-xl font-black mb-6 text-slate-800">Input Data Manual</h2><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Tanggal</label><input type="date" id="man-tgl" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 transition"></div><div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Jam</label><input type="time" id="man-jam" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 transition"></div></div><div class="mb-4"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Nama Staf</label><select id="man-nama" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 transition"></select></div><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Cabang</label><select id="man-outlet" onchange="loadShiftManual()" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 transition"></select></div><div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Shift Target</label><select id="man-shift" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 transition"><option value="-" selected>Pilih Shift</option></select></div></div><div class="mb-4"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Tipe Absen</label><select id="man-tipe" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 transition"><option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option><option value="Izin">Izin / Sakit</option><option value="Libur" class="text-indigo-600 font-bold">Jadwal Libur (Day Off)</option></select></div><div class="mb-6"><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Keterangan / Alasan</label><input type="text" id="man-ket" placeholder="Alasan (Cth: Lupa Bawa HP)" class="w-full p-3 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 transition"></div><div class="flex gap-3"><button onclick="tutupModal('modal-manual')" class="flex-1 py-3.5 bg-slate-100 font-bold rounded-xl text-slate-500 hover:bg-slate-200 transition text-sm">Batal</button><button onclick="simpanManual()" class="flex-[2] py-3.5 bg-amber-500 text-white font-black rounded-xl text-sm hover:bg-amber-600 transition shadow-lg shadow-amber-200 flex justify-center items-center gap-2"><i class="fas fa-save"></i> Simpan Data</button></div></div></div>
@@ -377,7 +410,7 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="text-[9px] font-bold text-blue-600 mb-1.5 block">Syarat Minimal Lembur</label>
+                                <label class="text-[9px] font-bold text-blue-600 mb-1.5 block">Syarat Min. Lembur</label>
                                 <div class="relative">
                                     <span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 text-lg"><i class="fas fa-fire"></i></span>
                                     <input type="number" id="shf-lembur" placeholder="60" value="60" class="w-full p-3.5 pl-11 bg-white border border-blue-200 rounded-xl text-sm font-black outline-none focus:border-blue-500 text-blue-700 shadow-sm transition">
@@ -396,7 +429,8 @@
         </div>
     </div>
 
-    <div id="modal-jadwal-off" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-2 sm:p-4">
+    <!-- MODAL MATRIX JADWAL OFF (LIBUR) -->
+    <div id="modal-jadwal-off" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4">
         <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden modal-enter">
             
             <div class="bg-gradient-to-r from-indigo-600 to-blue-700 p-5 sm:p-6 lg:p-8 text-white flex justify-between items-center shrink-0 relative overflow-hidden">
@@ -423,7 +457,7 @@
             <div class="flex-1 overflow-auto custom-scroll relative bg-white" id="container-tabel-off">
                 <table class="w-full text-left text-xs whitespace-nowrap border-collapse">
                     <thead class="text-slate-500 font-bold sticky top-0 z-20 shadow-sm" id="thead-jadwal-off">
-                        </thead>
+                    </thead>
                     <tbody id="tbody-jadwal-off" class="divide-y divide-slate-100 text-slate-700">
                         <tr><td class="p-10 text-center text-slate-400 italic font-medium">Silakan pilih Cabang dan Bulan terlebih dahulu.</td></tr>
                     </tbody>
@@ -467,15 +501,12 @@
             document.getElementById('filter-start').value = `${yyyy}-${mm}-01`;
             document.getElementById('filter-end').value = `${yyyy}-${mm}-${dd}`;
             
-            // Set default date for header
-            document.getElementById('header-date').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('header-date').innerText = today.toLocaleDateString('id-ID', options);
             
             syncDatabase();
         });
 
-        // ==========================================
-        // SUPERAPP SIDEBAR LOGIC
-        // ==========================================
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
@@ -488,31 +519,48 @@
             }
         }
 
-        function switchView(viewId, btnElement) {
-            // Sembunyikan semua view
+        function switchView(viewId, desktopBtn, mobileBtn) {
             document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
             
-            // Tampilkan view yang dipilih
             const targetView = document.getElementById(viewId);
             if(targetView) targetView.classList.add('active');
 
-            // Hapus status active dari semua tombol
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active', 'bg-blue-600', 'text-white', 'shadow-[0_4px_15px_rgba(37,99,235,0.4)]');
                 btn.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
             });
 
-            // Aktifkan tombol yang diklik
-            if (btnElement) {
-                btnElement.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
-                btnElement.classList.add('active', 'bg-blue-600', 'text-white', 'shadow-[0_4px_15px_rgba(37,99,235,0.4)]');
-                
-                // Ubah Judul Header
-                document.getElementById('header-title').innerText = btnElement.innerText.trim();
+            document.querySelectorAll('.nav-mob-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600');
+                btn.classList.add('text-slate-400');
+            });
+
+            const navBtnMap = {
+                'view-laporan': { desk: 'nav-laporan', mob: 'nav-mob-laporan', title: 'Laporan & Analitik' },
+                'view-karyawan': { desk: 'nav-karyawan', mob: 'nav-mob-karyawan', title: 'Data Karyawan' },
+                'view-outlet': { desk: 'nav-outlet', mob: 'nav-mob-outlet', title: 'Master Outlet' },
+                'view-shift': { desk: 'nav-shift', mob: 'nav-mob-shift', title: 'Aturan Shift' }
+            };
+
+            const mapping = navBtnMap[viewId];
+            if (mapping) {
+                const dBtn = document.getElementById(mapping.desk);
+                if (dBtn) {
+                    dBtn.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
+                    dBtn.classList.add('active', 'bg-blue-600', 'text-white', 'shadow-[0_4px_15px_rgba(37,99,235,0.4)]');
+                }
+                const mBtn = document.getElementById(mapping.mob);
+                if (mBtn) {
+                    mBtn.classList.remove('text-slate-400');
+                    mBtn.classList.add('text-blue-600');
+                }
+                document.getElementById('header-title').innerText = mapping.title;
             }
 
-            // Tutup sidebar jika di HP
-            if (window.innerWidth < 1024) toggleSidebar();
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth < 1024 && !sidebar.classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
         }
 
         async function syncDatabase(silent = false) {
@@ -736,7 +784,7 @@
             });
         }
 
-        // FUNGSI MODAL MANUAL, IMPORT, OUTLET, SHIFT, KARYAWAN (TETAP SAMA SEPERTI SEBELUMNYA)
+        // FUNGSI MODAL MANUAL, IMPORT, OUTLET, SHIFT, KARYAWAN
         function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; document.getElementById('modal-manual').classList.remove('hidden'); }
         function bukaModalImport() { document.getElementById('file-csv').value = ""; document.getElementById('modal-import').classList.remove('hidden'); }
         function loadShiftManual() { const outlet = document.getElementById('man-outlet').value, shiftSelect = document.getElementById('man-shift'); const shiftTersedia = gShift.filter(s => s.outlet === outlet); shiftSelect.innerHTML = '<option value="-" selected>Pilih Shift (Abaikan jika Libur/Izin)</option>'; shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}">${s.kode}</option>`; }); }
@@ -754,7 +802,7 @@
         function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value, ambangLembur: document.getElementById('shf-lembur').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
         function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
-        // --- CORE ANALYTICS (RINCI VS REKAP) ---
+        // --- CORE ANALYTICS ---
         async function generateAnalytics() {
             const mode = document.getElementById('mode-laporan').value;
             const outlet = document.getElementById('filter-outlet').value, karyawan = document.getElementById('filter-karyawan').value;
@@ -778,7 +826,11 @@
             });
 
             logsRange.forEach(r => {
-                const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
+                const isIzin = r.tipe === 'Izin';
+                const isLibur = r.tipe === 'Libur';
+                const isMasuk = r.tipe === 'Masuk'; // HANYA DIHITUNG SAAT MASUK (FIX DOUBLE COUNTING)
+                const isTelat = r.status.includes('TERLAMBAT');
+                const isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
                 
                 if(!rekapAkumulasi[r.nama]) rekapAkumulasi[r.nama] = { outlet: r.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0, alpa: 0, total_masuk: 0 };
 
@@ -814,13 +866,13 @@
                 else if (kategori === 'Alpa') { tableLogsToRender = alpaList.map(nama => ({ ts: '-', tanggal: `${tglStart} s/d ${tglEnd}`, jam: '-', nama: nama, outlet: outlet, shift: '-', tipe: '-', status: 'ALPA', info: 'Tidak ada log', lembur: 0, foto: '-' })); } 
                 else {
                     tableLogsToRender = logsRange.filter(r => {
-                        const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk' || r.tipe === 'Pulang', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
+                        const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
                         
                         const shiftRule = gShift.find(s => s.kode === r.shift && s.outlet === r.outlet);
                         const batasLembur = shiftRule && shiftRule.ambangLembur ? parseInt(shiftRule.ambangLembur) : 60;
                         const isLemburValid = r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) >= batasLembur;
 
-                        if(kategori === 'Rajin') return isMasuk && !isTelat; if(kategori === 'Telat') return isTelat;
+                        if(kategori === 'Rajin') return isMasuk && !isTelat; if(kategori === 'Telat') return isMasuk && isTelat;
                         if(kategori === 'Izin') return isIzin || (isManual && r.tipe === 'Izin'); if(kategori === 'Libur') return isLibur || (isManual && r.tipe === 'Libur');
                         if(kategori === 'Lembur') return isLemburValid; return true;
                     });
@@ -848,7 +900,6 @@
                 document.getElementById('log-count').innerText = `${tableLogsToRender.length} Data Tersaring`;
 
             } else {
-                // =============== MODE REKAP =================
                 document.getElementById('tabel-mode-rinci').classList.add('hidden');
                 document.getElementById('tabel-mode-rekap').classList.remove('hidden');
                 document.getElementById('judul-tabel').innerText = "📊 Rekap Akumulasi Gaji";
@@ -879,12 +930,12 @@
                     htmlRekap += `<tr class="hover:bg-slate-50 border-b border-slate-50 transition-colors">
                         <td class="px-4 py-5 font-black text-slate-800 border-r border-slate-200/50 sticky left-0 z-10 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.02)]">${r.nama}</td>
                         <td class="px-4 py-5 font-bold text-blue-600 border-r border-slate-200/50">${r.outlet}</td>
-                        <td class="px-4 py-5 text-center font-black text-emerald-600 bg-emerald-50/50 border-r border-slate-200/50 text-base shadow-inner">${r.total_masuk} <span class="text-[10px] font-bold text-emerald-400">Hari</span></td>
+                        <td class="px-4 py-5 text-center font-black text-white bg-gradient-to-r from-emerald-500 to-teal-500 text-sm shadow-inner border-r border-emerald-600/50">${r.total_masuk} <span class="text-[10px] font-bold text-emerald-100">Hari</span></td>
                         <td class="px-4 py-5 text-center font-bold text-emerald-600 border-r border-slate-200/50">${r.rajin}x</td>
                         <td class="px-4 py-5 text-center font-bold text-orange-600 border-r border-slate-200/50">${r.telat}x</td>
                         <td class="px-4 py-5 text-center font-bold text-amber-500 border-r border-slate-200/50">${r.izin}x</td>
                         <td class="px-4 py-5 text-center font-bold text-indigo-500 border-r border-slate-200/50">${r.libur}x</td>
-                        <td class="px-4 py-5 text-center font-black text-rose-600 bg-rose-50/50 border-r border-slate-200/50 shadow-inner">${r.alpa}x</td>
+                        <td class="px-4 py-5 text-center font-black text-white bg-gradient-to-r from-rose-500 to-red-600 shadow-inner border-r border-rose-600/50">${r.alpa}x</td>
                         <td class="px-4 py-5 text-center font-black text-blue-600">${r.lembur} <span class="text-[10px] font-bold text-blue-400">Mnt</span></td>
                     </tr>`;
                 });
