@@ -24,7 +24,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
-    <!-- FONT AWESOME KEKINIAN (V6) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
@@ -58,25 +57,45 @@
         .glass-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .glass-bottom-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(226, 232, 240, 0.8); }
         
-        /* Card Hover Effects */
         .card-premium { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(226, 232, 240, 0.8); }
         .card-premium:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05); border-color: rgba(203, 213, 225, 1); }
 
-        /* Safe area for mobile notch */
         @supports (padding-bottom: env(safe-area-inset-bottom)) {
             #bottom-nav-bar { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); }
         }
+
+        /* 🚀 SISTEM DRAWER / BOTTOM SHEET 🚀 */
+        .drawer-overlay {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .drawer-overlay.show { opacity: 1; pointer-events: auto; }
+
+        .drawer-panel {
+            position: fixed; z-index: 101; background: white; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column; box-shadow: 0 -20px 60px rgba(0,0,0,0.15);
+            /* Mobile: Bottom Sheet */
+            bottom: 0; left: 0; right: 0; border-radius: 2rem 2rem 0 0; max-height: 90vh; transform: translateY(100%);
+        }
+        
+        @media (min-width: 1024px) {
+            .drawer-panel {
+                /* PC: Side Drawer */
+                top: 0; bottom: 0; right: 0; left: auto; width: 450px; border-radius: 2rem 0 0 2rem; max-height: 100vh; transform: translateX(100%); box-shadow: -20px 0 60px rgba(0,0,0,0.15);
+            }
+            .drawer-panel.w-wide { width: 90vw; max-width: 1200px; }
+        }
+
+        .drawer-panel.show { transform: translate(0, 0) !important; }
     </style>
 </head>
 <body class="flex h-[100dvh] text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
 
-    <!-- MOBILE OVERLAY -->
+    <!-- MOBILE OVERLAY FOR SIDEBAR -->
     <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity duration-300" onclick="toggleSidebar()"></div>
 
-    <!-- SIDEBAR NAVIGATION (ENTERPRISE STYLE) -->
+    <!-- SIDEBAR NAVIGATION -->
     <aside id="sidebar" class="fixed lg:static top-0 left-0 h-full w-[280px] bg-white border-r border-slate-200/80 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-[20px_0_40px_rgba(0,0,0,0.05)] lg:shadow-none flex flex-col rounded-r-[2.5rem] lg:rounded-none">
-        
-        <!-- Logo Area -->
         <div class="p-6 md:p-8 flex items-center justify-between lg:justify-start border-b border-slate-100 shrink-0">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-[1rem] flex items-center justify-center shadow-lg shadow-blue-500/30">
@@ -90,9 +109,8 @@
             <button class="lg:hidden w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-rose-50 hover:text-rose-500 transition-colors" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
         </div>
 
-        <!-- Navigation Links -->
         <nav class="flex-1 overflow-y-auto custom-scroll p-4 space-y-1.5 mt-2">
-            <p class="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 mt-2">Analitik</p>
+            <p class="px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 mt-2">Analitik</p>
             
             <button id="nav-laporan" onclick="switchView('view-laporan')" class="nav-btn active w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold bg-blue-50 text-blue-700 relative overflow-hidden group">
                 <div class="absolute inset-y-0 left-0 w-1.5 bg-blue-600 rounded-r-full nav-indicator"></div>
@@ -100,7 +118,7 @@
                 Dashboard
             </button>
 
-            <p class="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-8 mb-3">Manajemen Data</p>
+            <p class="px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-8 mb-3">Manajemen Data</p>
 
             <button id="nav-karyawan" onclick="switchView('view-karyawan')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-600 hover:bg-slate-50 relative overflow-hidden group">
                 <div class="absolute inset-y-0 left-0 w-1.5 bg-blue-600 rounded-r-full nav-indicator hidden"></div>
@@ -119,14 +137,14 @@
             </button>
             
             <div class="mt-6 px-4">
-                <button onclick="bukaModalMatrix()" class="w-full flex justify-center items-center gap-2 px-4 py-3.5 bg-slate-900 text-white rounded-xl transition-all duration-300 text-xs font-black shadow-[0_8px_15px_rgba(15,23,42,0.2)] hover:bg-indigo-600 hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:scale-95 group">
+                <button onclick="openDrawer('drawer-matrix')" class="w-full flex justify-center items-center gap-2 px-4 py-3.5 bg-slate-900 text-white rounded-xl transition-all duration-300 text-xs font-black shadow-[0_8px_15px_rgba(15,23,42,0.2)] hover:bg-indigo-600 hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:scale-95 group">
                     <i class="fas fa-calendar-check text-indigo-400 group-hover:text-white transition-colors"></i> Matrix WFM
                 </button>
             </div>
         </nav>
 
         <div class="p-6 shrink-0 border-t border-slate-100 hidden lg:block">
-            <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-200/60 shadow-sm cursor-pointer hover:bg-white hover:border-slate-300 transition-colors">
+            <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-200/60 shadow-sm">
                 <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg border-2 border-white shadow-sm"><i class="fas fa-user-tie"></i></div>
                 <div class="flex flex-col min-w-0">
                     <span class="text-sm font-black text-slate-800 truncate">Sistem HRD</span>
@@ -138,8 +156,6 @@
 
     <!-- MAIN CONTENT AREA -->
     <main class="flex-1 flex flex-col min-w-0 relative">
-        
-        <!-- Top App Bar (Glassmorphism) -->
         <header class="h-[72px] lg:h-24 glass-header border-b border-slate-200/60 flex items-center justify-between px-4 lg:px-10 shrink-0 z-20">
             <div class="flex items-center gap-4">
                 <button class="lg:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-600 border border-slate-200 shadow-sm hover:text-blue-600 transition active:scale-90" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
@@ -160,17 +176,14 @@
             
             <!-- VIEW: LAPORAN -->
             <div id="view-laporan" class="view-content active flex-col gap-6 w-full max-w-7xl mx-auto">
-                
                 <div class="flex flex-col sm:flex-row justify-end items-center gap-3 mb-2">
                     <div class="flex w-full sm:w-auto gap-2">
-                        <button onclick="bukaModalManual()" class="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-pen-to-square text-amber-500"></i> Input Manual</button>
-                        <button onclick="bukaModalImport()" class="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-file-import text-indigo-500"></i> Import Data</button>
+                        <button onclick="openDrawer('drawer-manual')" class="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-pen-to-square text-amber-500"></i> Input Manual</button>
+                        <button onclick="openDrawer('drawer-import')" class="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-file-import text-indigo-500"></i> Import Data</button>
                     </div>
                 </div>
 
-                <!-- FILTER PANEL (Glassy SaaS Style) -->
                 <div class="bg-white/80 backdrop-blur-xl p-6 lg:p-8 rounded-[2rem] shadow-sm border border-white relative overflow-hidden">
-                    <!-- Subtle background decoration -->
                     <div class="absolute top-0 right-0 w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative z-10">
@@ -206,7 +219,6 @@
                     </div>
                 </div>
 
-                <!-- KOTAK SUMMARY (PREMIUM CARDS) -->
                 <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 lg:gap-4 mt-2">
                     <div class="card-premium bg-white p-5 rounded-[1.5rem] flex flex-col justify-between relative overflow-hidden group">
                         <div class="absolute -right-4 -bottom-4 text-emerald-50 text-8xl opacity-60 transform rotate-12 group-hover:scale-110 transition-transform duration-500"><i class="fas fa-star"></i></div>
@@ -252,18 +264,16 @@
                     </div>
                 </div>
 
-                <!-- TABEL DATA -->
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col min-h-[500px]">
                     <div class="bg-white border-b border-slate-100 p-6 font-black text-sm uppercase tracking-widest flex justify-between items-center shrink-0">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 border border-slate-100 flex items-center justify-center shadow-inner"><i class="fas fa-table text-sm"></i></div>
+                            <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 border border-slate-100 flex items-center justify-center shadow-inner"><i class="fas fa-table text-sm"></i></div>
                             <span id="judul-tabel" class="text-slate-800 text-base">📋 Laporan Rinci</span>
                         </div>
                         <span id="log-count" class="text-[10px] font-black text-blue-600 bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 shadow-sm uppercase tracking-widest">0 Data</span>
                     </div>
                     
                     <div class="flex-1 overflow-x-auto custom-scroll relative bg-slate-50/30">
-                        <!-- TABEL 1: MODE RINCI -->
                         <table id="tabel-mode-rinci" class="w-full text-left text-xs md:text-sm whitespace-nowrap">
                             <thead class="bg-slate-100/90 backdrop-blur-md text-slate-500 font-bold uppercase text-[10px] sticky top-0 z-10 shadow-sm tracking-widest">
                                 <tr>
@@ -280,7 +290,6 @@
                             </tbody>
                         </table>
 
-                        <!-- TABEL 2: MODE REKAP TOTAL -->
                         <table id="tabel-mode-rekap" class="hidden w-full text-left text-xs md:text-sm whitespace-nowrap border-collapse">
                             <thead class="bg-slate-100/90 backdrop-blur-md sticky top-0 z-20 shadow-sm font-black uppercase text-[10px] tracking-wider border-b border-slate-200">
                                 <tr>
@@ -310,7 +319,7 @@
                         <h2 class="text-2xl font-black text-slate-800">Direktori Karyawan</h2>
                         <p class="text-xs font-bold text-slate-400 mt-1">Data master seluruh staf HC.</p>
                     </div>
-                    <button onclick="bukaModalMatrix()" class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95">
+                    <button onclick="openDrawer('drawer-matrix')" class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95">
                         <i class="fas fa-calendar-check text-indigo-200 text-base"></i> Atur Jadwal & Absen Masal
                     </button>
                 </div>
@@ -339,7 +348,7 @@
                         <h2 class="text-2xl font-black text-slate-800">Master Outlet</h2>
                         <p class="text-xs font-bold text-slate-400 mt-1">Titik GPS & Radius Absensi.</p>
                     </div>
-                    <button onclick="bukaModalOutlet()" class="w-full sm:w-auto bg-slate-900 text-white px-6 py-3.5 rounded-xl font-black shadow-lg shadow-slate-900/20 hover:bg-slate-800 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-plus text-slate-400"></i> Tambah Outlet</button>
+                    <button onclick="openDrawer('drawer-outlet')" class="w-full sm:w-auto bg-slate-900 text-white px-6 py-3.5 rounded-xl font-black shadow-lg shadow-slate-900/20 hover:bg-slate-800 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-plus text-slate-400"></i> Tambah Outlet</button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
@@ -364,7 +373,7 @@
                         <h2 class="text-2xl font-black text-slate-800">Aturan Waktu & Shift</h2>
                         <p class="text-xs font-bold text-slate-400 mt-1">Konfigurasi batas telat dan lembur.</p>
                     </div>
-                    <button onclick="bukaModalShift()" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(16,185,129,0.3)] hover:bg-emerald-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-plus text-emerald-200"></i> Buat Shift Baru</button>
+                    <button onclick="openDrawer('drawer-shift')" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(16,185,129,0.3)] hover:bg-emerald-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-plus text-emerald-200"></i> Buat Shift Baru</button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
@@ -386,7 +395,7 @@
         </div>
     </main>
 
-    <!-- MOBILE BOTTOM NAV BAR (APP STYLE) -->
+    <!-- MOBILE BOTTOM NAV BAR (GLASSMORPHISM) -->
     <nav class="fixed bottom-0 left-0 w-full glass-bottom-nav flex justify-around p-2 pb-safe lg:hidden z-[50]" id="bottom-nav-bar">
         <button id="nav-mob-laporan" onclick="switchView('view-laporan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-blue-600 w-full transition-colors relative">
             <div class="w-12 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-chart-pie text-lg"></i></div>
@@ -397,131 +406,195 @@
             <span class="text-[9px] font-extrabold tracking-wide">Staf</span>
         </button>
         <button id="nav-mob-outlet" onclick="switchView('view-outlet', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 w-full hover:text-blue-600 transition-colors relative">
-            <div class="w-12 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-store text-lg"></i></div>
+            <div class="w-12 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-map-location-dot text-lg"></i></div>
             <span class="text-[9px] font-extrabold tracking-wide">Outlet</span>
         </button>
         <button id="nav-mob-shift" onclick="switchView('view-shift', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 w-full hover:text-blue-600 transition-colors relative">
-            <div class="w-12 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-clock text-lg"></i></div>
+            <div class="w-12 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-clock-rotate-left text-lg"></i></div>
             <span class="text-[9px] font-extrabold tracking-wide">Shift</span>
         </button>
     </nav>
 
-    <!-- SEMUA MODAL POP-UP (PREMIUM SAAS STYLE) -->
-    
-    <div id="modal-import" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"><div class="bg-white p-6 md:p-8 rounded-[2rem] w-full max-w-md shadow-2xl modal-enter border border-slate-100"><div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mb-5 shadow-inner border border-indigo-100"><i class="fas fa-file-excel"></i></div><h2 class="text-xl font-black mb-2 text-slate-800">Import Data Excel</h2><p class="text-xs text-slate-500 mb-6 font-medium leading-relaxed">Gunakan format CSV untuk mengunggah data absensi secara massal.</p><button onclick="downloadTemplateCSV()" class="w-full py-3.5 bg-slate-50 text-blue-600 border border-slate-200 font-black rounded-xl mb-5 hover:bg-white hover:border-blue-300 transition text-sm flex justify-center items-center gap-2 shadow-sm"><i class="fas fa-download"></i> Unduh Template CSV</button><input type="file" id="file-csv" accept=".csv" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl mb-6 text-sm font-bold outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer transition-colors"><div class="flex gap-3"><button onclick="tutupModal('modal-import')" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button><button onclick="prosesImportCSV()" class="flex-[2] py-3.5 bg-indigo-600 text-white font-black rounded-xl text-sm transition hover:bg-indigo-700 shadow-[0_8px_15px_rgba(79,70,229,0.3)] flex justify-center items-center gap-2"><i class="fas fa-upload"></i> Proses Upload</button></div></div></div>
-    
-    <div id="modal-manual" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"><div class="bg-white p-6 md:p-8 rounded-[2rem] w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh] custom-scroll modal-enter border border-slate-100"><div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl mb-5 shadow-inner border border-amber-100"><i class="fas fa-pen-to-square"></i></div><h2 class="text-xl font-black mb-6 text-slate-800">Input Data Manual</h2><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Tanggal</label><input type="date" id="man-tgl" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition"></div><div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Jam</label><input type="time" id="man-jam" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition"></div></div><div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Nama Staf</label><select id="man-nama" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition cursor-pointer"></select></div><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Cabang</label><select id="man-outlet" onchange="loadShiftManual()" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition cursor-pointer"></select></div><div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Shift Target</label><select id="man-shift" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition cursor-pointer"><option value="-" selected>Pilih Shift</option></select></div></div><div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Tipe Absen</label><select id="man-tipe" class="w-full p-3 bg-slate-50 border border-amber-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition cursor-pointer"><option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option><option value="Izin">Izin / Sakit</option><option value="Libur">Jadwal Libur (Day Off)</option></select></div><div class="mb-8"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Keterangan / Alasan</label><input type="text" id="man-ket" placeholder="Alasan (Cth: Lupa Bawa HP)" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition"></div><div class="flex gap-3"><button onclick="tutupModal('modal-manual')" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button><button onclick="simpanManual()" class="flex-[2] py-3.5 bg-amber-500 text-white font-black rounded-xl text-sm hover:bg-amber-600 transition shadow-[0_8px_15px_rgba(245,158,11,0.3)] flex justify-center items-center gap-2"><i class="fas fa-save"></i> Simpan Data</button></div></div></div>
-    
-    <div id="modal-karyawan" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"><div class="bg-white p-6 md:p-8 rounded-[2rem] w-full max-w-sm shadow-2xl modal-enter border border-slate-100"><h2 class="text-xl font-black mb-6 text-slate-800">Edit Data Staf</h2><input type="hidden" id="kar-oldnama"><div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Nama Lengkap</label><input type="text" id="kar-nama" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition"></div><div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Jabatan Sistem</label><select id="kar-role" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition cursor-pointer"><option value="Staff">Staff</option><option value="Senior">Senior</option></select></div><div class="mb-8"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Penempatan</label><select id="kar-outlet" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition cursor-pointer"></select></div><div class="flex gap-3"><button onclick="tutupModal('modal-karyawan')" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button><button onclick="simpanData('edit_karyawan')" class="flex-1 py-3.5 bg-blue-600 text-white font-black rounded-xl text-sm hover:bg-blue-700 transition shadow-[0_8px_15px_rgba(37,99,235,0.3)]">Simpan</button></div></div></div>
-    
-    <div id="modal-outlet" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"><div class="bg-white p-6 md:p-8 rounded-[2rem] w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh] custom-scroll modal-enter border border-slate-100"><h2 id="title-modal-out" class="text-xl font-black mb-4 text-slate-800">Form Outlet</h2><div id="map"></div><input type="hidden" id="out-oldnama"><div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Nama Outlet</label><input type="text" id="out-nama" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition"></div><div class="grid grid-cols-2 gap-3 mb-4"><div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Latitude (Y)</label><input type="text" id="out-lat" readonly class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold outline-none text-slate-500"></div><div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Longitude (X)</label><input type="text" id="out-lng" readonly class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold outline-none text-slate-500"></div></div><div class="mb-8"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Radius Kunci GPS (Meter)</label><input type="number" id="out-rad" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition" placeholder="Cth: 50"></div><div class="flex gap-3"><button onclick="tutupModal('modal-outlet')" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button><button onclick="simpanData('outlet')" class="flex-1 py-3.5 bg-blue-600 text-white font-black rounded-xl text-sm hover:bg-blue-700 transition shadow-[0_8px_15px_rgba(37,99,235,0.3)]">Simpan</button></div></div></div>
-    
-    <div id="modal-shift" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh] modal-enter border border-slate-100">
-            <div class="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 lg:p-8 text-white relative shrink-0">
-                <i class="fas fa-business-time absolute -bottom-4 -right-4 text-8xl opacity-20 transform -rotate-12"></i>
-                <h2 id="title-modal-shf" class="text-2xl font-black relative z-10 tracking-tight">Form Shift</h2>
-                <p class="text-xs text-emerald-100 font-medium mt-1.5 relative z-10">Atur jam operasional & filter otomatis sistem.</p>
-            </div>
-            
-            <div class="p-6 lg:p-8 overflow-y-auto custom-scroll relative z-10 flex-1 bg-white">
-                <input type="hidden" id="shf-oldoutlet"><input type="hidden" id="shf-oldkode">
-                
-                <div class="space-y-6">
-                    <div>
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Cabang & Kode Shift</label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <select id="shf-outlet" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 focus:bg-white shadow-sm transition-colors cursor-pointer"></select>
-                            <input type="text" id="shf-nama" placeholder="Kode (Cth: PAGI)" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 focus:bg-white shadow-sm transition-colors uppercase">
-                        </div>
-                    </div>
+    <!-- ========================================== -->
+    <!-- SISTEM DRAWER / BOTTOM SHEET UNIFIED -->
+    <!-- ========================================== -->
+    <div id="global-overlay" class="drawer-overlay" onclick="closeAllDrawers()"></div>
 
-                    <div class="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-200 shadow-sm relative overflow-hidden group">
-                        <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-400 group-hover:bg-emerald-500 transition-colors"></div>
-                        <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 ml-1"><i class="fas fa-clock text-emerald-500 text-sm"></i> Jam Operasional</label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="relative">
-                                <span class="absolute -top-2.5 left-3 bg-slate-50 px-1.5 text-[9px] font-black text-slate-400">MASUK</span>
-                                <input type="time" id="shf-masuk" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 text-slate-700 transition shadow-sm">
-                            </div>
-                            <div class="relative">
-                                <span class="absolute -top-2.5 left-3 bg-slate-50 px-1.5 text-[9px] font-black text-slate-400">PULANG</span>
-                                <input type="time" id="shf-keluar" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 text-slate-700 transition shadow-sm">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-indigo-50/50 p-5 rounded-[1.5rem] border border-indigo-100 shadow-sm relative overflow-hidden group">
-                        <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-400 group-hover:bg-indigo-500 transition-colors"></div>
-                        <label class="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 ml-1"><i class="fas fa-sliders-h text-indigo-400 text-sm"></i> Aturan Ketat (Menit)</label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[9px] font-bold text-rose-500 mb-1.5 block ml-1">Toleransi Telat</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400 text-lg"><i class="fas fa-user-clock"></i></span>
-                                    <input type="number" id="shf-tol" placeholder="15" value="15" class="w-full p-3.5 pl-11 bg-white border border-rose-200 rounded-xl text-sm font-black outline-none focus:border-rose-500 text-rose-600 shadow-sm transition">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="text-[9px] font-bold text-blue-600 mb-1.5 block ml-1">Syarat Min. Lembur</label>
-                                <div class="relative">
-                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 text-lg"><i class="fas fa-fire"></i></span>
-                                    <input type="number" id="shf-lembur" placeholder="60" value="60" class="w-full p-3.5 pl-11 bg-white border border-blue-200 rounded-xl text-sm font-black outline-none focus:border-blue-500 text-blue-700 shadow-sm transition">
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-[9px] text-slate-500 font-medium mt-4 leading-relaxed"><i class="fas fa-info-circle text-indigo-400"></i> Lembur di bawah batas waktu syarat tidak akan diakui oleh sistem penggajian.</p>
-                    </div>
+    <!-- DRAWER: TIMELINE DETAIL -->
+    <div id="drawer-detail" class="drawer-panel">
+        <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
+        <div class="px-6 py-4 lg:py-6 lg:px-8 border-b border-slate-100 flex justify-between items-center shrink-0">
+            <div class="flex items-center gap-4">
+                <div id="drawer-icon" class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner border"></div>
+                <div>
+                    <h3 id="drawer-title" class="font-black text-lg text-slate-800 tracking-tight">Judul</h3>
+                    <p id="drawer-subtitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Rincian Timeline</p>
                 </div>
             </div>
+            <button onclick="closeAllDrawers()" class="hidden lg:flex w-8 h-8 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-500 rounded-full items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="drawer-detail-content" class="flex-1 overflow-y-auto custom-scroll p-6 lg:p-8 bg-slate-50/50"></div>
+    </div>
 
-            <div class="p-5 lg:p-6 border-t border-slate-100 bg-white shrink-0 flex gap-3">
-                <button onclick="tutupModal('modal-shift')" class="flex-[1] py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-sm shadow-sm">Batal</button>
-                <button onclick="simpanData('shift')" class="flex-[2] py-3.5 bg-emerald-600 text-white font-black rounded-xl hover:bg-emerald-700 shadow-[0_8px_15px_rgba(16,185,129,0.3)] transition-all active:scale-95 text-sm flex justify-center items-center gap-2"><i class="fas fa-save text-emerald-200 text-lg"></i> Simpan Aturan</button>
+    <!-- DRAWER: IMPORT -->
+    <div id="drawer-import" class="drawer-panel">
+        <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
+        <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
+            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mb-5 shadow-inner border border-indigo-100"><i class="fas fa-file-excel"></i></div>
+            <h2 class="text-xl font-black mb-2 text-slate-800">Import Data Excel</h2>
+            <p class="text-xs text-slate-500 mb-6 font-medium leading-relaxed">Gunakan format CSV untuk mengunggah data absensi secara massal.</p>
+            <button onclick="downloadTemplateCSV()" class="w-full py-3.5 bg-slate-50 text-blue-600 border border-slate-200 font-black rounded-xl mb-5 hover:bg-white hover:border-blue-300 transition text-sm flex justify-center items-center gap-2 shadow-sm"><i class="fas fa-download"></i> Unduh Template CSV</button>
+            <input type="file" id="file-csv" accept=".csv" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl mb-6 text-sm font-bold outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-black file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer transition-colors">
+            <div class="flex gap-3">
+                <button onclick="closeAllDrawers()" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button>
+                <button onclick="prosesImportCSV()" class="flex-[2] py-3.5 bg-indigo-600 text-white font-black rounded-xl text-sm transition hover:bg-indigo-700 shadow-[0_8px_15px_rgba(79,70,229,0.3)] flex justify-center items-center gap-2"><i class="fas fa-upload"></i> Proses Upload</button>
             </div>
         </div>
     </div>
-
-    <!-- MODAL MATRIX JADWAL OFF (LIBUR & WFM) -->
-    <div id="modal-jadwal-shift" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4">
-        <div class="bg-white rounded-[2rem] w-full max-w-[95vw] lg:max-w-7xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden modal-enter border border-slate-100">
-            
-            <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 p-5 sm:p-6 lg:p-8 text-white flex justify-between items-center shrink-0 relative overflow-hidden">
-                <i class="fas fa-calendar-alt absolute -right-4 -bottom-4 text-8xl opacity-20 transform -rotate-12"></i>
-                <div class="relative z-10">
-                    <h2 class="text-xl sm:text-2xl font-black flex items-center gap-3 tracking-tight"><i class="fas fa-calendar-check text-indigo-200"></i> Manajer Jadwal & Absen Masal</h2>
-                    <p class="text-[10px] sm:text-xs text-indigo-100 font-medium mt-1.5">Atur Shift, Off, Izin, atau rapel data absen masa lalu dengan antarmuka Matriks.</p>
+    
+    <!-- DRAWER: MANUAL -->
+    <div id="drawer-manual" class="drawer-panel">
+        <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
+        <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
+            <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl mb-5 shadow-inner border border-amber-100"><i class="fas fa-pen-to-square"></i></div>
+            <h2 class="text-xl font-black mb-6 text-slate-800">Input Data Manual</h2>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Tanggal</label><input type="date" id="man-tgl" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition"></div>
+                <div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Jam</label><input type="time" id="man-jam" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition"></div>
+            </div>
+            <div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Nama Staf</label><select id="man-nama" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition cursor-pointer"></select></div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Cabang</label><select id="man-outlet" onchange="loadShiftManual()" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition cursor-pointer"></select></div>
+                <div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Shift Target</label><select id="man-shift" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition cursor-pointer"><option value="-" selected>Pilih Shift</option></select></div>
+            </div>
+            <div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Tipe Absen</label><select id="man-tipe" class="w-full p-3 bg-slate-50 border border-amber-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition cursor-pointer"><option value="Masuk">Absen Masuk</option><option value="Pulang">Absen Pulang</option><option value="Izin">Izin / Sakit</option><option value="Libur">Jadwal Libur (Day Off)</option></select></div>
+            <div class="mb-8"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Keterangan / Alasan</label><input type="text" id="man-ket" placeholder="Alasan (Cth: Lupa Bawa HP)" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-amber-500 focus:bg-white transition"></div>
+            <div class="flex gap-3">
+                <button onclick="closeAllDrawers()" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button>
+                <button onclick="simpanManual()" class="flex-[2] py-3.5 bg-amber-500 text-white font-black rounded-xl text-sm hover:bg-amber-600 transition shadow-[0_8px_15px_rgba(245,158,11,0.3)] flex justify-center items-center gap-2"><i class="fas fa-save"></i> Simpan Data</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- DRAWER: KARYAWAN -->
+    <div id="drawer-karyawan" class="drawer-panel">
+        <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
+        <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
+            <h2 class="text-xl font-black mb-6 text-slate-800">Edit Data Staf</h2>
+            <input type="hidden" id="kar-oldnama">
+            <div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Nama Lengkap</label><input type="text" id="kar-nama" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition"></div>
+            <div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Jabatan Sistem</label><select id="kar-role" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition cursor-pointer"><option value="Staff">Staff</option><option value="Senior">Senior</option></select></div>
+            <div class="mb-8"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Penempatan</label><select id="kar-outlet" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition cursor-pointer"></select></div>
+            <div class="flex gap-3">
+                <button onclick="closeAllDrawers()" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button>
+                <button onclick="simpanData('edit_karyawan')" class="flex-1 py-3.5 bg-blue-600 text-white font-black rounded-xl text-sm hover:bg-blue-700 transition shadow-[0_8px_15px_rgba(37,99,235,0.3)]">Simpan</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- DRAWER: OUTLET -->
+    <div id="drawer-outlet" class="drawer-panel">
+        <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
+        <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
+            <h2 id="title-modal-out" class="text-xl font-black mb-4 text-slate-800">Form Outlet</h2>
+            <div id="map"></div>
+            <input type="hidden" id="out-oldnama">
+            <div class="mb-4"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Nama Outlet</label><input type="text" id="out-nama" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition"></div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Latitude (Y)</label><input type="text" id="out-lat" readonly class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold outline-none text-slate-500"></div>
+                <div><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Longitude (X)</label><input type="text" id="out-lng" readonly class="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold outline-none text-slate-500"></div>
+            </div>
+            <div class="mb-8"><label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block ml-1">Radius Kunci GPS (Meter)</label><input type="number" id="out-rad" class="w-full p-3 bg-slate-50 border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition" placeholder="Cth: 50"></div>
+            <div class="flex gap-3">
+                <button onclick="closeAllDrawers()" class="flex-1 py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition text-sm shadow-sm">Batal</button>
+                <button onclick="simpanData('outlet')" class="flex-1 py-3.5 bg-blue-600 text-white font-black rounded-xl text-sm hover:bg-blue-700 transition shadow-[0_8px_15px_rgba(37,99,235,0.3)]">Simpan</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- DRAWER: SHIFT -->
+    <div id="drawer-shift" class="drawer-panel">
+        <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0 absolute z-50" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-white/50 rounded-full"></div></div>
+        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 p-6 lg:p-8 text-white relative shrink-0">
+            <i class="fas fa-business-time absolute -bottom-4 -right-4 text-8xl opacity-20 transform -rotate-12"></i>
+            <h2 id="title-modal-shf" class="text-2xl font-black relative z-10 tracking-tight mt-2 lg:mt-0">Form Shift</h2>
+            <p class="text-xs text-emerald-100 font-medium mt-1.5 relative z-10">Atur jam operasional & filter otomatis sistem.</p>
+        </div>
+        <div class="p-6 lg:p-8 overflow-y-auto custom-scroll relative z-10 flex-1 bg-white">
+            <input type="hidden" id="shf-oldoutlet"><input type="hidden" id="shf-oldkode">
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Cabang & Kode Shift</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <select id="shf-outlet" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 focus:bg-white shadow-sm transition-colors cursor-pointer"></select>
+                        <input type="text" id="shf-nama" placeholder="Kode (Cth: PAGI)" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 focus:bg-white shadow-sm transition-colors uppercase">
+                    </div>
                 </div>
-                <button onclick="tutupModal('modal-jadwal-shift')" class="text-white hover:text-rose-200 transition bg-white/20 hover:bg-rose-500 w-10 h-10 rounded-full flex items-center justify-center relative z-10 active:scale-90 shadow-sm"><i class="fas fa-times text-lg"></i></button>
-            </div>
-            
-            <div class="p-4 sm:p-5 lg:p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
-                <div class="flex-1">
-                    <label class="text-[10px] font-black text-indigo-600 uppercase tracking-widest block mb-1.5 ml-1"><i class="fas fa-calendar-day mr-1"></i> Pilih Bulan</label>
-                    <input type="month" id="matrix-bulan" class="w-full p-3.5 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-indigo-800 transition cursor-pointer" onchange="renderTabelMatrix()">
+                <div class="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-200 shadow-sm relative overflow-hidden group">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-emerald-400 group-hover:bg-emerald-500 transition-colors"></div>
+                    <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 ml-1"><i class="fas fa-clock text-emerald-500 text-sm"></i> Jam Operasional</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="relative"><span class="absolute -top-2.5 left-3 bg-slate-50 px-1.5 text-[9px] font-black text-slate-400">MASUK</span><input type="time" id="shf-masuk" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 text-slate-700 transition shadow-sm"></div>
+                        <div class="relative"><span class="absolute -top-2.5 left-3 bg-slate-50 px-1.5 text-[9px] font-black text-slate-400">PULANG</span><input type="time" id="shf-keluar" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-emerald-500 text-slate-700 transition shadow-sm"></div>
+                    </div>
                 </div>
-                <div class="flex-1">
-                    <label class="text-[10px] font-black text-indigo-600 uppercase tracking-widest block mb-1.5 ml-1"><i class="fas fa-store mr-1"></i> Pilih Cabang</label>
-                    <select id="matrix-outlet" class="w-full p-3.5 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-indigo-800 transition cursor-pointer" onchange="renderTabelMatrix()">
-                    </select>
+                <div class="bg-indigo-50/50 p-5 rounded-[1.5rem] border border-indigo-100 shadow-sm relative overflow-hidden group">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-400 group-hover:bg-indigo-500 transition-colors"></div>
+                    <label class="text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 ml-1"><i class="fas fa-sliders-h text-indigo-400 text-sm"></i> Aturan Ketat (Menit)</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[9px] font-bold text-rose-500 mb-1.5 block ml-1">Toleransi Telat</label>
+                            <div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400 text-lg"><i class="fas fa-user-clock"></i></span><input type="number" id="shf-tol" placeholder="15" value="15" class="w-full p-3.5 pl-11 bg-white border border-rose-200 rounded-xl text-sm font-black outline-none focus:border-rose-500 text-rose-600 shadow-sm transition"></div>
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-bold text-blue-600 mb-1.5 block ml-1">Syarat Min. Lembur</label>
+                            <div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 text-lg"><i class="fas fa-fire"></i></span><input type="number" id="shf-lembur" placeholder="60" value="60" class="w-full p-3.5 pl-11 bg-white border border-blue-200 rounded-xl text-sm font-black outline-none focus:border-blue-500 text-blue-700 shadow-sm transition"></div>
+                        </div>
+                    </div>
+                    <p class="text-[9px] text-slate-500 font-medium mt-4 leading-relaxed"><i class="fas fa-info-circle text-indigo-400"></i> Lembur di bawah batas waktu syarat tidak akan diakui oleh sistem penggajian.</p>
                 </div>
             </div>
+        </div>
+        <div class="p-5 lg:p-6 border-t border-slate-100 bg-white shrink-0 flex gap-3">
+            <button onclick="closeAllDrawers()" class="flex-[1] py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-sm shadow-sm">Batal</button>
+            <button onclick="simpanData('shift')" class="flex-[2] py-3.5 bg-emerald-600 text-white font-black rounded-xl hover:bg-emerald-700 shadow-[0_8px_15px_rgba(16,185,129,0.3)] transition-all active:scale-95 text-sm flex justify-center items-center gap-2"><i class="fas fa-save text-emerald-200 text-lg"></i> Simpan Aturan</button>
+        </div>
+    </div>
 
-            <div class="flex-1 overflow-auto custom-scroll relative bg-slate-50/50" id="container-tabel-matrix">
-                <table class="w-full text-left text-xs whitespace-nowrap border-collapse">
-                    <thead class="text-slate-500 font-bold sticky top-0 z-20 shadow-sm" id="thead-matrix"></thead>
-                    <tbody id="tbody-matrix" class="divide-y divide-slate-200/60 text-slate-700 bg-white">
-                        <tr><td class="p-10 text-center text-slate-400 italic font-medium text-sm">Silakan pilih Cabang dan Bulan terlebih dahulu.</td></tr>
-                    </tbody>
-                </table>
+    <!-- DRAWER: MATRIX (WIDE DRAWER / BOTTOM SHEET) -->
+    <div id="drawer-matrix" class="drawer-panel w-wide">
+        <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0 absolute z-50" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-white/50 rounded-full"></div></div>
+        <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 p-5 sm:p-6 lg:p-8 text-white flex justify-between items-center shrink-0 relative overflow-hidden">
+            <i class="fas fa-calendar-alt absolute -right-4 -bottom-4 text-8xl opacity-20 transform -rotate-12"></i>
+            <div class="relative z-10 mt-2 lg:mt-0">
+                <h2 class="text-xl sm:text-2xl font-black flex items-center gap-3 tracking-tight"><i class="fas fa-calendar-check text-indigo-200"></i> Matrix WFM</h2>
+                <p class="text-[10px] sm:text-xs text-indigo-100 font-medium mt-1.5">Atur Shift, Off, Izin, atau rapel data absen masa lalu secara visual.</p>
             </div>
-
-            <div class="p-5 lg:p-6 border-t border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <p class="text-[10px] text-slate-500 font-bold leading-relaxed text-center sm:text-left bg-slate-50 p-3 rounded-xl border border-slate-200/60 shadow-inner flex-1"><i class="fas fa-info-circle text-indigo-500 mr-1 text-sm align-middle"></i> Anda dapat menggeser nama staf ke atas/bawah. Jika Anda mengganti jadwal yang sudah ada (misal dari Shift ke Off), <b class="text-rose-500">absen lama akan tertimpa otomatis</b>.</p>
-                <button onclick="simpanMatrix()" class="w-full sm:w-auto bg-indigo-600 text-white px-8 py-4 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm tracking-wide">
-                    <i class="fas fa-cloud-upload-alt text-indigo-200 text-xl"></i> SIMPAN MATRIKS
-                </button>
+            <button onclick="closeAllDrawers()" class="hidden lg:flex text-white hover:text-rose-200 transition bg-white/20 hover:bg-rose-500 w-10 h-10 rounded-full items-center justify-center relative z-10 active:scale-90 shadow-sm"><i class="fas fa-times text-lg"></i></button>
+        </div>
+        <div class="p-4 sm:p-5 lg:p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
+            <div class="flex-1">
+                <label class="text-[10px] font-black text-indigo-600 uppercase tracking-widest block mb-1.5 ml-1"><i class="fas fa-calendar-day mr-1"></i> Pilih Bulan</label>
+                <input type="month" id="matrix-bulan" class="w-full p-3.5 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-indigo-800 transition cursor-pointer" onchange="renderTabelMatrix()">
             </div>
+            <div class="flex-1">
+                <label class="text-[10px] font-black text-indigo-600 uppercase tracking-widest block mb-1.5 ml-1"><i class="fas fa-store mr-1"></i> Pilih Cabang</label>
+                <select id="matrix-outlet" class="w-full p-3.5 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 text-indigo-800 transition cursor-pointer" onchange="renderTabelMatrix()"></select>
+            </div>
+        </div>
+        <div class="flex-1 overflow-auto custom-scroll relative bg-slate-50/50" id="container-tabel-matrix">
+            <table class="w-full text-left text-xs whitespace-nowrap border-collapse">
+                <thead class="text-slate-500 font-bold sticky top-0 z-20 shadow-sm" id="thead-matrix"></thead>
+                <tbody id="tbody-matrix" class="divide-y divide-slate-200/60 text-slate-700 bg-white">
+                    <tr><td class="p-10 text-center text-slate-400 italic font-medium text-sm">Silakan pilih Cabang dan Bulan terlebih dahulu.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="p-5 lg:p-6 border-t border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-[10px] text-slate-500 font-bold leading-relaxed text-center sm:text-left bg-slate-50 p-3 rounded-xl border border-slate-200/60 shadow-inner flex-1"><i class="fas fa-info-circle text-indigo-500 mr-1 text-sm align-middle"></i> Anda dapat menggeser nama staf ke atas/bawah. Jika Anda mengganti jadwal yang sudah ada, <b class="text-rose-500">absen lama akan tertimpa otomatis</b>.</p>
+            <button onclick="simpanMatrix()" class="w-full sm:w-auto bg-indigo-600 text-white px-8 py-4 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm tracking-wide">
+                <i class="fas fa-cloud-upload-alt text-indigo-200 text-xl"></i> SIMPAN MATRIKS
+            </button>
         </div>
     </div>
 
@@ -532,19 +605,54 @@
         let summaryData = {}; 
         
         const uiColors = {
-            rajin: { textMain: 'text-emerald-600', bgBtn: 'bg-emerald-50', hoverBtn: 'hover:bg-emerald-100', textBtn: 'text-emerald-700', pillBg: 'bg-emerald-100', pillBorder: 'border-emerald-200' },
-            telat: { textMain: 'text-rose-600', bgBtn: 'bg-rose-50', hoverBtn: 'hover:bg-rose-100', textBtn: 'text-rose-700', pillBg: 'bg-rose-100', pillBorder: 'border-rose-200' },
-            izin: { textMain: 'text-amber-500', bgBtn: 'bg-amber-50', hoverBtn: 'hover:bg-amber-100', textBtn: 'text-amber-700', pillBg: 'bg-amber-100', pillBorder: 'border-amber-200' },
-            libur: { textMain: 'text-indigo-600', bgBtn: 'bg-indigo-50', hoverBtn: 'hover:bg-indigo-100', textBtn: 'text-indigo-700', pillBg: 'bg-indigo-100', pillBorder: 'border-indigo-200' },
-            alpa: { textMain: 'text-red-500', bgBtn: 'bg-red-50', hoverBtn: 'hover:bg-red-100', textBtn: 'text-red-700', pillBg: 'bg-red-100', pillBorder: 'border-red-200' },
-            lembur: { textMain: 'text-blue-600', bgBtn: 'bg-blue-50', hoverBtn: 'hover:bg-blue-100', textBtn: 'text-blue-700', pillBg: 'bg-blue-100', pillBorder: 'border-blue-200' }
+            rajin: { textMain: 'text-emerald-600', dot: 'bg-emerald-500', bgBtn: 'bg-emerald-50', hoverBtn: 'hover:bg-emerald-100', textBtn: 'text-emerald-700', pillBg: 'bg-emerald-100', pillBorder: 'border-emerald-200' },
+            telat: { textMain: 'text-rose-600', dot: 'bg-rose-500', bgBtn: 'bg-rose-50', hoverBtn: 'hover:bg-rose-100', textBtn: 'text-rose-700', pillBg: 'bg-rose-100', pillBorder: 'border-rose-200' },
+            izin: { textMain: 'text-amber-500', dot: 'bg-amber-500', bgBtn: 'bg-amber-50', hoverBtn: 'hover:bg-amber-100', textBtn: 'text-amber-700', pillBg: 'bg-amber-100', pillBorder: 'border-amber-200' },
+            libur: { textMain: 'text-indigo-600', dot: 'bg-indigo-500', bgBtn: 'bg-indigo-50', hoverBtn: 'hover:bg-indigo-100', textBtn: 'text-indigo-700', pillBg: 'bg-indigo-100', pillBorder: 'border-indigo-200' },
+            alpa: { textMain: 'text-red-500', dot: 'bg-red-500', bgBtn: 'bg-red-50', hoverBtn: 'hover:bg-red-100', textBtn: 'text-red-700', pillBg: 'bg-red-100', pillBorder: 'border-red-200' },
+            lembur: { textMain: 'text-blue-600', dot: 'bg-blue-500', bgBtn: 'bg-blue-50', hoverBtn: 'hover:bg-blue-100', textBtn: 'text-blue-700', pillBg: 'bg-blue-100', pillBorder: 'border-blue-200' }
         };
 
-        const titleMap = { rajin: '🌟 Daftar Hadir', telat: '⏰ Daftar Terlambat', izin: '📝 Daftar Izin / Sakit', libur: '🏖️ Daftar Libur', alpa: '⚠️ Daftar Alpa', lembur: '⏱️ Daftar Lembur' };
+        const titleMap = { rajin: '🌟 Daftar Hadir', telat: '⏰ Daftar Terlambat', izin: '📝 Daftar Izin / Sakit', libur: '🏖️ Daftar Libur', alpa: '⚠️ Daftar Alpa / Bolos', lembur: '⏱️ Daftar Lembur' };
         
         function getIconForKey(key) {
             const icons = { rajin: 'fas fa-star', telat: 'fas fa-clock', izin: 'fas fa-file-medical', libur: 'fas fa-umbrella-beach', alpa: 'fas fa-triangle-exclamation', lembur: 'fas fa-fire' };
             return icons[key] || 'fas fa-info-circle';
+        }
+
+        // ==========================================
+        // SISTEM DRAWER / BOTTOM SHEET CORE
+        // ==========================================
+        let activeDrawer = null;
+        
+        function openDrawer(id) {
+            if(activeDrawer) closeDrawer(activeDrawer);
+            document.getElementById('global-overlay').classList.add('show');
+            document.getElementById(id).classList.add('show');
+            activeDrawer = id;
+            
+            if (id === 'drawer-outlet') {
+                setTimeout(() => { if (map) map.invalidateSize(); }, 400);
+            }
+        }
+        
+        function closeAllDrawers() {
+            if(activeDrawer) {
+                document.getElementById(activeDrawer).classList.remove('show');
+                document.getElementById('global-overlay').classList.remove('show');
+                activeDrawer = null;
+            }
+        }
+        
+        function closeDrawer(id) {
+            document.getElementById(id).classList.remove('show');
+            document.getElementById('global-overlay').classList.remove('show');
+            activeDrawer = null;
+        }
+
+        // Ganti tutupModal lama agar sync dengan Drawer
+        function tutupModal(id) {
+            closeAllDrawers();
         }
 
         if ('serviceWorker' in navigator) {
@@ -588,27 +696,14 @@
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active', 'bg-blue-50', 'text-blue-700');
                 btn.classList.add('text-slate-600', 'hover:bg-slate-50');
-                
-                const indicator = btn.querySelector('.nav-indicator');
-                if (indicator) indicator.classList.add('hidden');
-                
-                const iconBox = btn.querySelector('.nav-icon-box');
-                if (iconBox) {
-                    iconBox.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
-                    iconBox.classList.add('bg-slate-100', 'text-slate-500');
-                }
+                const indicator = btn.querySelector('.nav-indicator'); if (indicator) indicator.classList.add('hidden');
+                const iconBox = btn.querySelector('.nav-icon-box'); if (iconBox) { iconBox.classList.remove('bg-white', 'text-blue-600', 'shadow-sm'); iconBox.classList.add('bg-slate-100', 'text-slate-500'); }
             });
 
             // Reset Mobile Nav
             document.querySelectorAll('.nav-mob-btn').forEach(btn => {
-                btn.classList.remove('text-blue-600');
-                btn.classList.add('text-slate-400');
-                
-                const pill = btn.querySelector('.nav-mob-pill');
-                if (pill) {
-                    pill.classList.remove('bg-blue-100');
-                    pill.classList.add('bg-transparent');
-                }
+                btn.classList.remove('text-blue-600'); btn.classList.add('text-slate-400');
+                const pill = btn.querySelector('.nav-mob-pill'); if (pill) { pill.classList.remove('bg-blue-100'); pill.classList.add('bg-transparent'); }
             });
 
             const navBtnMap = {
@@ -620,35 +715,17 @@
 
             const mapping = navBtnMap[viewId];
             if (mapping) {
-                // Activate Desktop
                 const dBtn = document.getElementById(mapping.desk);
                 if (dBtn) {
-                    dBtn.classList.remove('text-slate-600', 'hover:bg-slate-50');
-                    dBtn.classList.add('active', 'bg-blue-50', 'text-blue-700');
-                    
-                    const indicator = dBtn.querySelector('.nav-indicator');
-                    if (indicator) indicator.classList.remove('hidden');
-                    
-                    const iconBox = dBtn.querySelector('.nav-icon-box');
-                    if (iconBox) {
-                        iconBox.classList.remove('bg-slate-100', 'text-slate-500');
-                        iconBox.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
-                    }
+                    dBtn.classList.remove('text-slate-600', 'hover:bg-slate-50'); dBtn.classList.add('active', 'bg-blue-50', 'text-blue-700');
+                    const indicator = dBtn.querySelector('.nav-indicator'); if (indicator) indicator.classList.remove('hidden');
+                    const iconBox = dBtn.querySelector('.nav-icon-box'); if (iconBox) { iconBox.classList.remove('bg-slate-100', 'text-slate-500'); iconBox.classList.add('bg-white', 'text-blue-600', 'shadow-sm'); }
                 }
-                
-                // Activate Mobile
                 const mBtn = document.getElementById(mapping.mob);
                 if (mBtn) {
-                    mBtn.classList.remove('text-slate-400');
-                    mBtn.classList.add('text-blue-600');
-                    
-                    const pill = mBtn.querySelector('.nav-mob-pill');
-                    if (pill) {
-                        pill.classList.remove('bg-transparent');
-                        pill.classList.add('bg-blue-100');
-                    }
+                    mBtn.classList.remove('text-slate-400'); mBtn.classList.add('text-blue-600');
+                    const pill = mBtn.querySelector('.nav-mob-pill'); if (pill) { pill.classList.remove('bg-transparent'); pill.classList.add('bg-blue-100'); }
                 }
-                
                 document.getElementById('header-title').innerText = mapping.title;
             }
 
@@ -699,19 +776,63 @@
             gKaryawan.forEach(k => { 
                 karFilter += `<option value="${k.nama}">${k.nama} (${k.outlet})</option>`; karForm += `<option value="${k.nama}">${k.nama}</option>`; 
                 let badgeRole = k.role === 'Senior' ? '<span class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-1 rounded-lg font-black text-[10px] shadow-sm tracking-widest">SENIOR</span>' : '<span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-bold text-[10px] border border-slate-200 shadow-sm tracking-widest">STAFF</span>'; 
-                tableKar += `<tr class="hover:bg-slate-50/50 transition-colors"><td class="px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">${k.ts.split(' ')[0]}</td><td class="px-6 py-5 font-black text-slate-800 text-sm">${k.nama}</td><td class="px-6 py-5">${badgeRole}</td><td class="px-6 py-5 font-bold text-slate-600 flex items-center gap-2 mt-1.5"><div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200"><i class="fas fa-map-marker-alt text-blue-500 text-[10px]"></i></div> ${k.outlet}</td><td class="px-6 py-5 text-right"><button onclick="editModalKaryawan('${k.nama}','${k.role}','${k.outlet}')" class="bg-white border border-slate-200 text-amber-500 hover:bg-amber-500 hover:text-white hover:border-amber-500 px-3.5 py-2 rounded-xl text-xs font-bold mr-1.5 transition-all shadow-sm"><i class="fas fa-edit"></i></button><button onclick="deleteRow('hapus_karyawan', {nama: '${k.nama}'})" class="bg-white border border-slate-200 text-rose-500 hover:bg-rose-500 hover:text-white hover:border-rose-500 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"><i class="fas fa-trash"></i></button></td></tr>`; 
+                tableKar += `<tr class="hover:bg-slate-50/50 transition-colors"><td class="px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">${k.ts.split(' ')[0]}</td><td class="px-6 py-5 font-black text-slate-800 text-sm md:text-base">${k.nama}</td><td class="px-6 py-5">${badgeRole}</td><td class="px-6 py-5 font-bold text-slate-600 flex items-center gap-1.5 mt-1.5"><div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200"><i class="fas fa-map-marker-alt text-blue-500 text-[10px]"></i></div> ${k.outlet}</td><td class="px-6 py-5 text-right"><button onclick="editModalKaryawan('${k.nama}','${k.role}','${k.outlet}')" class="bg-white border border-slate-200 text-amber-500 hover:bg-amber-500 hover:text-white hover:border-amber-500 px-3.5 py-2 rounded-xl text-xs font-bold mr-1.5 transition-all shadow-sm"><i class="fas fa-edit"></i></button><button onclick="deleteRow('hapus_karyawan', {nama: '${k.nama}'})" class="bg-white border border-slate-200 text-rose-500 hover:bg-rose-500 hover:text-white hover:border-rose-500 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"><i class="fas fa-trash"></i></button></td></tr>`; 
             });
 
             document.getElementById('filter-outlet').innerHTML = outFilter; document.getElementById('shf-outlet').innerHTML = outForm; document.getElementById('kar-outlet').innerHTML = outForm; document.getElementById('man-outlet').innerHTML = outForm; document.getElementById('filter-karyawan').innerHTML = karFilter; document.getElementById('man-nama').innerHTML = karForm;
             document.getElementById('table-outlet').innerHTML = tableOut || `<tr><td colspan="3" class="text-center py-12 text-sm italic text-slate-400">Belum ada outlet terdaftar.</td></tr>`; document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center py-12 text-sm italic text-slate-400">Belum ada jadwal shift.</td></tr>`; document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center py-12 text-sm italic text-slate-400">Belum ada karyawan terdaftar.</td></tr>`;
         }
 
+        // ==========================================
+        // 🚀 VERTICAL TIMELINE DRAWER FOR DETAILS
+        // ==========================================
         function showDetailModal(key) {
-            const data = summaryData[key] || []; const c = uiColors[key];
+            const data = summaryData[key] || []; 
+            const c = uiColors[key];
+
+            document.getElementById('drawer-title').innerText = titleMap[key].split(' ').slice(1).join(' '); // Buang Emoji dr judul
+            
+            const iconBox = document.getElementById('drawer-icon');
+            iconBox.className = `w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner border ${c.pillBorder} ${c.bgBtn} ${c.textMain}`;
+            iconBox.innerHTML = `<i class="${getIconForKey(key)}"></i>`;
+
             let htmlContent = '';
-            if(data.length === 0) { htmlContent = `<div class="p-8 text-center text-slate-400 italic text-sm font-medium">Tidak ada data karyawan di kategori ini.</div>`; } 
-            else { const pills = data.map(n => `<span class="inline-block ${c.pillBg} ${c.textBtn} px-4 py-2 rounded-xl text-[11px] md:text-xs font-black m-1.5 border shadow-sm ${c.pillBorder} hover:-translate-y-0.5 transition-transform">${n}</span>`).join(''); htmlContent = `<div class="p-6 text-center max-h-[50vh] overflow-y-auto custom-scroll leading-relaxed">${pills}</div>`; }
-            Swal.fire({ title: `<div class="flex items-center justify-center gap-3"><div class="w-12 h-12 rounded-2xl ${c.bgBtn} ${c.textMain} flex items-center justify-center text-2xl shadow-inner border ${c.pillBorder}"><i class="${getIconForKey(key)}"></i></div><span class="font-black text-lg md:text-xl uppercase tracking-widest text-slate-800">${titleMap[key].split(' ').slice(1).join(' ')}</span></div>`, html: htmlContent, showCloseButton: true, showConfirmButton: false, customClass: { popup: 'rounded-[2rem] border border-slate-100 shadow-2xl' } });
+            
+            if (data.length === 0) {
+                htmlContent = `
+                <div class="flex flex-col items-center justify-center h-[40vh] text-center opacity-60">
+                    <i class="${getIconForKey(key)} text-6xl mb-4 ${c.textMain}"></i>
+                    <h3 class="font-black text-slate-700 text-lg">Data Kosong</h3>
+                    <p class="text-sm font-bold text-slate-400 mt-1">Tidak ada staf di kategori ini.</p>
+                </div>`;
+            } else {
+                htmlContent += `<div class="relative pl-[1.1rem] border-l-2 ${c.pillBorder} space-y-5 ml-3 pb-8">`;
+                
+                data.forEach(item => {
+                    let timeStr = item.jam ? `<i class="far fa-clock mr-1"></i> ${item.jam}` : `<i class="far fa-calendar-check mr-1"></i> -`;
+                    let infoStr = item.status || item.info || '';
+                    if (item.menit) infoStr = `Lembur ${item.menit} Menit`;
+                    
+                    let dotColor = c.dot || 'bg-slate-400';
+
+                    htmlContent += `
+                    <div class="relative">
+                        <div class="absolute -left-[1.58rem] top-1.5 w-3.5 h-3.5 rounded-full ${dotColor} border-[3px] border-white shadow-sm"></div>
+                        <div class="bg-white p-4 lg:p-5 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-slate-100 hover:border-slate-300 transition-colors group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-black text-slate-800 text-sm md:text-base group-hover:text-blue-600 transition-colors">${item.nama}</span>
+                                <span class="text-[10px] md:text-xs font-black ${c.textMain} bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${timeStr}</span>
+                            </div>
+                            ${infoStr ? `<p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest bg-slate-50 inline-block px-2.5 py-1 rounded-lg border border-slate-100">${infoStr}</p>` : ''}
+                        </div>
+                    </div>`;
+                });
+                
+                htmlContent += `</div>`;
+            }
+
+            document.getElementById('drawer-detail-content').innerHTML = htmlContent;
+            openDrawer('drawer-detail');
         }
 
         // ==========================================
@@ -730,7 +851,7 @@
             document.getElementById('thead-matrix').innerHTML = '';
             document.getElementById('tbody-matrix').innerHTML = '<tr><td class="p-10 text-center text-slate-400 italic font-medium">Silakan pilih Cabang & Bulan terlebih dahulu.</td></tr>';
             
-            document.getElementById('modal-jadwal-shift').classList.remove('hidden');
+            openDrawer('drawer-matrix');
         }
 
         function warnaiSelect(sel) {
@@ -748,7 +869,7 @@
         }
 
         async function renderTabelMatrix() {
-            const bulanVal = document.getElementById('matrix-bulan').value; // "YYYY-MM"
+            const bulanVal = document.getElementById('matrix-bulan').value; 
             const outletVal = document.getElementById('matrix-outlet').value;
             
             if (!bulanVal || !outletVal) return;
@@ -791,7 +912,7 @@
                         if (window.originalMatrixState[key].val === '') {
                             if (r.tipe === 'Libur') window.originalMatrixState[key].val = 'OFF';
                             else if (r.tipe === 'Izin') window.originalMatrixState[key].val = 'IZIN';
-                            else if (r.tipe === 'Masuk' || r.tipe === 'Pulang') window.originalMatrixState[key].val = r.shift; 
+                            else if (r.tipe === 'Masuk') window.originalMatrixState[key].val = r.shift; 
                         }
                     }
                 });
@@ -828,7 +949,7 @@
                         let bgColCell = (new Date(yyyy, mm - 1, i).getDay() === 0) ? 'bg-rose-50/20' : '';
                         let customOpt = optShift.replace(`value="${currVal}"`, `value="${currVal}" selected`);
 
-                        tbodyHtml += `<td class="p-1.5 text-center border-l border-slate-100/60 ${bgColCell}">
+                        tbodyHtml += `<td class="p-1 text-center border-l border-slate-100/60 ${bgColCell}">
                             <select class="sel-matrix w-full h-9 text-[10px] font-bold text-center outline-none cursor-pointer rounded-lg border border-transparent hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 transition-all appearance-none" data-nama="${k.nama}" data-tanggal="${safeDate}" onchange="warnaiSelect(this)">
                                 ${customOpt}
                             </select>
@@ -916,7 +1037,7 @@
                             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
                         }
                         Swal.fire('Berhasil!', 'Seluruh Matriks WFM berhasil diimplementasikan.', 'success'); 
-                        tutupModal('modal-jadwal-shift'); 
+                        closeAllDrawers(); 
                         syncDatabase(true); 
                     } catch(err) {
                         Swal.fire('Error', 'Gagal memproses matriks ke database.', 'error');
@@ -925,21 +1046,22 @@
             });
         }
 
-        // FUNGSI MODAL MANUAL, IMPORT, dll
-        function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; document.getElementById('modal-manual').classList.remove('hidden'); }
-        function bukaModalImport() { document.getElementById('file-csv').value = ""; document.getElementById('modal-import').classList.remove('hidden'); }
+        // FUNGSI MODAL MANUAL, IMPORT, OUTLET, SHIFT, KARYAWAN -> Diubah ke Drawer
+        function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; openDrawer('drawer-manual'); }
+        function bukaModalImport() { document.getElementById('file-csv').value = ""; openDrawer('drawer-import'); }
+        function bukaModalOutlet() { document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = ""; document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = ""; openDrawer('drawer-outlet'); initMap(-1.269160, 116.825264); }
+        function editModalOutlet(nama, lat, lng, rad) { document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama; document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad; openDrawer('drawer-outlet'); initMap(parseFloat(lat), parseFloat(lng)); }
+        function bukaModalShift() { document.getElementById('title-modal-shf').innerText = "Tambah Jadwal Shift"; document.getElementById('shf-oldoutlet').value = ""; document.getElementById('shf-oldkode').value = ""; document.getElementById('shf-outlet').value = ""; document.getElementById('shf-nama').value = ""; document.getElementById('shf-masuk').value = ""; document.getElementById('shf-keluar').value = ""; document.getElementById('shf-tol').value = "15"; document.getElementById('shf-lembur').value = "60"; openDrawer('drawer-shift'); }
+        function editModalShift(outlet, kode, jamM, jamK, tol, lembur) { document.getElementById('title-modal-shf').innerText = "Edit Jadwal Shift"; document.getElementById('shf-oldoutlet').value = outlet; document.getElementById('shf-oldkode').value = kode; document.getElementById('shf-outlet').value = outlet; document.getElementById('shf-nama').value = kode; document.getElementById('shf-masuk').value = jamM; document.getElementById('shf-keluar').value = jamK; document.getElementById('shf-tol').value = tol; document.getElementById('shf-lembur').value = lembur || "60"; openDrawer('drawer-shift'); }
+        function editModalKaryawan(nama, role, outlet) { document.getElementById('kar-oldnama').value = nama; document.getElementById('kar-nama').value = nama; document.getElementById('kar-role').value = role; document.getElementById('kar-outlet').value = outlet; openDrawer('drawer-karyawan'); }
+
         function loadShiftManual() { const outlet = document.getElementById('man-outlet').value, shiftSelect = document.getElementById('man-shift'); const shiftTersedia = gShift.filter(s => s.outlet === outlet); shiftSelect.innerHTML = '<option value="-" selected>Pilih Shift (Abaikan jika Libur/Izin)</option>'; shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}">${s.kode}</option>`; }); }
         function simpanManual() { const p = { tanggal: document.getElementById('man-tgl').value, jam: document.getElementById('man-jam').value, nama: document.getElementById('man-nama').value, outlet: document.getElementById('man-outlet').value, shift: document.getElementById('man-shift').value, tipe: document.getElementById('man-tipe').value, keterangan: document.getElementById('man-ket').value }; if(!p.tanggal || !p.jam || !p.nama || !p.outlet) return Swal.fire('Error', 'Data penting wajib diisi!', 'warning'); runAPI('absen_manual', p); }
         function downloadTemplateCSV() { let csv = "Tanggal (YYYY-MM-DD),Jam (HH:MM),Nama Karyawan,Outlet,Shift,Tipe Absen (Masuk/Pulang/Izin/Libur),Keterangan\n"; csv += "2026-05-15,08:00,Rizky Beby Auliana,Outlet Pusat,Pagi,Masuk,Input Masal HRD\n"; const link = document.createElement("a"); link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv)); link.setAttribute("download", "Template_Import_Absen.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
-        function prosesImportCSV() { const fileInput = document.getElementById('file-csv'); if (!fileInput.files.length) return Swal.fire('Peringatan', 'Silakan pilih file CSV terlebih dahulu.', 'warning'); const reader = new FileReader(); reader.onload = function(e) { const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r); if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error'); const delimiter = rows[0].includes(';') ? ';' : ','; const dataToImport = []; for(let i=1; i<rows.length; i++) { const cols = rows[i].split(delimiter); if(cols.length >= 6) { const rawDate = cols[0].trim(); let safeDate = rawDate; if (rawDate.includes('/')) { let p = rawDate.split('/'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } else if (rawDate.includes('-') && rawDate.split('-')[0].length <= 2) { let p = rawDate.split('-'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); dataToImport.push({ tanggal: safeDate, jam: cols[1].trim(), nama: cols[2].trim(), outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim() }); } } if(dataToImport.length > 0) { Swal.fire({ title: 'Mengupload Data...', html: 'Mohon tunggu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) }).then(res => res.json()).then(data => { if(data.status === 'success') { Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success'); tutupModal('modal-import'); generateAnalytics(); } else { Swal.fire('Gagal', data.message, 'error'); } }).catch(err => Swal.fire('Error', 'Gagal server GAS.', 'error')); } else { Swal.fire('Format Salah', 'Sistem tidak dapat membaca baris data.', 'error'); } }; reader.readAsText(fileInput.files[0]); }
-        function initMap(lat, lng) { if(!map) { map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } setTimeout(() => map.invalidateSize(), 300); }
-        function bukaModalOutlet() { document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = ""; document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = ""; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(-1.269160, 116.825264); }
-        function editModalOutlet(nama, lat, lng, rad) { document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama; document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad; document.getElementById('modal-outlet').classList.remove('hidden'); initMap(parseFloat(lat), parseFloat(lng)); }
-        function bukaModalShift() { document.getElementById('title-modal-shf').innerText = "Tambah Jadwal Shift"; document.getElementById('shf-oldoutlet').value = ""; document.getElementById('shf-oldkode').value = ""; document.getElementById('shf-outlet').value = ""; document.getElementById('shf-nama').value = ""; document.getElementById('shf-masuk').value = ""; document.getElementById('shf-keluar').value = ""; document.getElementById('shf-tol').value = "15"; document.getElementById('shf-lembur').value = "60"; document.getElementById('modal-shift').classList.remove('hidden'); }
-        function editModalShift(outlet, kode, jamM, jamK, tol, lembur) { document.getElementById('title-modal-shf').innerText = "Edit Jadwal Shift"; document.getElementById('shf-oldoutlet').value = outlet; document.getElementById('shf-oldkode').value = kode; document.getElementById('shf-outlet').value = outlet; document.getElementById('shf-nama').value = kode; document.getElementById('shf-masuk').value = jamM; document.getElementById('shf-keluar').value = jamK; document.getElementById('shf-tol').value = tol; document.getElementById('shf-lembur').value = lembur || "60"; document.getElementById('modal-shift').classList.remove('hidden'); }
-        function editModalKaryawan(nama, role, outlet) { document.getElementById('kar-oldnama').value = nama; document.getElementById('kar-nama').value = nama; document.getElementById('kar-role').value = role; document.getElementById('kar-outlet').value = outlet; document.getElementById('modal-karyawan').classList.remove('hidden'); }
-        function tutupModal(id) { document.getElementById(id).classList.add('hidden'); }
-        async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil.', 'success'); syncDatabase(true); tutupModal('modal-outlet'); tutupModal('modal-shift'); tutupModal('modal-karyawan'); tutupModal('modal-manual'); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
+        function prosesImportCSV() { const fileInput = document.getElementById('file-csv'); if (!fileInput.files.length) return Swal.fire('Peringatan', 'Silakan pilih file CSV terlebih dahulu.', 'warning'); const reader = new FileReader(); reader.onload = function(e) { const rows = e.target.result.split(/\r\n|\n|\r/).map(r => r.trim()).filter(r => r); if(rows.length <= 1) return Swal.fire('Error', 'File CSV kosong atau format salah.', 'error'); const delimiter = rows[0].includes(';') ? ';' : ','; const dataToImport = []; for(let i=1; i<rows.length; i++) { const cols = rows[i].split(delimiter); if(cols.length >= 6) { const rawDate = cols[0].trim(); let safeDate = rawDate; if (rawDate.includes('/')) { let p = rawDate.split('/'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } else if (rawDate.includes('-') && rawDate.split('-')[0].length <= 2) { let p = rawDate.split('-'); if(p.length === 3) safeDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`; } const ket = cols.slice(6).join(delimiter).replace(/"/g, ''); dataToImport.push({ tanggal: safeDate, jam: cols[1].trim(), nama: cols[2].trim(), outlet: cols[3].trim(), shift: cols[4].trim(), tipe: cols[5].trim(), keterangan: ket.trim() }); } } if(dataToImport.length > 0) { Swal.fire({ title: 'Mengupload Data...', html: 'Mohon tunggu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) }).then(res => res.json()).then(data => { if(data.status === 'success') { Swal.fire('Berhasil', `${data.count} data absen berhasil di-import!`, 'success'); closeAllDrawers(); generateAnalytics(); } else { Swal.fire('Gagal', data.message, 'error'); } }).catch(err => Swal.fire('Error', 'Gagal server GAS.', 'error')); } else { Swal.fire('Format Salah', 'Sistem tidak dapat membaca baris data.', 'error'); } }; reader.readAsText(fileInput.files[0]); }
+        function initMap(lat, lng) { if(!map) { map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); } }
+        
+        async function runAPI(action, payload) { Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() }); const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }) }); const data = await res.json(); if(data.status === 'success') { Swal.fire('Berhasil', 'Aksi berhasil.', 'success'); syncDatabase(true); closeAllDrawers(); if(action === 'hapus_absen' || action === 'absen_manual') generateAnalytics(); } else { Swal.fire('Gagal', data.message || 'Error', 'error'); } }
         function simpanData(type) { let p = {}, act = ""; if(type === 'outlet') { const oldNama = document.getElementById('out-oldnama').value; p = { nama: document.getElementById('out-nama').value, lat: document.getElementById('out-lat').value, lng: document.getElementById('out-lng').value, radius: document.getElementById('out-rad').value }; if(!p.nama || !p.lat) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldNama ? 'edit_outlet' : 'tambah_outlet'; if(oldNama) p.oldNama = oldNama; } else if(type === 'shift') { const oldOut = document.getElementById('shf-oldoutlet').value, oldKode = document.getElementById('shf-oldkode').value; p = { outlet: document.getElementById('shf-outlet').value, kode: document.getElementById('shf-nama').value, jamMasuk: document.getElementById('shf-masuk').value, jamKeluar: document.getElementById('shf-keluar').value, toleransi: document.getElementById('shf-tol').value, ambangLembur: document.getElementById('shf-lembur').value }; if(!p.outlet || !p.kode) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = oldOut ? 'edit_shift' : 'tambah_shift'; if(oldOut){p.oldOutlet = oldOut; p.oldKode = oldKode;} } else if(type === 'edit_karyawan') { p = { oldNama: document.getElementById('kar-oldnama').value, nama: document.getElementById('kar-nama').value, role: document.getElementById('kar-role').value, outlet: document.getElementById('kar-outlet').value }; if(!p.nama || !p.outlet) return Swal.fire('Peringatan', 'Form tidak lengkap.', 'warning'); act = 'edit_karyawan'; } runAPI(act, p); }
         function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
@@ -975,11 +1097,11 @@
                 
                 if(!rekapAkumulasi[r.nama]) rekapAkumulasi[r.nama] = { outlet: r.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0, alpa: 0, total_masuk: 0 };
 
-                if(isIzin) { izinList.push(r.nama); rekapAkumulasi[r.nama].izin++; }
-                else if(isLibur) { liburList.push(r.nama); rekapAkumulasi[r.nama].libur++; }
+                if(isIzin) { izinList.push({nama: r.nama, info: r.keterangan || r.info, jam: r.jam}); rekapAkumulasi[r.nama].izin++; }
+                else if(isLibur) { liburList.push({nama: r.nama, info: r.info, jam: r.jam}); rekapAkumulasi[r.nama].libur++; }
                 else if(isMasuk) { 
-                    if(isTelat && !isManual) { telatList.push(r.nama); rekapAkumulasi[r.nama].telat++; }
-                    else { rajinList.push(r.nama); rekapAkumulasi[r.nama].rajin++; }
+                    if(isTelat && !isManual) { telatList.push({nama: r.nama, jam: r.jam, status: r.status}); rekapAkumulasi[r.nama].telat++; }
+                    else { rajinList.push({nama: r.nama, jam: r.jam, status: r.status}); rekapAkumulasi[r.nama].rajin++; }
                 }
                 
                 const shiftRule = gShift.find(s => s.kode === r.shift && s.outlet === r.outlet);
@@ -987,15 +1109,15 @@
 
                 if(r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) >= batasLembur) {
                     const l = parseInt(r.lembur);
-                    totalLemburMnt += l; lemburList.push(`${r.nama} (+${l}m)`);
+                    totalLemburMnt += l; lemburList.push({nama: r.nama, jam: r.jam, menit: l});
                     rekapAkumulasi[r.nama].lembur += l;
                 }
             });
 
-            const loggedNames = [...new Set([...rajinList, ...telatList, ...izinList, ...liburList])];
-            const alpaList = masterRoster.filter(k => !loggedNames.includes(k.nama)).map(k => k.nama);
+            const loggedNames = [...new Set([...rajinList.map(x=>x.nama), ...telatList.map(x=>x.nama), ...izinList.map(x=>x.nama), ...liburList.map(x=>x.nama)])];
+            const alpaList = masterRoster.filter(k => !loggedNames.includes(k.nama)).map(k => ({nama: k.nama, info: 'Tidak ada log masuk hari ini'}));
 
-            summaryData = { rajin: [...new Set(rajinList)], telat: [...new Set(telatList)], izin: [...new Set(izinList)], libur: [...new Set(liburList)], alpa: alpaList, lembur: [...new Set(lemburList)] };
+            summaryData = { rajin: rajinList, telat: telatList, izin: izinList, libur: liburList, alpa: alpaList, lembur: lemburList };
 
             if (mode === 'rinci') {
                 document.getElementById('tabel-mode-rinci').classList.remove('hidden');
@@ -1004,7 +1126,7 @@
 
                 let tableLogsToRender = [];
                 if (kategori === 'Semua') { tableLogsToRender = logsRange; } 
-                else if (kategori === 'Alpa') { tableLogsToRender = alpaList.map(nama => ({ ts: '-', tanggal: `${tglStart} s/d ${tglEnd}`, jam: '-', nama: nama, outlet: outlet, shift: '-', tipe: '-', status: 'ALPA', info: 'Tidak ada log', lembur: 0, foto: '-' })); } 
+                else if (kategori === 'Alpa') { tableLogsToRender = alpaList.map(item => ({ ts: '-', tanggal: `${tglStart} s/d ${tglEnd}`, jam: '-', nama: item.nama, outlet: outlet, shift: '-', tipe: '-', status: 'ALPA', info: 'Tidak ada log', lembur: 0, foto: '-' })); } 
                 else {
                     tableLogsToRender = logsRange.filter(r => {
                         const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
@@ -1046,7 +1168,7 @@
                 document.getElementById('judul-tabel').innerText = "📊 Rekap Akumulasi Gaji";
 
                 let arrRekap = Object.keys(rekapAkumulasi).map(nama => {
-                    let alpaCount = alpaList.includes(nama) ? 1 : 0;
+                    let alpaCount = alpaList.filter(a => a.nama === nama).length;
                     let totalMasuk = rekapAkumulasi[nama].rajin + rekapAkumulasi[nama].telat;
                     return {
                         nama: nama, outlet: rekapAkumulasi[nama].outlet, 
@@ -1092,7 +1214,13 @@
                 <button onclick="showDetailModal('${key}')" class="mt-4 w-full ${colorConfig.bgBtn} hover:bg-white text-slate-600 text-[10px] md:text-xs font-bold py-2 md:py-2.5 rounded-xl transition-all border ${colorConfig.pillBorder} shadow-sm active:scale-95 group flex justify-between items-center px-4"><span class="tracking-wide">Lihat Data</span> <i class="fas fa-chevron-right opacity-50 group-hover:translate-x-1 transition-transform"></i></button>
             </div>`;
             
-            document.getElementById('box-rajin').innerHTML = renderBox(summaryData.rajin.length, 'Orang', 'rajin', uiColors.rajin); document.getElementById('box-telat').innerHTML = renderBox(summaryData.telat.length, 'Orang', 'telat', uiColors.telat); document.getElementById('box-izin').innerHTML = renderBox(summaryData.izin.length, 'Orang', 'izin', uiColors.izin); document.getElementById('box-libur').innerHTML = renderBox(summaryData.libur.length, 'Orang', 'libur', uiColors.libur); document.getElementById('box-alpa').innerHTML = renderBox(summaryData.alpa.length, 'Orang', 'alpa', uiColors.alpa); document.getElementById('box-lembur').innerHTML = renderBox(totalLemburMnt, 'Menit', 'lembur', uiColors.lembur);
+            // Unique counting based on names to keep the large numbers accurate per person
+            document.getElementById('box-rajin').innerHTML = renderBox([...new Set(summaryData.rajin.map(x=>x.nama))].length, 'Orang', 'rajin', uiColors.rajin); 
+            document.getElementById('box-telat').innerHTML = renderBox([...new Set(summaryData.telat.map(x=>x.nama))].length, 'Orang', 'telat', uiColors.telat); 
+            document.getElementById('box-izin').innerHTML = renderBox([...new Set(summaryData.izin.map(x=>x.nama))].length, 'Orang', 'izin', uiColors.izin); 
+            document.getElementById('box-libur').innerHTML = renderBox([...new Set(summaryData.libur.map(x=>x.nama))].length, 'Orang', 'libur', uiColors.libur); 
+            document.getElementById('box-alpa').innerHTML = renderBox([...new Set(summaryData.alpa.map(x=>x.nama))].length, 'Orang', 'alpa', uiColors.alpa); 
+            document.getElementById('box-lembur').innerHTML = renderBox(totalLemburMnt, 'Menit', 'lembur', uiColors.lembur);
 
             Swal.close();
         }
