@@ -122,7 +122,30 @@
         </div>
 
         <!-- TAB KARYAWAN -->
-        <div id="tab-karyawan" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Tgl Daftar</th><th class="px-3 py-3 md:p-4">Nama Lengkap</th><th class="px-3 py-3 md:p-4">Jabatan</th><th class="px-3 py-3 md:p-4">Penempatan</th><th class="px-3 py-3 md:p-4 text-right">Aksi HRD</th></tr></thead><tbody id="table-karyawan" class="divide-y divide-slate-100"></tbody></table></div></div>
+        <div id="tab-karyawan" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
+    
+    <div class="flex flex-col sm:flex-row gap-2 mb-4">
+        <button onclick="bukaModalJadwalOff()" class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-indigo-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2">
+            <i class="fas fa-calendar-alt text-indigo-200"></i> Atur Jadwal Off Staf
+        </button>
+    </div>
+
+    <div class="overflow-x-auto custom-scroll">
+        <table class="w-full text-left text-xs md:text-sm whitespace-nowrap">
+            <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]">
+                <tr>
+                    <th class="px-3 py-3 md:p-4">Tgl Daftar</th>
+                    <th class="px-3 py-3 md:p-4">Nama Lengkap</th>
+                    <th class="px-3 py-3 md:p-4">Jabatan</th>
+                    <th class="px-3 py-3 md:p-4">Penempatan</th>
+                    <th class="px-3 py-3 md:p-4 text-right">Aksi HRD</th>
+                </tr>
+            </thead>
+            <tbody id="table-karyawan" class="divide-y divide-slate-100"></tbody>
+        </table>
+    </div>
+    
+</div>
         
         <!-- TAB OUTLET -->
         <div id="tab-outlet" class="tab-content bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6"><button onclick="bukaModalOutlet()" class="w-full md:w-auto bg-blue-600 text-white px-4 py-3 md:py-2 rounded-lg font-bold shadow-md mb-4 text-xs">+ Tambah Outlet</button><div class="overflow-x-auto"><table class="w-full text-left text-xs md:text-sm whitespace-nowrap"><thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[9px] md:text-[10px]"><tr><th class="px-3 py-3 md:p-4">Nama Outlet</th><th class="px-3 py-3 md:p-4">Titik GPS & Radius</th><th class="px-3 py-3 md:p-4 text-right">Aksi</th></tr></thead><tbody id="table-outlet" class="divide-y divide-slate-100"></tbody></table></div></div>
@@ -580,5 +603,48 @@
             }
         }
     </script>
+
+    <div id="modal-jadwal-off" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[99] flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] overflow-hidden modal-enter">
+            
+            <div class="bg-gradient-to-r from-indigo-600 to-blue-700 p-5 sm:p-6 text-white flex justify-between items-center shrink-0 relative overflow-hidden">
+                <i class="fas fa-calendar-alt absolute -right-4 -bottom-4 text-7xl opacity-20 transform -rotate-12"></i>
+                <div class="relative z-10">
+                    <h2 class="text-lg sm:text-xl font-black flex items-center gap-2"><i class="fas fa-calendar-check text-indigo-200"></i> Manajer Jadwal Off</h2>
+                    <p class="text-[10px] sm:text-xs text-indigo-100 font-medium mt-1">Atur hari libur karyawan per bulan dengan sekali klik.</p>
+                </div>
+                <button onclick="tutupModal('modal-jadwal-off')" class="text-white hover:text-rose-200 transition bg-white/20 hover:bg-rose-500 w-8 h-8 rounded-full flex items-center justify-center relative z-10"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
+                <div class="flex-1">
+                    <label class="text-[10px] font-black text-indigo-600 uppercase tracking-widest block mb-1.5"><i class="fas fa-calendar-day mr-1"></i> Pilih Bulan</label>
+                    <input type="month" id="off-bulan" class="w-full p-3 bg-white border border-indigo-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 text-indigo-800 transition cursor-pointer" onchange="renderTabelJadwalOff()">
+                </div>
+                <div class="flex-1">
+                    <label class="text-[10px] font-black text-indigo-600 uppercase tracking-widest block mb-1.5"><i class="fas fa-store mr-1"></i> Pilih Cabang</label>
+                    <select id="off-outlet" class="w-full p-3 bg-white border border-indigo-200 shadow-sm rounded-xl text-sm font-bold outline-none focus:border-indigo-500 text-indigo-800 transition cursor-pointer" onchange="renderTabelJadwalOff()">
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-auto custom-scroll relative bg-white" id="container-tabel-off">
+                <table class="w-full text-left text-xs whitespace-nowrap border-collapse">
+                    <thead class="text-slate-500 font-bold sticky top-0 z-20 shadow-sm" id="thead-jadwal-off">
+                        </thead>
+                    <tbody id="tbody-jadwal-off" class="divide-y divide-slate-100 text-slate-700">
+                        <tr><td class="p-8 text-center text-slate-400 italic font-medium">Silakan pilih Cabang dan Bulan terlebih dahulu.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 shrink-0 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <p class="text-[10px] text-slate-500 font-bold leading-relaxed text-center sm:text-left"><i class="fas fa-info-circle text-indigo-500 mr-1"></i> Jadwal yang dicentang akan dikirim massal dan otomatis tercatat sebagai "Libur (Day Off)".</p>
+                <button onclick="simpanJadwalOff()" class="w-full sm:w-auto bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-black shadow-[0_8px_15px_rgba(79,70,229,0.3)] hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-cloud-upload-alt text-indigo-200 text-lg"></i> SIMPAN JADWAL
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
