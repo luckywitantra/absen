@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SI-AMoy (Sistem Absensi Aicha Momoyo)</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2d0202">
+    <meta name="theme-color" content="#1a0101">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Si-Amoy">
@@ -20,159 +20,151 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         
-        /* TEMA MAROON & KREM (ENTERPRISE DARK MODE) */
-        body { background: #4a0404; background-image: radial-gradient(at top center, #5f0808 0%, transparent 70%); font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; touch-action: manipulation; color: #F8F1E5; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #1a0101; 
+            overflow: hidden; 
+            touch-action: manipulation; 
+            color: #F8F1E5; 
+        }
         
-        .camera-container { position: relative; width: 100%; aspect-ratio: 3/4; background: #1a0101; border-radius: 2rem; overflow: hidden; border: 1px solid rgba(248, 241, 229, 0.15); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.8); }
-        video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        /* Glass Input Modern */
+        .glass-input { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(248, 241, 229, 0.15); color: #F8F1E5; transition: all 0.3s; }
+        .glass-input:focus { border-color: #D4AF37; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2); outline: none; background: rgba(0, 0, 0, 0.6); }
         
-        /* Glassmorphism Panels */
-        .glass-panel { background: rgba(45, 2, 2, 0.4); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid rgba(248, 241, 229, 0.1); }
-        .glass-input { background: rgba(26, 1, 1, 0.6); border: 1px solid rgba(248, 241, 229, 0.1); color: #F8F1E5; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .glass-input:focus { border-color: #D4AF37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2); outline: none; background: rgba(45, 2, 2, 0.8); }
-        
-        /* Smart HUD (Bounding Box) */
-        .hud-box { position: absolute; border: 2px dashed rgba(248, 241, 229, 0.4); border-radius: 1.5rem; transition: all 0.1s ease; pointer-events: none; z-index: 20; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-        .hud-box::before { content: ''; position: absolute; inset: -4px; border: 4px solid transparent; border-radius: 1.6rem; transition: all 0.3s; }
-        
-        /* Warna Status HUD */
-        .status-search { border-color: rgba(248, 241, 229, 0.5); }
-        .status-searching { border-color: #3b82f6; box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.3); }
-        .status-wait { border-style: solid; border-color: #D4AF37; background: rgba(212, 175, 55, 0.1); transform: scale(1.02); }
-        .status-success { border-style: solid; border-color: #10b981; background: rgba(16, 185, 129, 0.1); transform: scale(1.05); }
-        .status-success::before { border-color: rgba(16, 185, 129, 0.3); }
-
-        .scan-line { width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #F8F1E5, transparent); animation: scan 2s infinite linear; opacity: 0; }
-        .status-searching .scan-line { opacity: 1; background: linear-gradient(90deg, transparent, #3b82f6, transparent); }
+        /* Animasi Garis Scanner */
+        .scan-line { width: 100%; height: 3px; background: linear-gradient(90deg, transparent, #3b82f6, transparent); animation: scan 2s infinite linear; opacity: 0; box-shadow: 0 0 10px #3b82f6; }
+        .status-searching .scan-line { opacity: 1; }
         @keyframes scan { 0% { transform: translateY(0); } 100% { transform: translateY(200px); } }
 
-        .tab-btn.active { color: #D4AF37; border-bottom: 3px solid #D4AF37; background: linear-gradient(to top, rgba(212, 175, 55, 0.1), transparent); }
-        select option { background: #2d0202; color: #F8F1E5; padding: 10px; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
 
         /* SweetAlert2 Premium Dark Mode */
-        div:where(.swal2-container) .swal2-popup { border-radius: 2rem !important; border: 1px solid rgba(248, 241, 229, 0.1) !important; background: rgba(26, 1, 1, 0.85) !important; backdrop-filter: blur(30px) !important; -webkit-backdrop-filter: blur(30px) !important; color: #F8F1E5 !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8) !important; padding: 2rem 1.5rem !important; }
-        div:where(.swal2-container) .swal2-title { color: #F8F1E5 !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
-        div:where(.swal2-container) .swal2-html-container { color: #e8d5c4 !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
-        div:where(.swal2-container) .swal2-input { color: #F8F1E5 !important; border: 1px solid rgba(248, 241, 229, 0.2) !important; border-radius: 1rem !important; background: rgba(0,0,0,0.3) !important; }
-        div:where(.swal2-container) .swal2-input:focus { border-color: #D4AF37 !important; box-shadow: none !important; }
+        div:where(.swal2-container) .swal2-popup { border-radius: 2rem !important; border: 1px solid rgba(248, 241, 229, 0.1) !important; background: rgba(26, 1, 1, 0.95) !important; backdrop-filter: blur(20px) !important; color: #F8F1E5 !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8) !important; }
+        div:where(.swal2-container) .swal2-title, div:where(.swal2-container) .swal2-html-container { color: #F8F1E5 !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        div:where(.swal2-container) .swal2-input { color: #F8F1E5 !important; border: 1px solid rgba(248, 241, 229, 0.2) !important; border-radius: 1rem !important; background: rgba(0,0,0,0.5) !important; }
+        div:where(.swal2-container) .swal2-input:focus { border-color: #D4AF37 !important; }
         
         /* Flash Camera Effect */
-        #flash-overlay { position: absolute; inset: 0; background: white; opacity: 0; z-index: 50; pointer-events: none; transition: opacity 0.15s ease-out; }
+        #flash-overlay { position: absolute; inset: 0; background: white; opacity: 0; z-index: 100; pointer-events: none; transition: opacity 0.15s ease-out; }
     </style>
 </head>
-<body class="min-h-[100dvh] flex items-center justify-center sm:p-4 selection:bg-amber-900 selection:text-amber-100">
+<body class="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-[#4a0404] to-[#0a0000] selection:bg-amber-900 selection:text-amber-100">
 
-    <div class="w-full max-w-md mx-auto h-[100dvh] sm:h-[95vh] sm:rounded-[2.5rem] overflow-hidden glass-panel flex flex-col relative text-white border-x-0 sm:border border-white/5">
+    <div class="w-full h-full max-w-md mx-auto flex flex-col relative sm:h-[95vh] sm:my-[2.5vh] sm:rounded-[2.5rem] overflow-hidden shadow-2xl sm:border border-white/10">
         
         <div id="flash-overlay"></div>
 
-        <div class="relative z-30 px-6 pt-6 pb-4 flex justify-between items-start shrink-0">
+        <header class="shrink-0 relative z-30 px-6 pt-6 sm:pt-6 pb-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-amber-600 flex items-center justify-center shadow-lg shadow-amber-900/50 border border-amber-300/30">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-amber-600 flex items-center justify-center shadow-lg border border-amber-300/30">
                     <i class="fas fa-fingerprint text-white text-xl"></i>
                 </div>
                 <div>
                     <h1 class="text-xl font-black tracking-tight text-[#F8F1E5] leading-none">Si-Amoy</h1>
-                    <p id="geo-status" class="text-rose-400 text-[9px] tracking-widest font-bold mt-1 uppercase flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> Mencari Satelit</p>
+                    <p id="geo-status" class="text-rose-400 text-[9px] tracking-widest font-bold mt-1 uppercase flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> Mencari Satelit
+                    </p>
                 </div>
             </div>
             <div class="text-right">
                 <p class="text-[9px] text-[#e8d5c4] font-bold uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">Absensi AI</p>
             </div>
-        </div>
+        </header>
 
-        <div class="px-6 flex-1 flex flex-col justify-center relative z-10 min-h-0">
-            <div class="camera-container">
-                <video id="video" autoplay muted playsinline></video>
-                <canvas id="overlay" class="z-10"></canvas>
+        <div class="flex-1 relative px-5 pb-4 min-h-0 flex flex-col z-10">
+            <div class="relative w-full h-full rounded-3xl overflow-hidden border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.8)] bg-black">
                 
-                <div id="hud-scanner" class="hud-box status-search" style="left: 20%; top: 20%; width: 60%; height: 60%;">
-                    <div class="flex justify-between w-full px-2 pt-2">
+                <video id="video" class="absolute inset-0 w-full h-full object-cover transform -scale-x-100" autoplay muted playsinline></video>
+                <canvas id="overlay" class="absolute inset-0 w-full h-full z-10"></canvas>
+                
+                <div id="hud-scanner" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-2 border-dashed border-white/40 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 box-border">
+                    <div class="flex justify-between w-full p-1">
                         <i class="fas fa-expand text-[#F8F1E5]/50 text-xs"></i>
                         <i class="fas fa-compress text-[#F8F1E5]/50 text-xs"></i>
                     </div>
                     <div class="scan-line"></div>
-                    <div class="text-center pb-2">
-                        <span id="hud-percent" class="text-[10px] font-black text-white bg-black/50 px-2 py-0.5 rounded backdrop-blur-sm hidden">98%</span>
+                    <div class="text-center pb-1">
+                        <span id="hud-percent" class="text-[10px] font-black text-white bg-black/60 px-2.5 py-1 rounded-md backdrop-blur-sm hidden tracking-widest">98% COCOK</span>
                     </div>
                 </div>
 
-                <div id="liveness-overlay" class="absolute inset-0 bg-black/70 backdrop-blur-sm z-15 hidden flex-col items-center justify-center transition-opacity duration-300">
+                <div id="liveness-overlay" class="absolute inset-0 bg-black/70 backdrop-blur-sm z-30 hidden flex-col items-center justify-center transition-opacity duration-300">
                     <div class="w-48 h-48 rounded-full border-4 border-dashed border-[#D4AF37] animate-[spin_10s_linear_infinite]"></div>
                 </div>
 
-                <div class="absolute bottom-5 left-0 right-0 z-30 flex justify-center px-4">
-                    <div id="cam-instruction" class="bg-black/60 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-full text-[#F8F1E5] text-[10px] font-black tracking-widest shadow-xl flex items-center gap-2 transition-all duration-300">
-                        <i class="fas fa-user-viewfinder text-blue-400"></i> SEJAJARKAN WAJAH KE BINGKAI
+                <div class="absolute bottom-4 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
+                    <div id="cam-instruction" class="bg-black/70 backdrop-blur-md border border-white/20 px-5 py-2.5 rounded-full text-[#F8F1E5] text-[10px] font-black tracking-widest shadow-xl flex items-center gap-2 transition-all duration-300">
+                        <i class="fas fa-user-viewfinder text-blue-400"></i> ARAHKAN WAJAH KE BINGKAI
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="mt-auto w-full shrink-0 bg-gradient-to-t from-[#0a0000] via-[#1a0101] to-transparent pt-6 relative z-20">
-            <div class="px-6">
-                <div class="flex mb-4 border-b border-white/10">
-                    <button onclick="switchTab('absen')" id="tab-absen" class="tab-btn active flex-1 py-3.5 text-[10px] font-black transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-clipboard-user text-sm"></i> ABSENSI</button>
-                    <button onclick="switchTab('reg')" id="tab-reg" class="tab-btn flex-1 py-3.5 text-[10px] font-black text-[#e8d5c4]/50 hover:text-[#e8d5c4] transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-user-plus text-sm"></i> REGISTRASI</button>
+        <div class="shrink-0 bg-[#0a0000]/80 backdrop-blur-xl rounded-t-3xl sm:rounded-b-[2.5rem] border-t border-white/10 relative z-50 mt-[-1.5rem] pt-6 pb-6 px-6 shadow-[0_-15px_30px_rgba(0,0,0,0.5)]">
+            
+            <div class="flex mb-4 border-b border-white/10">
+                <button onclick="switchTab('absen')" id="tab-absen" class="flex-1 py-3 text-[10px] font-black text-[#D4AF37] border-b-2 border-[#D4AF37] transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-clipboard-user text-sm"></i> ABSENSI</button>
+                <button onclick="switchTab('reg')" id="tab-reg" class="flex-1 py-3 text-[10px] font-black text-slate-500 border-b-2 border-transparent hover:text-slate-300 transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-user-plus text-sm"></i> REGISTRASI</button>
+            </div>
+
+            <div id="panel-absen" class="space-y-3">
+                <div class="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/10">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div id="avatar-bg" class="w-10 h-10 rounded-xl bg-black flex items-center justify-center border border-white/10 shrink-0 transition-colors"><span id="avatar-icon" class="text-lg">👤</span></div>
+                        <div class="flex flex-col min-w-0">
+                            <h2 id="ai-name" class="text-[13px] font-black text-slate-400 truncate tracking-tight transition-colors">Menunggu Wajah...</h2>
+                            <p id="ai-role" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">Arahkan kamera ke wajah Anda</p>
+                        </div>
+                    </div>
+                    <button id="btn-izin" onclick="ajukanIzin()" disabled class="shrink-0 bg-transparent hover:bg-amber-500/20 text-amber-500 border border-amber-500/40 px-3 py-2 rounded-lg font-black disabled:opacity-20 disabled:border-transparent transition-all text-[9px] tracking-widest flex flex-col items-center"><i class="fas fa-file-medical mb-0.5"></i> IZIN</button>
                 </div>
 
-                <div id="panel-absen" class="space-y-3 pb-6">
-                    <div class="flex items-center justify-between bg-black/40 p-3.5 rounded-2xl border border-white/5 backdrop-blur-md">
-                        <div class="flex items-center gap-3 overflow-hidden">
-                            <div id="avatar-bg" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0 transition-colors"><span id="avatar-icon" class="text-lg">👤</span></div>
-                            <div class="flex flex-col min-w-0">
-                                <h2 id="ai-name" class="text-sm font-black text-slate-400 truncate tracking-tight transition-colors">Menunggu Wajah...</h2>
-                                <p id="ai-role" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">Arahkan kamera ke wajah Anda</p>
-                            </div>
-                        </div>
-                        <button id="btn-izin" onclick="ajukanIzin()" disabled class="shrink-0 bg-transparent hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 px-3 py-2 rounded-lg font-black disabled:opacity-30 disabled:border-transparent transition-all text-[9px] tracking-widest flex flex-col items-center"><i class="fas fa-file-medical mb-0.5"></i> IZIN</button>
-                    </div>
-
-                    <div id="dist-alert" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 px-4 py-2.5 rounded-xl text-[10px] font-bold text-center shadow-inner flex items-center justify-center gap-2">
-                        <i class="fas fa-location-crosshairs animate-pulse"></i> <span id="dist-text">Mencari lokasi...</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="relative">
-                            <i class="fas fa-store absolute left-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/40 text-xs"></i>
-                            <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-4 pl-9 glass-input rounded-xl text-xs font-bold appearance-none cursor-pointer"><option value="" disabled selected>Pilih Outlet...</option></select>
-                            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/30 text-[10px] pointer-events-none"></i>
-                        </div>
-                        <div class="relative">
-                            <i class="fas fa-clock absolute left-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/40 text-xs"></i>
-                            <select id="sel-shift" class="w-full p-4 pl-9 glass-input rounded-xl text-xs font-bold appearance-none cursor-pointer"><option value="" disabled selected>Pilih Shift...</option></select>
-                            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/30 text-[10px] pointer-events-none"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-3 pt-2">
-                        <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-to-bracket text-blue-300"></i> MASUK</button>
-                        <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-rose-600 hover:bg-rose-500 text-white py-4 rounded-xl font-black shadow-[0_0_20px_rgba(225,29,72,0.3)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-from-bracket text-rose-300"></i> PULANG</button>
-                    </div>
+                <div id="dist-alert" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 px-3 py-2 rounded-xl text-[10px] font-bold text-center shadow-inner flex items-center justify-center gap-2">
+                    <i class="fas fa-location-crosshairs animate-pulse"></i> <span id="dist-text">Mencari lokasi...</span>
                 </div>
 
-                <div id="panel-reg" class="hidden space-y-3 pb-6">
-                    <div class="bg-black/40 p-4 rounded-2xl border border-white/5 backdrop-blur-md mb-2">
-                        <p class="text-[10px] text-[#e8d5c4] font-bold leading-relaxed text-center"><i class="fas fa-shield-halved text-[#D4AF37] mr-1"></i> Daftarkan wajah staf baru di sini. Pastikan pencahayaan cukup dan wajah berada di tengah bingkai kamera.</p>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="relative">
+                        <i class="fas fa-store absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer"><option value="" disabled selected>Outlet...</option></select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
                     </div>
                     <div class="relative">
-                        <i class="fas fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/40 text-xs"></i>
-                        <input type="text" id="reg-nama" placeholder="Nama Lengkap Sesuai KTP" class="w-full p-4 pl-9 glass-input rounded-xl text-xs font-bold outline-none placeholder:text-[#e8d5c4]/30">
+                        <i class="fas fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <select id="sel-shift" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer"><option value="" disabled selected>Shift...</option></select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="relative">
-                            <i class="fas fa-user-tie absolute left-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/40 text-xs"></i>
-                            <select id="reg-role" class="w-full p-4 pl-9 glass-input rounded-xl text-xs font-bold appearance-none cursor-pointer"><option value="Staff">Jabatan: Staff</option><option value="Senior">Jabatan: Senior</option></select>
-                            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/30 text-[10px] pointer-events-none"></i>
-                        </div>
-                        <div class="relative">
-                            <i class="fas fa-store absolute left-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/40 text-xs"></i>
-                            <select id="reg-outlet" class="w-full p-4 pl-9 glass-input rounded-xl text-xs font-bold appearance-none cursor-pointer"><option value="" disabled selected>Penempatan...</option></select>
-                            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[#e8d5c4]/30 text-[10px] pointer-events-none"></i>
-                        </div>
-                    </div>
-                    <button onclick="daftarkan()" class="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 text-white py-4 rounded-xl font-black shadow-[0_8px_20px_rgba(212,175,55,0.3)] mt-2 transition-all text-xs tracking-widest flex justify-center items-center gap-2 active:scale-95"><i class="fas fa-lock"></i> KUNCI BIOMETRIK WAJAH</button>
                 </div>
+                
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-black shadow-[0_0_15px_rgba(37,99,235,0.4)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-to-bracket"></i> MASUK</button>
+                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-rose-600 hover:bg-rose-500 text-white py-3.5 rounded-xl font-black shadow-[0_0_15px_rgba(225,29,72,0.4)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-from-bracket"></i> PULANG</button>
+                </div>
+            </div>
+
+            <div id="panel-reg" class="hidden space-y-3 pb-1">
+                <div class="bg-white/5 p-3.5 rounded-xl border border-white/10 mb-2">
+                    <p class="text-[9px] text-[#e8d5c4] font-bold leading-relaxed text-center"><i class="fas fa-shield-halved text-[#D4AF37] mr-1"></i> Daftarkan wajah staf baru. Pastikan pencahayaan terang dan wajah berada di dalam bingkai.</p>
+                </div>
+                <div class="relative">
+                    <i class="fas fa-id-card absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input type="text" id="reg-nama" placeholder="Nama Lengkap Sesuai KTP" class="w-full p-3.5 pl-8 glass-input rounded-xl text-xs font-bold outline-none placeholder:text-slate-600">
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="relative">
+                        <i class="fas fa-user-tie absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <select id="reg-role" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer"><option value="Staff">Jabatan: Staff</option><option value="Senior">Jabatan: Senior</option></select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-store absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <select id="reg-outlet" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer"><option value="" disabled selected>Penempatan...</option></select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
+                    </div>
+                </div>
+                <button onclick="daftarkan()" class="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 text-white py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(212,175,55,0.3)] mt-2 transition-all text-xs tracking-widest flex justify-center items-center gap-2 active:scale-95"><i class="fas fa-lock"></i> SIMPAN BIOMETRIK WAJAH</button>
             </div>
         </div>
     </div>
@@ -188,8 +180,7 @@
         let userLat = 0, userLng = 0, distance = 0, isLocValid = false, lastRecognizedName = null;
         let isPrompting = false, isLivenessPassed = false;
         
-        // Konstanta Liveness
-        const REQUIRED_SMILE_SCORE = 0.65; // Butuh senyum 65%
+        const REQUIRED_SMILE_SCORE = 0.65; 
 
         window.addEventListener('load', () => {
             if(navigator.geolocation) {
@@ -217,7 +208,7 @@
         }
 
         async function initApp() {
-            Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Inisialisasi Sistem...</span>', html: '<span class="text-[#e8d5c4] text-xs">Memuat modul AI biometrik 3D</span>', allowOutsideClick: false, background: 'transparent', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg font-black">Inisialisasi Sistem...</span>', html: '<span class="text-[#e8d5c4] text-xs">Memuat modul AI biometrik 3D</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
             
             const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
             await Promise.all([ 
@@ -228,17 +219,13 @@
             ]);
 
             try {
-                // LOCAL CACHING SYSTEM UNTUK KECEPATAN (Anti Lemot)
                 let dataGAS;
                 const cachedData = localStorage.getItem('aimoy_master_data');
                 const cacheTime = localStorage.getItem('aimoy_master_time');
                 
-                // Gunakan cache jika usianya kurang dari 12 jam, kecuali jika kita paksa tarik
                 if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < 12 * 60 * 60 * 1000) {
                     dataGAS = JSON.parse(cachedData);
-                    console.log("Memuat database dari Local Cache super cepat.");
                 } else {
-                    console.log("Menarik database dari Server GAS...");
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                     dataGAS = await res.json();
                     localStorage.setItem('aimoy_master_data', JSON.stringify(dataGAS));
@@ -253,7 +240,7 @@
 
                 if (dataGAS.dataKaryawan.length > 0) {
                     const labeled = dataGAS.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
-                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.45); // Toleransi 45% (lebih ketat, anti fraud)
+                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.45);
                 }
                 
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } } })
@@ -300,7 +287,7 @@
             
             if (distance > outlet.radius) { 
                 isLocValid = false; alertBox.classList.remove('hidden'); 
-                distText.innerHTML = `Di Luar Area! Jarak: <b class="text-rose-200">${Math.round(distance)}m</b> (Maks ${outlet.radius}m)`; 
+                distText.innerHTML = `Di Luar Radius! Jarak: <b class="text-rose-200">${Math.round(distance)}m</b> (Maks ${outlet.radius}m)`; 
             } else { 
                 isLocValid = true; alertBox.classList.add('hidden'); 
             } 
@@ -323,43 +310,32 @@
                 if (!document.getElementById('panel-absen').classList.contains('hidden')) {
                     if (detections.length > 0 && faceMatcher) {
                         
-                        // DYNAMIC BOUNDING BOX
-                        const box = resized[0].detection.box;
-                        const videoRect = video.getBoundingClientRect();
-                        const scaleX = videoRect.width / size.width;
-                        const scaleY = videoRect.height / size.height;
-                        
-                        hudScanner.style.left = `${box.x * scaleX}px`;
-                        hudScanner.style.top = `${box.y * scaleY}px`;
-                        hudScanner.style.width = `${box.width * scaleX}px`;
-                        hudScanner.style.height = `${box.height * scaleY}px`;
-                        
                         const match = faceMatcher.findBestMatch(resized[0].descriptor);
                         const matchPercent = Math.round((1 - match.distance) * 100);
                         const percentEl = document.getElementById('hud-percent');
                         
                         if (match.label !== 'unknown') {
-                            hudScanner.className = "hud-box status-searching";
-                            percentEl.classList.remove('hidden'); percentEl.innerText = `${matchPercent}% Cocok`;
+                            // Wajah Cocok - Ganti border statis jadi biru
+                            hudScanner.className = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-4 border-solid border-blue-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 shadow-[inset_0_0_30px_rgba(59,130,246,0.3)] bg-blue-500/5";
+                            percentEl.classList.remove('hidden'); percentEl.innerText = `${matchPercent}% COCOK`;
+                            percentEl.className = "text-[10px] font-black text-white bg-blue-600 px-2.5 py-1 rounded-md shadow-md tracking-widest";
 
                             const info = JSON.parse(match.label);
-                            
-                            // TANTANGAN LIVENESS: SENYUM
                             const expressions = resized[0].expressions;
-                            if (expressions.happy > REQUIRED_SMILE_SCORE) {
-                                isLivenessPassed = true;
-                            }
+                            if (expressions.happy > REQUIRED_SMILE_SCORE) { isLivenessPassed = true; }
 
                             if (!isLivenessPassed) {
                                 currentFace = info;
                                 updateUI(true, "LIVENESS_WAIT");
-                                return; // Jeda di sini sampai ia senyum
+                                return;
                             }
                             
-                            // LOLOS!
+                            // Liveness Passed - Border Hijau
+                            hudScanner.className = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-4 border-solid border-emerald-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 shadow-[inset_0_0_30px_rgba(16,185,129,0.3)] bg-emerald-500/5";
+                            percentEl.className = "text-[10px] font-black text-white bg-emerald-600 px-2.5 py-1 rounded-md shadow-md tracking-widest";
+
                             if(lastRecognizedName !== info.n) { 
-                                lastRecognizedName = info.n;
-                                currentFace = info; 
+                                lastRecognizedName = info.n; currentFace = info; 
                                 const outSel = document.getElementById('sel-outlet'); 
                                 if(info.o) { outSel.value = info.o; loadShiftDropdown(); } 
                                 
@@ -372,24 +348,20 @@
                             } else { currentFace = info; updateUI(true, "READY"); }
                             
                         } else { 
-                            // Wajah terdeteksi tapi tidak dikenal di database
-                            hudScanner.className = "hud-box status-search";
-                            hudScanner.style.borderColor = "#ef4444"; // Merah
-                            percentEl.classList.remove('hidden'); percentEl.innerText = "Tidak Dikenali";
+                            hudScanner.className = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-4 border-solid border-rose-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 shadow-[inset_0_0_30px_rgba(225,29,72,0.3)] bg-rose-500/5";
+                            percentEl.classList.remove('hidden'); percentEl.innerText = "TIDAK DIKENAL";
+                            percentEl.className = "text-[10px] font-black text-white bg-rose-600 px-2.5 py-1 rounded-md shadow-md tracking-widest";
                             lastRecognizedName = null; isLivenessPassed = false; updateUI(false); 
                         }
                     } else { 
-                        // Tidak ada wajah
-                        hudScanner.className = "hud-box status-search";
-                        hudScanner.style.left = "20%"; hudScanner.style.top = "20%"; hudScanner.style.width = "60%"; hudScanner.style.height = "60%";
+                        hudScanner.className = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-2 border-dashed border-white/40 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 status-search";
                         document.getElementById('hud-percent').classList.add('hidden');
                         lastRecognizedName = null; isLivenessPassed = false; updateUI(false); 
                     }
                 } else {
-                    // Jika ada di Tab Registrasi, munculkan jaring tulang wajah
                     if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); }
                 }
-            }, 500); // interval dipercepat untuk responsivitas bounding box
+            }, 600); 
         });
 
         function updateUI(found, state = "SEARCH") {
@@ -401,27 +373,24 @@
             
             if (found && currentFace) {
                 if (state === "LIVENESS_WAIT") {
-                    nameEl.innerText = currentFace.n; nameEl.className = "text-sm font-black text-amber-400 truncate";
+                    nameEl.innerText = currentFace.n; nameEl.className = "text-[13px] font-black text-amber-400 truncate";
                     roleEl.innerText = "VERIFIKASI ANTI-SPOOFING..."; roleEl.className = "text-[9px] font-black text-amber-500 uppercase tracking-widest truncate animate-pulse";
                     iconBg.className = "w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/50 shrink-0 transition-colors";
                     icon.innerText = "😊";
                     
-                    hudScanner.className = "hud-box status-wait";
                     camInstruction.innerHTML = "<i class='fas fa-face-smile text-amber-400 text-sm'></i> TERSENYUMLAH KE KAMERA"; 
-                    camInstruction.className = "bg-amber-900/80 backdrop-blur-md border border-amber-500/50 px-6 py-3 rounded-full text-amber-100 text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2 transition-all duration-300 transform scale-105";
+                    camInstruction.className = "bg-amber-900/90 backdrop-blur-md border border-amber-500/50 px-6 py-3 rounded-full text-amber-100 text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2 transition-all duration-300 transform scale-105";
                     
                     livenessOverlay.classList.remove('hidden'); livenessOverlay.classList.add('flex');
-                    
                     btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
                 } else if (state === "READY") {
-                    nameEl.innerText = currentFace.n; nameEl.className = "text-sm font-black text-white truncate";
+                    nameEl.innerText = currentFace.n; nameEl.className = "text-[13px] font-black text-white truncate";
                     roleEl.innerText = `Role: ${currentFace.r} • ${currentFace.o}`; roleEl.className = "text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate";
                     iconBg.className = "w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/50 shrink-0 transition-colors";
                     icon.innerText = "✅";
                     
-                    hudScanner.className = "hud-box status-success";
                     camInstruction.innerHTML = "<i class='fas fa-lock text-emerald-300'></i> BIOMETRIK TERKUNCI"; 
-                    camInstruction.className = "bg-emerald-900/80 backdrop-blur-md border border-emerald-500/50 px-5 py-2.5 rounded-full text-emerald-100 text-[10px] font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2 transition-all duration-300";
+                    camInstruction.className = "bg-emerald-900/90 backdrop-blur-md border border-emerald-500/50 px-5 py-2.5 rounded-full text-emerald-100 text-[10px] font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2 transition-all duration-300";
                     
                     livenessOverlay.classList.add('hidden'); livenessOverlay.classList.remove('flex');
                     
@@ -429,13 +398,13 @@
                     if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
                 }
             } else { 
-                nameEl.innerText = "Menunggu Wajah..."; nameEl.className = "text-sm font-black text-slate-400 truncate";
+                nameEl.innerText = "Menunggu Wajah..."; nameEl.className = "text-[13px] font-black text-slate-400 truncate";
                 roleEl.innerText = "Arahkan kamera ke wajah Anda"; roleEl.className = "text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate";
-                iconBg.className = "w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700 shrink-0 transition-colors";
+                iconBg.className = "w-10 h-10 rounded-xl bg-black flex items-center justify-center border border-white/10 shrink-0 transition-colors";
                 icon.innerText = "👤";
                 
-                camInstruction.innerHTML = "<i class='fas fa-user-viewfinder text-blue-400'></i> SEJAJARKAN WAJAH KE BINGKAI"; 
-                camInstruction.className = "bg-black/60 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-full text-[#F8F1E5] text-[10px] font-black tracking-widest shadow-xl flex items-center gap-2 transition-all duration-300";
+                camInstruction.innerHTML = "<i class='fas fa-user-viewfinder text-blue-400'></i> ARAHKAN WAJAH KE BINGKAI"; 
+                camInstruction.className = "bg-black/70 backdrop-blur-md border border-white/20 px-5 py-2.5 rounded-full text-[#F8F1E5] text-[10px] font-black tracking-widest shadow-xl flex items-center gap-2 transition-all duration-300";
                 
                 livenessOverlay.classList.add('hidden'); livenessOverlay.classList.remove('flex');
                 
@@ -449,22 +418,22 @@
                 Swal.fire({ 
                     icon: 'warning', 
                     title: '<span class="text-[#F8F1E5]">Di Luar Radius!</span>', 
-                    html: '<span class="text-[#e8d5c4] text-xs">Sistem mengenali Anda, tapi GPS HP Anda di luar batas toleransi toko. Silakan mendekat ke kasir.</span>', 
-                    confirmButtonText: 'Tutup', background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' }
+                    html: '<span class="text-[#e8d5c4] text-xs">Sistem mengenali Anda, tapi GPS HP Anda di luar batas toleransi toko. Silakan mendekat ke area toko.</span>', 
+                    confirmButtonText: 'Tutup', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest hover:bg-white/20' }
                 }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); 
                 return;
             }
             
             Swal.fire({
                 title: `<span class="text-[#F8F1E5] text-xl font-black">Hai, ${faceInfo.n}! 👋</span>`,
-                html: `<div class="text-[#e8d5c4] text-xs">Anda terdeteksi berada di <b class="text-white">${faceInfo.o}</b>.<br><br>Target Shift Hari Ini:<br><div class="bg-black/50 rounded-xl py-3 mt-2 font-black text-xl text-[#D4AF37] border border-[#D4AF37]/30 shadow-inner">${shift.kode} <span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
-                showDenyButton: true, showCancelButton: true, background: 'transparent', confirmButtonText: '<i class="fas fa-right-to-bracket mr-1"></i> MASUK', denyButtonText: '<i class="fas fa-right-from-bracket mr-1"></i> PULANG', cancelButtonText: 'Manual / Izin', allowOutsideClick: false,
+                html: `<div class="text-[#e8d5c4] text-xs">Anda terdeteksi berada di <b class="text-white">${faceInfo.o}</b>.<br><br>Target Shift Hari Ini:<br><div class="bg-black/60 rounded-xl py-3 mt-3 font-black text-xl text-[#D4AF37] border border-[#D4AF37]/30 shadow-inner">${shift.kode} <span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
+                showDenyButton: true, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)', confirmButtonText: '<i class="fas fa-right-to-bracket mr-1"></i> MASUK', denyButtonText: '<i class="fas fa-right-from-bracket mr-1"></i> PULANG', cancelButtonText: 'Manual / Izin', allowOutsideClick: false,
                 customClass: { 
                     popup: 'swal2-popup', 
                     confirmButton: 'bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-colors', 
                     denyButton: 'bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(225,29,72,0.4)] transition-colors', 
-                    cancelButton: 'bg-transparent text-[#e8d5c4]/60 hover:text-white rounded-xl w-full text-xs py-2 border border-white/10 transition-colors', 
-                    actions: 'flex-col w-full px-4' 
+                    cancelButton: 'bg-transparent text-slate-400 hover:text-white rounded-xl w-full text-xs py-2 border border-white/10 transition-colors', 
+                    actions: 'flex-col w-full px-4 mt-2' 
                 }
             }).then((result) => {
                 if (result.isConfirmed) { kirimAbsen('Masuk'); } 
@@ -495,11 +464,10 @@
             const shfLembur = shf.options[shf.selectedIndex].getAttribute('data-lembur') || 60;
             const fotoData = ambilFotoKamera();
 
-            // Animasi Flash Camera
             const flash = document.getElementById('flash-overlay');
             if(flash) { flash.style.opacity = '1'; setTimeout(() => { flash.style.opacity = '0'; }, 150); }
 
-            Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Mengirim Data...</span>', html: '<span class="text-[#e8d5c4] text-xs">Menganalisis lokasi, foto, dan jam server.</span>', allowOutsideClick: false, background: 'transparent', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Mengirim Data...</span>', html: '<span class="text-[#e8d5c4] text-xs">Menganalisis lokasi, foto, dan jam server.</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
 
             try {
                 const res = await fetch(API_URL, { 
@@ -519,11 +487,11 @@
                     Swal.fire({
                         icon: 'success', 
                         title: '<span class="text-[#F8F1E5] text-xl font-black">Absen Sukses!</span>',
-                        html: `<div class="text-[#e8d5c4] text-xs">Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.<br><br><div class="bg-black/40 p-4 rounded-xl border border-white/5"><span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span><b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b></div><br><a href="${waLink}" target="_blank" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2"><i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA</a></div>`,
-                        showConfirmButton: false, timer: 15000, background: 'transparent', customClass: { popup: 'swal2-popup' }
+                        html: `<div class="text-[#e8d5c4] text-xs">Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.<br><br><div class="bg-black/50 p-4 rounded-xl border border-white/5"><span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span><b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b></div><br><a href="${waLink}" target="_blank" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all mt-2"><i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA</a></div>`,
+                        showConfirmButton: false, timer: 15000, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
                     }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
-                } else { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Ditolak Sistem</span>', html: `<span class="text-[#e8d5c4] text-xs">${result.message}</span>`, background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
-            } catch (e) { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gangguan Sinyal</span>', html: '<span class="text-[#e8d5c4] text-xs">Gagal terhubung ke pangkalan data utama.</span>', background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+                } else { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Ditolak Sistem</span>', html: `<span class="text-[#e8d5c4] text-xs">${result.message}</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+            } catch (e) { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gangguan Sinyal</span>', html: '<span class="text-[#e8d5c4] text-xs">Gagal terhubung ke pangkalan data.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
         }
 
         async function ajukanIzin() {
@@ -531,10 +499,8 @@
             const out = document.getElementById('sel-outlet').value;
             const { value: alasan } = await Swal.fire({ 
                 title: '<span class="text-[#F8F1E5] text-xl font-black">Formulir Izin</span>', 
-                input: 'text', 
-                inputPlaceholder: 'Cth: Sakit Demam, Ban Bocor, dll',
-                showCancelButton: true, 
-                background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-amber-600 text-white rounded-xl font-black px-6 py-3 text-xs tracking-widest ml-2', cancelButton: 'bg-transparent text-white border border-white/20 rounded-xl px-6 py-3 text-xs tracking-widest', input: 'text-center' },
+                input: 'text', inputPlaceholder: 'Cth: Sakit Demam, Ban Bocor, dll',
+                showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-amber-600 text-white rounded-xl font-black px-6 py-3 text-xs tracking-widest ml-2', cancelButton: 'bg-transparent text-white border border-white/20 rounded-xl px-6 py-3 text-xs tracking-widest', input: 'text-center text-sm' },
                 inputValidator: (value) => { if (!value) return 'Keterangan wajib diisi!' } 
             });
             
@@ -543,12 +509,12 @@
                 const flash = document.getElementById('flash-overlay');
                 if(flash) { flash.style.opacity = '1'; setTimeout(() => { flash.style.opacity = '0'; }, 150); }
 
-                Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Merekam Data...</span>', html: '<span class="text-[#e8d5c4] text-xs">Menyimpan surat izin & foto bukti ke server.</span>', allowOutsideClick: false, background: 'transparent', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
+                Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Merekam Data...</span>', html: '<span class="text-[#e8d5c4] text-xs">Menyimpan surat izin & foto bukti ke server.</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
                 try {
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
                     const result = await res.json();
-                    if (result.status === 'success') Swal.fire({ icon: 'success', title: '<span class="text-[#F8F1E5]">Izin Tercatat</span>', html: `<span class="text-[#e8d5c4] text-xs">Pengajuan izin <b>${currentFace.n}</b> berhasil dikirim ke HRD.</span>`, background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
-                } catch (e) { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gagal</span>', html: '<span class="text-[#e8d5c4] text-xs">Cek koneksi internet Anda.</span>', background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; }); }
+                    if (result.status === 'success') Swal.fire({ icon: 'success', title: '<span class="text-[#F8F1E5]">Izin Tercatat</span>', html: `<span class="text-[#e8d5c4] text-xs">Pengajuan izin <b>${currentFace.n}</b> berhasil dikirim ke HRD.</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-emerald-600 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
+                } catch (e) { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gagal</span>', html: '<span class="text-[#e8d5c4] text-xs">Cek koneksi internet Anda.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; }); }
             } else { isPrompting = false; }
         }
 
@@ -558,19 +524,19 @@
             
             if(!nama || !outlet) { 
                 isPrompting = false; 
-                return Swal.fire({ icon: 'warning', title: '<span class="text-[#F8F1E5]">Peringatan</span>', html: '<span class="text-[#e8d5c4] text-xs">Nama dan Penempatan wajib diisi!</span>', background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }); 
+                return Swal.fire({ icon: 'warning', title: '<span class="text-[#F8F1E5]">Peringatan</span>', html: '<span class="text-[#e8d5c4] text-xs">Nama dan Penempatan wajib diisi!</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }); 
             }
 
             const flash = document.getElementById('flash-overlay');
             if(flash) { flash.style.opacity = '1'; setTimeout(() => { flash.style.opacity = '0'; }, 150); }
 
-            Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg font-black">Mengunci Wajah...</span>', html: '<span class="text-[#D4AF37] text-[10px] font-bold uppercase tracking-widest animate-pulse">Analisis 3D Biometrik Berjalan</span>', allowOutsideClick: false, background: 'transparent', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg font-black">Mengunci Wajah...</span>', html: '<span class="text-[#D4AF37] text-[10px] font-bold uppercase tracking-widest animate-pulse">Analisis 3D Biometrik Berjalan</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
             
             const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
             
             if(!detection) { 
                 isPrompting = false; 
-                return Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gagal Membaca</span>', html: '<span class="text-[#e8d5c4] text-xs">Wajah kabur atau kurang pencahayaan. Coba lagi.</span>', background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }); 
+                return Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gagal Membaca</span>', html: '<span class="text-[#e8d5c4] text-xs">Wajah kabur atau kurang pencahayaan. Coba lagi.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }); 
             }
 
             if (faceMatcher) {
@@ -578,7 +544,7 @@
                 if (match.label !== 'unknown') {
                     const existData = JSON.parse(match.label);
                     isPrompting = false; 
-                    return Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Registrasi Ditolak</span>', html: `<span class="text-[#e8d5c4] text-xs">Biometrik wajah sudah terdaftar atas nama:</span><br><div class="bg-black/50 rounded-xl py-3 mt-3 font-black text-lg text-[#D4AF37] border border-[#D4AF37]/30 shadow-inner">${existData.n}<br><span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">DI ${existData.o}</span></div>`, background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } });
+                    return Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Registrasi Ditolak</span>', html: `<span class="text-[#e8d5c4] text-xs">Biometrik wajah sudah terdaftar atas nama:</span><br><div class="bg-black/50 rounded-xl py-3 mt-3 font-black text-lg text-[#D4AF37] border border-[#D4AF37]/30 shadow-inner">${existData.n}<br><span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">DI ${existData.o}</span></div>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } });
                 }
             }
 
@@ -587,19 +553,22 @@
                 const data = await res.json();
                 if(data.status === 'success') {
                     Swal.fire({
-                        icon: 'success', title: '<span class="text-[#F8F1E5]">Biometrik Terkunci!</span>', html: `<span class="text-[#e8d5c4] text-xs">Akun <b>${nama}</b> resmi diaktifkan di sistem.</span>`, background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-emerald-500 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest shadow-lg shadow-emerald-500/30' }
+                        icon: 'success', title: '<span class="text-[#F8F1E5]">Biometrik Terkunci!</span>', html: `<span class="text-[#e8d5c4] text-xs">Akun <b>${nama}</b> resmi diaktifkan di sistem.</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-emerald-600 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest shadow-lg shadow-emerald-600/30' }
                     }).then(() => {
-                        // REFRESH CACHE AGAR WAJAH BARU BISA LANGSUNG DIPAKAI TANPA RELOAD LAMA
                         localStorage.removeItem('aimoy_master_data'); 
                         location.reload();
                     });
                 }
             } catch(e) { 
-                Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gangguan Server</span>', html: '<span class="text-[#e8d5c4] text-xs">Gagal menyimpan ke pangkalan data.</span>', background: 'transparent', customClass: { popup: 'swal2-popup', confirmButton: 'bg-[#F8F1E5] text-[#4a0404] rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; }); 
+                Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gangguan Server</span>', html: '<span class="text-[#e8d5c4] text-xs">Gagal menyimpan ke pangkalan data.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; }); 
             }
         }
         
-        function switchTab(t) { document.getElementById('panel-absen').classList.toggle('hidden', t === 'reg'); document.getElementById('panel-reg').classList.toggle('hidden', t === 'absen'); document.getElementById('tab-absen').classList.toggle('active', t === 'absen'); document.getElementById('tab-absen').classList.toggle('text-[#e8d5c4]/50', t === 'reg'); document.getElementById('tab-reg').classList.toggle('active', t === 'reg'); document.getElementById('tab-reg').classList.toggle('text-[#e8d5c4]/50', t === 'absen'); }
+        function switchTab(t) { 
+            const pAbsen = document.getElementById('panel-absen'), pReg = document.getElementById('panel-reg'), tAbsen = document.getElementById('tab-absen'), tReg = document.getElementById('tab-reg');
+            if(t === 'reg') { pAbsen.classList.add('hidden'); pReg.classList.remove('hidden'); tReg.classList.add('text-[#D4AF37]', 'border-[#D4AF37]'); tReg.classList.remove('text-slate-500', 'border-transparent'); tAbsen.classList.remove('text-[#D4AF37]', 'border-[#D4AF37]'); tAbsen.classList.add('text-slate-500', 'border-transparent'); } 
+            else { pReg.classList.add('hidden'); pAbsen.classList.remove('hidden'); tAbsen.classList.add('text-[#D4AF37]', 'border-[#D4AF37]'); tAbsen.classList.remove('text-slate-500', 'border-transparent'); tReg.classList.remove('text-[#D4AF37]', 'border-[#D4AF37]'); tReg.classList.add('text-slate-500', 'border-transparent'); } 
+        }
     </script>
 </body>
 </html>
