@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AiMoy Super HC - Admin</title>
     
+    <!-- PWA META TAGS -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,6 +15,7 @@
     <link rel="icon" type="image/png" href="./logoaimoy.png">
     <link rel="apple-touch-icon" href="./logoaimoy.png">
 
+    <!-- LIBRARIES -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -85,8 +87,10 @@
 </head>
 <body class="flex h-[100dvh] text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
 
+    <!-- MOBILE OVERLAY FOR SIDEBAR -->
     <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity duration-300" onclick="toggleSidebar()"></div>
 
+    <!-- SIDEBAR NAVIGATION -->
     <aside id="sidebar" class="fixed lg:static top-0 left-0 h-full w-[280px] bg-white border-r border-slate-200/80 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-[20px_0_40px_rgba(0,0,0,0.05)] lg:shadow-none flex flex-col rounded-r-[2.5rem] lg:rounded-none">
         <div class="p-6 md:p-8 flex items-center justify-between lg:justify-start border-b border-slate-100 shrink-0">
             <div class="flex items-center gap-4">
@@ -136,7 +140,7 @@
         </nav>
 
         <div class="p-6 shrink-0 border-t border-slate-100 hidden lg:block">
-            <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-200/60 shadow-sm">
+            <div class="bg-slate-50 rounded-2xl p-4 flex items-center gap-3 border border-slate-200/60 shadow-sm cursor-pointer hover:bg-white hover:border-slate-300 transition-colors">
                 <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg border-2 border-white shadow-sm"><i class="fas fa-user-tie"></i></div>
                 <div class="flex flex-col min-w-0">
                     <span class="text-sm font-black text-slate-800 truncate">Sistem HRD</span>
@@ -146,6 +150,7 @@
         </div>
     </aside>
 
+    <!-- MAIN CONTENT AREA -->
     <main class="flex-1 flex flex-col min-w-0 relative pb-20 lg:pb-0">
         <header class="h-[72px] lg:h-24 glass-header border-b border-slate-200/60 flex items-center justify-between px-4 lg:px-10 shrink-0 z-20">
             <div class="flex items-center gap-4">
@@ -164,6 +169,7 @@
 
         <div class="flex-1 overflow-y-auto custom-scroll p-4 lg:p-10 scroll-smooth">
             
+            <!-- VIEW: LAPORAN -->
             <div id="view-laporan" class="view-content active flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-end items-center gap-3 mb-2">
                     <div class="flex w-full sm:w-auto gap-2">
@@ -234,10 +240,11 @@
                     </div>
                 </div>
 
+                <!-- TABEL DATA -->
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col min-h-[500px]">
-                    <div class="bg-white border-b border-slate-100 p-6 font-black text-sm uppercase tracking-widest flex justify-between items-center shrink-0">
-                        <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 border border-slate-100 flex items-center justify-center shadow-inner"><i class="fas fa-table text-xs"></i></div><span id="judul-tabel" class="text-slate-800 text-base">📋 Laporan Rinci</span></div>
-                        <span id="log-count" class="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm uppercase tracking-widest">0 Data</span>
+                    <div class="bg-white border-b border-slate-100 p-5 font-black text-sm uppercase tracking-widest flex justify-between items-center shrink-0">
+                        <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 border border-slate-100 flex items-center justify-center shadow-inner"><i class="fas fa-table text-xs"></i></div><span id="judul-tabel" class="text-slate-800 text-sm md:text-base">📋 Laporan Rinci</span></div>
+                        <span id="log-count" class="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm uppercase tracking-widest">0 Data</span>
                     </div>
                     
                     <div class="flex-1 overflow-x-auto custom-scroll relative bg-slate-50/30">
@@ -261,23 +268,22 @@
                                     <th class="px-5 py-5 text-amber-600 text-center border-r border-slate-200/50 bg-amber-50/50">Izin/Sakit</th>
                                     <th class="px-5 py-5 text-indigo-600 text-center border-r border-slate-200/50 bg-indigo-50/50">Libur (Off)</th>
                                     <th class="px-5 py-5 bg-red-500 text-white text-center shadow-inner border-r border-red-600/50">⚠️ ALPA</th>
-                                    <th class="px-5 py-5 text-blue-600 text-center bg-blue-50/50">Lembur (Apprv)</th>
+                                    <th class="px-5 py-5 text-blue-600 text-center border-r border-blue-200/50 bg-blue-50/50">Lembur (Apprv)</th>
+                                    <th class="px-5 py-5 text-emerald-600 text-center bg-emerald-50/80">Kirim WA</th>
                                 </tr>
                             </thead>
                             <tbody id="body-rekap" class="text-slate-700 font-medium divide-y divide-slate-100/60 bg-white">
-                                <tr><td colspan="9" class="p-12 text-center italic text-slate-400 text-sm">Pilih mode Rekap dan klik Analisis.</td></tr>
+                                <tr><td colspan="10" class="p-12 text-center italic text-slate-400 text-sm">Pilih mode Rekap dan klik Analisis.</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
+            <!-- VIEW: KARYAWAN -->
             <div id="view-karyawan" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div><h2 class="text-2xl font-black text-slate-800">Direktori Karyawan</h2><p class="text-xs font-bold text-slate-400 mt-1">Data master seluruh staf HC.</p></div>
-                    <button onclick="openDrawer('drawer-matrix')" class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95">
-                        <i class="fas fa-calendar-check text-indigo-200 text-base"></i> Atur Jadwal & Absen Masal
-                    </button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
@@ -291,6 +297,7 @@
                 </div>
             </div>
             
+            <!-- VIEW: OUTLET -->
             <div id="view-outlet" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div><h2 class="text-2xl font-black text-slate-800">Master Outlet</h2><p class="text-xs font-bold text-slate-400 mt-1">Titik GPS & Radius Absensi.</p></div>
@@ -308,10 +315,11 @@
                 </div>
             </div>
             
+            <!-- VIEW: SHIFT -->
             <div id="view-shift" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div><h2 class="text-2xl font-black text-slate-800">Aturan Waktu & Shift</h2><p class="text-xs font-bold text-slate-400 mt-1">Konfigurasi batas telat dan lembur.</p></div>
-                    <button onclick="openDrawer('drawer-shift')" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(16,185,129,0.3)] hover:bg-emerald-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-plus text-emerald-200"></i> Buat Shift Baru</button>
+                    <button onclick="bukaModalShift()" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-black shadow-[0_8px_20px_rgba(16,185,129,0.3)] hover:bg-emerald-700 hover:-translate-y-0.5 transition-all text-xs flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-plus text-emerald-200"></i> Buat Shift Baru</button>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
                     <div class="overflow-x-auto custom-scroll max-h-[70vh]">
@@ -328,6 +336,7 @@
         </div>
     </main>
 
+    <!-- MOBILE BOTTOM NAV BAR -->
     <nav class="fixed bottom-0 left-0 w-full glass-bottom-nav flex justify-around p-2 pb-safe lg:hidden z-[50]" id="bottom-nav-bar">
         <button id="nav-mob-laporan" onclick="switchView('view-laporan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-blue-600 w-full transition-colors relative">
             <div class="w-12 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-chart-pie text-lg"></i></div>
@@ -347,8 +356,12 @@
         </button>
     </nav>
 
+    <!-- ========================================== -->
+    <!-- SISTEM DRAWER / BOTTOM SHEET UNIFIED -->
+    <!-- ========================================== -->
     <div id="global-overlay" class="drawer-overlay" onclick="closeAllDrawers()"></div>
 
+    <!-- DRAWER: TIMELINE DETAIL -->
     <div id="drawer-detail" class="drawer-panel">
         <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
         <div class="px-6 py-4 lg:py-6 lg:px-8 border-b border-slate-100 flex justify-between items-center shrink-0">
@@ -364,6 +377,7 @@
         <div id="drawer-detail-content" class="flex-1 overflow-y-auto custom-scroll p-6 lg:p-8 bg-slate-50/50"></div>
     </div>
 
+    <!-- DRAWER: IMPORT -->
     <div id="drawer-import" class="drawer-panel">
         <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
         <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
@@ -379,6 +393,7 @@
         </div>
     </div>
     
+    <!-- DRAWER: MANUAL -->
     <div id="drawer-manual" class="drawer-panel">
         <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
         <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
@@ -402,6 +417,7 @@
         </div>
     </div>
     
+    <!-- DRAWER: KARYAWAN -->
     <div id="drawer-karyawan" class="drawer-panel">
         <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
         <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
@@ -417,6 +433,7 @@
         </div>
     </div>
     
+    <!-- DRAWER: OUTLET -->
     <div id="drawer-outlet" class="drawer-panel">
         <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-slate-300 rounded-full"></div></div>
         <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scroll">
@@ -438,6 +455,7 @@
         </div>
     </div>
     
+    <!-- DRAWER: SHIFT -->
     <div id="drawer-shift" class="drawer-panel">
         <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0 absolute z-50" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-white/50 rounded-full"></div></div>
         <div class="bg-gradient-to-br from-emerald-500 to-teal-600 p-6 lg:p-8 text-white relative shrink-0">
@@ -486,6 +504,7 @@
         </div>
     </div>
 
+    <!-- DRAWER: MATRIX WFM (WIDE) -->
     <div id="drawer-matrix" class="drawer-panel w-wide">
         <div class="w-full flex justify-center pt-4 pb-2 lg:hidden cursor-pointer shrink-0 absolute z-50" onclick="closeAllDrawers()"><div class="w-12 h-1.5 bg-white/50 rounded-full"></div></div>
         <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 p-5 sm:p-6 lg:p-8 text-white flex justify-between items-center shrink-0 relative overflow-hidden">
@@ -544,9 +563,6 @@
             return icons[key] || 'fas fa-info-circle';
         }
 
-        // ==========================================
-        // SISTEM DRAWER / BOTTOM SHEET CORE
-        // ==========================================
         let activeDrawer = null;
         
         function openDrawer(id) {
@@ -554,11 +570,7 @@
             document.getElementById('global-overlay').classList.add('show');
             document.getElementById(id).classList.add('show');
             activeDrawer = id;
-            
-            // KUNCI PERBAIKAN: Beri jeda 0.4 detik agar drawer terbuka penuh, baru re-kalkulasi ukuran peta
-            if (id === 'drawer-outlet') {
-                setTimeout(() => { if (map) map.invalidateSize(); }, 400);
-            }
+            if (id === 'drawer-outlet') setTimeout(() => { if (map) map.invalidateSize(); }, 400);
         }
         
         function closeAllDrawers() {
@@ -575,9 +587,7 @@
             activeDrawer = null;
         }
 
-        function tutupModal(id) {
-            closeAllDrawers();
-        }
+        function tutupModal(id) { closeAllDrawers(); }
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); });
@@ -612,7 +622,6 @@
 
         function switchView(viewId, desktopBtn = null, mobileBtn = null) {
             document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
-            
             const targetView = document.getElementById(viewId);
             if(targetView) targetView.classList.add('active');
 
@@ -705,21 +714,15 @@
             document.getElementById('table-outlet').innerHTML = tableOut || `<tr><td colspan="3" class="text-center py-12 text-sm italic text-slate-400">Belum ada outlet terdaftar.</td></tr>`; document.getElementById('table-shift').innerHTML = tableShf || `<tr><td colspan="4" class="text-center py-12 text-sm italic text-slate-400">Belum ada jadwal shift.</td></tr>`; document.getElementById('table-karyawan').innerHTML = tableKar || `<tr><td colspan="5" class="text-center py-12 text-sm italic text-slate-400">Belum ada karyawan terdaftar.</td></tr>`;
         }
 
-        // ==========================================
-        // 🚀 VERTICAL TIMELINE DRAWER FOR DETAILS
-        // ==========================================
         function showDetailModal(key) {
             const data = summaryData[key] || []; 
             const c = uiColors[key];
-
             document.getElementById('drawer-title').innerText = titleMap[key].split(' ').slice(1).join(' '); 
-            
             const iconBox = document.getElementById('drawer-icon');
             iconBox.className = `w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner border ${c.pillBorder} ${c.bgBtn} ${c.textMain}`;
             iconBox.innerHTML = `<i class="${getIconForKey(key)}"></i>`;
 
             let htmlContent = '';
-            
             if (data.length === 0) {
                 htmlContent = `
                 <div class="flex flex-col items-center justify-center h-[40vh] text-center opacity-60">
@@ -729,14 +732,11 @@
                 </div>`;
             } else {
                 htmlContent += `<div class="relative pl-[1.1rem] border-l-2 ${c.pillBorder} space-y-5 ml-3 pb-8">`;
-                
                 data.forEach(item => {
                     let timeStr = item.jam ? `<i class="far fa-clock mr-1"></i> ${item.jam}` : `<i class="far fa-calendar-check mr-1"></i> -`;
                     let infoStr = item.status || item.info || '';
                     if (item.menit) infoStr = `Lembur ${item.menit} Menit`;
-                    
                     let dotColor = c.dot || 'bg-slate-400';
-
                     htmlContent += `
                     <div class="relative">
                         <div class="absolute -left-[1.58rem] top-1.5 w-3.5 h-3.5 rounded-full ${dotColor} border-[3px] border-white shadow-sm"></div>
@@ -749,7 +749,6 @@
                         </div>
                     </div>`;
                 });
-                
                 htmlContent += `</div>`;
             }
 
@@ -757,41 +756,27 @@
             openDrawer('drawer-detail');
         }
 
-        // ==========================================
-        // FITUR MATRIX JADWAL & ABSEN (SUPER WFM)
-        // ==========================================
         function bukaModalMatrix() {
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             document.getElementById('matrix-bulan').value = `${yyyy}-${mm}`;
-            
-            // Note: matrix-outlet is already populated in renderMasterTables()
-            
             document.getElementById('thead-matrix').innerHTML = '';
             document.getElementById('tbody-matrix').innerHTML = '<tr><td class="p-10 text-center text-slate-400 italic font-medium">Silakan pilih Cabang & Bulan terlebih dahulu.</td></tr>';
-            
             openDrawer('drawer-matrix');
         }
 
         function warnaiSelect(sel) {
             sel.classList.remove('text-slate-400', 'text-emerald-600', 'text-rose-600', 'text-amber-600', 'bg-emerald-50', 'bg-rose-50', 'bg-amber-50', 'bg-transparent', 'bg-slate-50', 'border-emerald-200', 'border-rose-200', 'border-amber-200', 'border-transparent', 'border-slate-200');
-            
-            if (sel.value === '') { 
-                sel.classList.add('text-slate-400', 'bg-slate-50', 'border-slate-200'); 
-            } else if (sel.value === 'OFF') { 
-                sel.classList.add('text-rose-600', 'bg-rose-50', 'border-rose-200'); 
-            } else if (sel.value === 'IZIN') { 
-                sel.classList.add('text-amber-600', 'bg-amber-50', 'border-amber-200'); 
-            } else { 
-                sel.classList.add('text-emerald-600', 'bg-emerald-50', 'border-emerald-200'); 
-            }
+            if (sel.value === '') { sel.classList.add('text-slate-400', 'bg-slate-50', 'border-slate-200'); } 
+            else if (sel.value === 'OFF') { sel.classList.add('text-rose-600', 'bg-rose-50', 'border-rose-200'); } 
+            else if (sel.value === 'IZIN') { sel.classList.add('text-amber-600', 'bg-amber-50', 'border-amber-200'); } 
+            else { sel.classList.add('text-emerald-600', 'bg-emerald-50', 'border-emerald-200'); }
         }
 
         async function renderTabelMatrix() {
             const bulanVal = document.getElementById('matrix-bulan').value; 
             const outletVal = document.getElementById('matrix-outlet').value;
-            
             if (!bulanVal || !outletVal) return;
 
             const [yyyy, mm] = bulanVal.split('-');
@@ -812,21 +797,14 @@
                 const logs = result.data || [];
 
                 const shiftCabang = gShift.filter(s => s.outlet === outletVal);
-                let optShift = `<option value="">-</option>
-                                <option value="OFF" class="font-black text-rose-500">OFF (Libur)</option>
-                                <option value="IZIN" class="font-black text-amber-500">IZIN / SAKIT</option>`;
-                shiftCabang.forEach(s => {
-                    optShift += `<option value="${s.kode}" class="font-black text-emerald-600">${s.kode}</option>`;
-                });
+                let optShift = `<option value="">-</option><option value="OFF" class="font-black text-rose-500">OFF (Libur)</option><option value="IZIN" class="font-black text-amber-500">IZIN / SAKIT</option>`;
+                shiftCabang.forEach(s => { optShift += `<option value="${s.kode}" class="font-black text-emerald-600">${s.kode}</option>`; });
 
                 window.originalMatrixState = {}; 
                 logs.forEach(r => {
                     if (String(r.tanggal).startsWith(bulanVal)) {
                         let key = `${r.nama}_${r.tanggal}`;
-                        
-                        if (!window.originalMatrixState[key]) {
-                            window.originalMatrixState[key] = { val: '', tsList: [] };
-                        }
+                        if (!window.originalMatrixState[key]) { window.originalMatrixState[key] = { val: '', tsList: [] }; }
                         window.originalMatrixState[key].tsList.push(r.ts);
 
                         if (window.originalMatrixState[key].val === '') {
@@ -842,10 +820,8 @@
                     let dateObj = new Date(yyyy, mm - 1, i);
                     let dayName = dateObj.toLocaleDateString('id-ID', { weekday: 'short' }); 
                     let isSunday = dateObj.getDay() === 0; 
-                    
                     let textCol = isSunday ? 'text-rose-600' : 'text-slate-500';
                     let bgCol = isSunday ? 'bg-rose-50' : 'bg-slate-100';
-                    
                     theadHtml += `<th class="py-2.5 px-2 text-center border-l border-slate-200 ${bgCol} min-w-[75px]"><div class="${textCol} text-[9px] font-black uppercase tracking-widest">${dayName}</div><div class="font-black text-sm md:text-base mt-0.5 ${textCol}">${i}</div></th>`;
                 }
                 theadHtml += '</tr>';
@@ -855,36 +831,27 @@
                 karFiltered.forEach(k => {
                     tbodyHtml += `<tr class="hover:bg-indigo-50/40 transition-colors group bg-white">
                         <td class="py-2 px-5 font-black text-slate-800 text-xs md:text-sm sticky left-0 bg-inherit z-10 border-r border-slate-200 shadow-[2px_0_5px_rgba(0,0,0,0.02)] transition-colors">
-                            <div class="flex items-center gap-3">
-                                <i class="fas fa-grip-vertical text-slate-300 cursor-grab hover:text-indigo-600 transition-colors drag-handle py-3 pr-2 active:cursor-grabbing text-base" title="Tahan & Geser"></i>
-                                <span class="truncate max-w-[100px] md:max-w-[150px]">${k.nama}</span>
-                            </div>
+                            <div class="flex items-center gap-3"><i class="fas fa-grip-vertical text-slate-300 cursor-grab hover:text-indigo-600 transition-colors drag-handle py-3 pr-2 active:cursor-grabbing text-base" title="Tahan & Geser"></i><span class="truncate max-w-[100px] md:max-w-[150px]">${k.nama}</span></div>
                         </td>`;
                     
                     for (let i = 1; i <= daysInMonth; i++) {
                         let safeDate = `${yyyy}-${mm}-${String(i).padStart(2, '0')}`;
                         let keyState = `${k.nama}_${safeDate}`;
                         let currVal = window.originalMatrixState[keyState] ? window.originalMatrixState[keyState].val : '';
-                        
                         let bgColCell = (new Date(yyyy, mm - 1, i).getDay() === 0) ? 'bg-rose-50/20' : '';
                         let customOpt = optShift.replace(`value="${currVal}"`, `value="${currVal}" selected`);
 
                         tbodyHtml += `<td class="p-1.5 text-center border-l border-slate-100/60 ${bgColCell}">
-                            <select class="sel-matrix w-full h-9 text-[10px] font-bold text-center outline-none cursor-pointer rounded-lg border border-transparent hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 transition-all appearance-none" data-nama="${k.nama}" data-tanggal="${safeDate}" onchange="warnaiSelect(this)">
-                                ${customOpt}
-                            </select>
+                            <select class="sel-matrix w-full h-9 text-[10px] font-bold text-center outline-none cursor-pointer rounded-lg border border-transparent hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 transition-all appearance-none" data-nama="${k.nama}" data-tanggal="${safeDate}" onchange="warnaiSelect(this)">${customOpt}</select>
                         </td>`;
                     }
                     tbodyHtml += '</tr>';
                 });
                 document.getElementById('tbody-matrix').innerHTML = tbodyHtml;
-
                 document.querySelectorAll('.sel-matrix').forEach(sel => warnaiSelect(sel));
 
                 if (window.matrixSortable) window.matrixSortable.destroy();
-                window.matrixSortable = new Sortable(document.getElementById('tbody-matrix'), {
-                    handle: '.drag-handle', animation: 250, ghostClass: 'opacity-40', dragClass: 'shadow-2xl', forceFallback: true
-                });
+                window.matrixSortable = new Sortable(document.getElementById('tbody-matrix'), { handle: '.drag-handle', animation: 250, ghostClass: 'opacity-40', dragClass: 'shadow-2xl', forceFallback: true });
 
                 Swal.close();
             } catch (e) {
@@ -905,110 +872,62 @@
                 let tanggal = sel.getAttribute('data-tanggal');
                 let newVal = sel.value;
                 let key = `${nama}_${tanggal}`;
-                
                 let oldState = window.originalMatrixState[key];
                 let oldVal = oldState ? oldState.val : '';
 
                 if (newVal !== oldVal) {
-                    if (oldState && oldState.tsList.length > 0) {
-                        oldState.tsList.forEach(ts => { dataToDelete.push({ ts: ts }); });
-                    }
-
+                    if (oldState && oldState.tsList.length > 0) { oldState.tsList.forEach(ts => { dataToDelete.push({ ts: ts }); }); }
                     if (newVal !== '') {
                         let tipeStr = ''; let jamStr = '00:00'; let shiftStr = '-';
-                        
-                        if (newVal === 'OFF') {
-                            tipeStr = 'Libur';
-                        } else if (newVal === 'IZIN') {
-                            tipeStr = 'Izin';
-                        } else {
+                        if (newVal === 'OFF') { tipeStr = 'Libur'; } 
+                        else if (newVal === 'IZIN') { tipeStr = 'Izin'; } 
+                        else {
                             tipeStr = 'Masuk'; shiftStr = newVal;
                             let sObj = shiftRules.find(s => s.kode === newVal);
                             jamStr = sObj ? sObj.jamMasuk : '08:00'; 
                         }
-
                         dataToImport.push({ tanggal: tanggal, jam: jamStr, nama: nama, outlet: outletVal, shift: shiftStr, tipe: tipeStr, keterangan: 'Penyesuaian Matriks HRD' });
                     }
                 }
             });
 
-            if (dataToImport.length === 0 && dataToDelete.length === 0) {
-                return Swal.fire('Informasi', 'Tidak ada perubahan matriks yang dilakukan.', 'info');
-            }
+            if (dataToImport.length === 0 && dataToDelete.length === 0) return Swal.fire('Informasi', 'Tidak ada perubahan matriks yang dilakukan.', 'info');
 
             Swal.fire({
                 title: `Eksekusi Matriks?`,
                 html: `Sistem akan membatalkan <b>${dataToDelete.length}</b> data lama, dan menyuntikkan <b>${dataToImport.length}</b> data baru ke riwayat absensi.`,
                 icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#4f46e5',
-                cancelButtonColor: '#e2e8f0',
-                confirmButtonText: '<i class="fas fa-save mr-2"></i>Ya, Jalankan!',
-                cancelButtonText: '<span class="text-slate-600 font-bold">Batal</span>',
-                customClass: { confirmButton: 'shadow-lg', popup: 'rounded-3xl' }
+                showCancelButton: true, confirmButtonColor: '#4f46e5', cancelButtonColor: '#e2e8f0', confirmButtonText: '<i class="fas fa-save mr-2"></i>Ya, Jalankan!', cancelButtonText: '<span class="text-slate-600 font-bold">Batal</span>', customClass: { confirmButton: 'shadow-lg', popup: 'rounded-3xl' }
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     Swal.fire({ title: 'Memproses WFM...', html: 'Membersihkan data lama dan menyuntikkan data baru...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                     try {
-                        if (dataToDelete.length > 0) {
-                            for(let d of dataToDelete) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'hapus_absen', payload: d }) }); }
-                        }
-                        if (dataToImport.length > 0) {
-                            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
-                        }
+                        if (dataToDelete.length > 0) { for(let d of dataToDelete) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'hapus_absen', payload: d }) }); } }
+                        if (dataToImport.length > 0) { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) }); }
                         Swal.fire('Berhasil!', 'Seluruh Matriks WFM berhasil diimplementasikan.', 'success'); 
-                        closeAllDrawers(); 
-                        syncDatabase(true); 
-                    } catch(err) {
-                        Swal.fire('Error', 'Gagal memproses matriks ke database.', 'error');
-                    }
+                        closeAllDrawers(); syncDatabase(true); 
+                    } catch(err) { Swal.fire('Error', 'Gagal memproses matriks ke database.', 'error'); }
                 }
             });
         }
 
         function initMap(lat, lng) { 
             if(!map) { 
-                map = L.map('map').setView([lat, lng], 14); 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); 
-                marker = L.marker([lat, lng]).addTo(map); 
-                map.on('click', e => { 
-                    marker.setLatLng(e.latlng); 
-                    document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); 
-                    document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); 
-                }); 
-            } else { 
-                map.setView([lat, lng], 14); 
-                marker.setLatLng([lat, lng]); 
-            }
+                map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); 
+                map.on('click', e => { marker.setLatLng(e.latlng); document.getElementById('out-lat').value = e.latlng.lat.toFixed(6); document.getElementById('out-lng').value = e.latlng.lng.toFixed(6); }); 
+            } else { map.setView([lat, lng], 14); marker.setLatLng([lat, lng]); }
         }
 
         function bukaModalOutlet() { 
-            document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; 
-            document.getElementById('out-oldnama').value = ""; 
-            document.getElementById('out-nama').value = ""; 
-            document.getElementById('out-lat').value = ""; 
-            document.getElementById('out-lng').value = ""; 
-            document.getElementById('out-rad').value = ""; 
-            openDrawer('drawer-outlet'); 
-            
-            // Jeda 0.3s agar animasi laci samping / bottom sheet selesai, lalu gambar peta
+            document.getElementById('title-modal-out').innerText = "Tambah Outlet Baru"; document.getElementById('out-oldnama').value = ""; document.getElementById('out-nama').value = ""; document.getElementById('out-lat').value = ""; document.getElementById('out-lng').value = ""; document.getElementById('out-rad').value = ""; openDrawer('drawer-outlet'); 
             setTimeout(() => { initMap(-1.269160, 116.825264); }, 300);
         }
 
         function editModalOutlet(nama, lat, lng, rad) { 
-            document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; 
-            document.getElementById('out-oldnama').value = nama; 
-            document.getElementById('out-nama').value = nama; 
-            document.getElementById('out-lat').value = lat; 
-            document.getElementById('out-lng').value = lng; 
-            document.getElementById('out-rad').value = rad; 
-            openDrawer('drawer-outlet'); 
-            
-            // Jeda 0.3s agar animasi laci samping / bottom sheet selesai, lalu gambar peta
+            document.getElementById('title-modal-out').innerText = "Edit Data Outlet"; document.getElementById('out-oldnama').value = nama; document.getElementById('out-nama').value = nama; document.getElementById('out-lat').value = lat; document.getElementById('out-lng').value = lng; document.getElementById('out-rad').value = rad; openDrawer('drawer-outlet'); 
             setTimeout(() => { initMap(parseFloat(lat), parseFloat(lng)); }, 300);
         }
 
-        // FUNGSI MODAL MANUAL, IMPORT, SHIFT, KARYAWAN -> Diubah ke Drawer
         function bukaModalManual() { document.getElementById('man-tgl').value = new Date().toISOString().split('T')[0]; document.getElementById('man-jam').value = new Date().toTimeString().slice(0,5); document.getElementById('man-ket').value = ""; openDrawer('drawer-manual'); }
         function bukaModalImport() { document.getElementById('file-csv').value = ""; openDrawer('drawer-import'); }
         function bukaModalShift() { document.getElementById('title-modal-shf').innerText = "Tambah Jadwal Shift"; document.getElementById('shf-oldoutlet').value = ""; document.getElementById('shf-oldkode').value = ""; document.getElementById('shf-outlet').value = ""; document.getElementById('shf-nama').value = ""; document.getElementById('shf-masuk').value = ""; document.getElementById('shf-keluar').value = ""; document.getElementById('shf-tol').value = "15"; document.getElementById('shf-lembur').value = "60"; openDrawer('drawer-shift'); }
@@ -1039,6 +958,9 @@
             
             const logsRange = result.data.filter(r => r.tanggal >= tglStart && r.tanggal <= tglEnd && (outlet === 'Semua' || r.outlet === outlet) && (karyawan === 'Semua' || r.nama === karyawan) );
             
+            // Simpan ke Global Array untuk diakses fitur Kirim WA
+            window.globalLogsRange = logsRange;
+
             let rajinList = [], telatList = [], izinList = [], liburList = [], lemburList = [], totalLemburMnt = 0;
             let rekapAkumulasi = {}; 
             
@@ -1089,11 +1011,9 @@
                 else {
                     tableLogsToRender = logsRange.filter(r => {
                         const isIzin = r.tipe === 'Izin', isLibur = r.tipe === 'Libur', isMasuk = r.tipe === 'Masuk', isTelat = r.status.includes('TERLAMBAT'), isManual = r.status.includes('MANUAL') || r.info.includes('Bypass') || r.foto === 'Bypass HRD';
-                        
                         const shiftRule = gShift.find(s => s.kode === r.shift && s.outlet === r.outlet);
                         const batasLembur = shiftRule && shiftRule.ambangLembur ? parseInt(shiftRule.ambangLembur) : 60;
                         const isLemburValid = r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) >= batasLembur;
-
                         if(kategori === 'Rajin') return isMasuk && !isTelat; if(kategori === 'Telat') return isMasuk && isTelat;
                         if(kategori === 'Izin') return isIzin || (isManual && r.tipe === 'Izin'); if(kategori === 'Libur') return isLibur || (isManual && r.tipe === 'Libur');
                         if(kategori === 'Lembur') return isLemburValid; return true;
@@ -1158,10 +1078,15 @@
                         <td class="px-5 py-5 text-center font-bold text-amber-500 border-r border-slate-200/50">${r.izin}x</td>
                         <td class="px-5 py-5 text-center font-bold text-indigo-500 border-r border-slate-200/50">${r.libur}x</td>
                         <td class="px-5 py-5 text-center font-black text-white bg-red-500 border-r border-red-600/50 shadow-inner">${r.alpa}x</td>
-                        <td class="px-5 py-5 text-center font-black text-blue-700 bg-blue-50/50">${r.lembur} <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Mnt</span></td>
+                        <td class="px-5 py-5 text-center font-black text-blue-700 bg-blue-50/50 border-r border-blue-200/50">${r.lembur} <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Mnt</span></td>
+                        <td class="px-5 py-5 text-center bg-slate-50/30">
+                            <button onclick="kirimWA('${r.nama}')" class="bg-emerald-100 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all active:scale-95">
+                                <i class="fab fa-whatsapp text-sm md:mr-1"></i> <span class="hidden md:inline">Kirim</span>
+                            </button>
+                        </td>
                     </tr>`;
                 });
-                document.getElementById('body-rekap').innerHTML = htmlRekap || `<tr><td colspan="9" class="p-12 text-center italic text-slate-400 text-sm">Tidak ada data.</td></tr>`;
+                document.getElementById('body-rekap').innerHTML = htmlRekap || `<tr><td colspan="10" class="p-12 text-center italic text-slate-400 text-sm">Tidak ada data.</td></tr>`;
                 document.getElementById('log-count').innerText = `${arrRekap.length} Karyawan`;
             }
 
@@ -1183,6 +1108,94 @@
             Swal.close();
         }
 
+        // ==========================================
+        // 🚀 FUNGSI BARU: KIRIM WA AUTO-GENERATE
+        // ==========================================
+        function kirimWA(nama) {
+            const tglStart = document.getElementById('filter-start').value;
+            const tglEnd = document.getElementById('filter-end').value;
+
+            if (!tglStart || !tglEnd) return Swal.fire('Error', 'Filter tanggal tidak valid.', 'error');
+
+            const dStart = new Date(tglStart);
+            const dEnd = new Date(tglEnd);
+            const today = new Date();
+            today.setHours(0,0,0,0); // Set to midnight for fair comparison
+
+            // Ambil log spesifik karyawan dari data global yg disaring
+            const myLogs = window.globalLogsRange.filter(r => r.nama === nama);
+            const myKaryawan = gKaryawan.find(k => k.nama === nama);
+            const myOutlet = myKaryawan ? myKaryawan.outlet : '';
+            const shiftRules = gShift.filter(s => s.outlet === myOutlet);
+
+            let totalHadir = 0;
+            let offDates = [];
+            let izinDates = [];
+            let alpaDates = [];
+            let lemburDates = [];
+
+            // Loop hari demi hari (Time Machine)
+            for (let d = new Date(dStart); d <= dEnd; d.setDate(d.getDate() + 1)) {
+                let y = d.getFullYear();
+                let m = String(d.getMonth() + 1).padStart(2, '0');
+                let day = String(d.getDate()).padStart(2, '0');
+                let dStr = `${y}-${m}-${day}`;
+                let displayDate = `${day}/${m}`; // Cth format: 15/05
+
+                let logsToday = myLogs.filter(r => r.tanggal.startsWith(dStr));
+
+                let isMasuk = false;
+                let isLibur = false;
+                let isIzin = false;
+                let lemburMnt = 0;
+
+                logsToday.forEach(r => {
+                    if (r.tipe === 'Masuk' || r.tipe === 'Pulang') {
+                        isMasuk = true;
+                        // Cek syarat lembur berdasar Master Shift
+                        const rule = shiftRules.find(s => s.kode === r.shift);
+                        const batasLembur = rule && rule.ambangLembur ? parseInt(rule.ambangLembur) : 60;
+                        if (r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) >= batasLembur) {
+                            lemburMnt = Math.max(lemburMnt, parseInt(r.lembur));
+                        }
+                    } else if (r.tipe === 'Libur') {
+                        isLibur = true;
+                    } else if (r.tipe === 'Izin') {
+                        isIzin = true;
+                    }
+                });
+
+                // Kalkulasi ke keranjang Array
+                if (isMasuk) {
+                    totalHadir++;
+                    if (lemburMnt > 0) lemburDates.push(`- ${displayDate} (${lemburMnt} mnt)`);
+                } else if (isLibur) {
+                    let passed = (d < today) ? ' ✅' : '';
+                    offDates.push(`- ${displayDate}${passed}`);
+                } else if (isIzin) {
+                    izinDates.push(`- ${displayDate}`);
+                } else {
+                    // Jika tidak ada data apapun & tanggal sudah lewat = ALPA
+                    if (d < today) alpaDates.push(`- ${displayDate}`);
+                }
+            }
+
+            // Hitung total hari di bulan tersebut berdasarkan tglStart filter
+            const daysInMonth = new Date(dStart.getFullYear(), dStart.getMonth() + 1, 0).getDate();
+
+            // Rangkai Pesan WhatsApp
+            let msg = `Halo *${nama}*, berikut adalah rekap kehadiran Anda untuk periode ${tglStart} s/d ${tglEnd}:\n\n`;
+            msg += `📊 *Total Bekerja:* ${totalHadir}/${daysInMonth} Hari\n\n`;
+            msg += `🏖️ *Jadwal Off (Libur):*\n${offDates.length ? offDates.join('\n') : '-'}\n\n`;
+            msg += `📝 *Izin / Sakit:*\n${izinDates.length ? izinDates.join('\n') : '-'}\n\n`;
+            msg += `⚠️ *Alpa / Bolos:*\n${alpaDates.length ? alpaDates.join('\n') : '-'}\n\n`;
+            msg += `🔥 *Lembur (Disetujui):*\n${lemburDates.length ? lemburDates.join('\n') : '-'}\n\n`;
+            msg += `Harap pastikan data ini sesuai. Hubungi HRD jika terdapat kendala. Terima kasih! 🙏`;
+
+            // Eksekusi buka tab WA
+            window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+        }
+
         function exportPDF() {
             const mode = document.getElementById('mode-laporan').value;
             const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
@@ -1196,7 +1209,6 @@
                 if(gLaporanRinci.length === 0) return Swal.fire('Kosong', 'Tidak ada data untuk di-export.', 'warning');
                 const katStr = document.getElementById('filter-kategori').options[document.getElementById('filter-kategori').selectedIndex].text;
                 doc.text(`Tipe: Rincian Log Harian | Periode: ${dStart} s/d ${dEnd} | Filter: ${katStr}`, 14, 28);
-                
                 const headers = [["Tanggal", "Jam", "Nama", "Outlet", "Shift", "Tipe", "Status", "Lembur (Mnt)", "Keterangan"]];
                 const dataRow = gLaporanRinci.map(r => [r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status, r.lembur, (r.foto==="Bypass HRD" || r.status==="ALPA" ? r.foto : "Terdapat Foto")]);
                 doc.autoTable({ head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, styles: { fontSize: 7 } });
@@ -1204,27 +1216,11 @@
             } else {
                 if(gLaporanRekap.length === 0) return Swal.fire('Kosong', 'Tidak ada data rekap.', 'warning');
                 doc.text(`Tipe: Rekapitulasi Akumulasi Gaji | Periode: ${dStart} s/d ${dEnd} | Karyawan: ${empStr}`, 14, 28);
-                
                 const headers = [["Nama Karyawan", "Outlet", "TOTAL MASUK", "On-Time", "Terlambat", "Izin/Sakit", "Libur", "ALPA", "Lembur (Mnt)"]];
                 const dataRow = gLaporanRekap.map(r => [r.nama, r.outlet, `${r.total_masuk} Hari`, `${r.rajin}x`, `${r.telat}x`, `${r.izin}x`, `${r.libur}x`, `${r.alpa}x`, `${r.lembur}`]);
-                
                 doc.autoTable({ 
-                    head: headers, 
-                    body: dataRow, 
-                    startY: 36, 
-                    theme: 'grid', 
-                    headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center' },
-                    columnStyles: {
-                        0: { halign: 'left', fontStyle: 'bold' },
-                        1: { halign: 'center' },
-                        2: { halign: 'center', fillColor: [209, 250, 229], textColor: [4, 120, 87], fontStyle: 'bold' }, 
-                        3: { halign: 'center' },
-                        4: { halign: 'center' },
-                        5: { halign: 'center' },
-                        6: { halign: 'center' },
-                        7: { halign: 'center', fillColor: [255, 228, 230], textColor: [225, 29, 72], fontStyle: 'bold' }, 
-                        8: { halign: 'center' }
-                    },
+                    head: headers, body: dataRow, startY: 36, theme: 'grid', headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', halign: 'center' },
+                    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center', fillColor: [209, 250, 229], textColor: [4, 120, 87], fontStyle: 'bold' }, 3: { halign: 'center' }, 4: { halign: 'center' }, 5: { halign: 'center' }, 6: { halign: 'center' }, 7: { halign: 'center', fillColor: [255, 228, 230], textColor: [225, 29, 72], fontStyle: 'bold' }, 8: { halign: 'center' } },
                     styles: { fontSize: 9, valign: 'middle' } 
                 });
                 doc.save(`Rekap_Gaji_${dStart}_to_${dEnd}.pdf`);
