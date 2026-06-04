@@ -596,6 +596,95 @@
             if(t === 'reg') { pAbsen.classList.add('hidden'); pReg.classList.remove('hidden'); tReg.classList.add('text-[#D4AF37]', 'border-[#D4AF37]'); tReg.classList.remove('text-slate-500', 'border-transparent'); tAbsen.classList.remove('text-[#D4AF37]', 'border-[#D4AF37]'); tAbsen.classList.add('text-slate-500', 'border-transparent'); } 
             else { pReg.classList.add('hidden'); pAbsen.classList.remove('hidden'); tAbsen.classList.add('text-[#D4AF37]', 'border-[#D4AF37]'); tAbsen.classList.remove('text-slate-500', 'border-transparent'); tReg.classList.remove('text-[#D4AF37]', 'border-[#D4AF37]'); tReg.classList.add('text-slate-500', 'border-transparent'); } 
         }
+
+        // ==========================================
+        // 🚀 SISTEM DETEKSI & INSTALASI PWA (NATIVE)
+        // ==========================================
+        let deferredPrompt;
+
+        // Tangkap event instalasi dari Android (Chrome/Edge)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); // Cegah prompt bawaan browser muncul otomatis
+            deferredPrompt = e;
+            cekDanTampilkanPwaPrompt();
+        });
+
+        // Paksa cek untuk iOS (karena iOS tidak mendukung 'beforeinstallprompt')
+        window.addEventListener('load', () => {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if(isIOS) setTimeout(cekDanTampilkanPwaPrompt, 2000);
+        });
+
+        function cekDanTampilkanPwaPrompt() {
+            // Cek apakah aplikasi SUDAH diinstal (berjalan di mode standalone)
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+            if (isStandalone) return; // Jika sudah diinstal, hentikan fungsi ini (jangan munculkan popup)
+
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isAndroid = /android/i.test(navigator.userAgent);
+            
+            const overlay = document.getElementById('pwa-install-overlay');
+            const sheet = document.getElementById('pwa-install-sheet');
+            const instruction = document.getElementById('pwa-instruction');
+            const btnInstall = document.getElementById('pwa-install-btn');
+
+            if (isIOS) {
+                // Panduan Manual Khusus Apple iOS
+                instruction.innerHTML = `Apple iOS mengharuskan instalasi manual:<br><br>1. Ketuk ikon <b>Bagikan (Share)</b> <i class="fas fa-arrow-up-from-bracket text-blue-400 mx-1"></i> di menu bawah Safari.<br>2. Gulir ke bawah dan ketuk <b>"Tambah ke Layar Utama"</b> (Add to Home Screen) <i class="fas fa-square-plus text-slate-300 mx-1"></i>.`;
+                btnInstall.classList.add('hidden'); // iOS tidak bisa install via tombol, jadi sembunyikan
+                tampilkanPwaUI(overlay, sheet);
+            } else if (isAndroid && deferredPrompt) {
+                // Tombol Instal Sekali Klik Khusus Android
+                instruction.innerHTML = `Instal aplikasi Si-Amoy ke Home Screen Android Anda untuk kinerja kamera yang lebih responsif dan hemat memori.`;
+                btnInstall.onclick = async () => {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') closePwaPrompt();
+                    deferredPrompt = null;
+                };
+                tampilkanPwaUI(overlay, sheet);
+            }
+        }
+
+        function tampilkanPwaUI(overlay, sheet) {
+            // Munculkan setelah jeda 2 detik agar tidak mengganggu inisialisasi AI Wajah
+            setTimeout(() => {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+                setTimeout(() => { sheet.classList.remove('translate-y-full'); }, 50);
+            }, 2000);
+        }
+
+        function closePwaPrompt() {
+            const overlay = document.getElementById('pwa-install-overlay');
+            const sheet = document.getElementById('pwa-install-sheet');
+            sheet.classList.add('translate-y-full');
+            setTimeout(() => {
+                overlay.classList.remove('flex');
+                overlay.classList.add('hidden');
+            }, 400);
+        }
     </script>
+
+    <div id="pwa-install-overlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] hidden flex-col justify-end transition-opacity duration-300">
+        <div class="bg-[#1a0101] border-t border-[#D4AF37]/30 rounded-t-[2rem] p-6 pb-8 transform translate-y-full transition-transform duration-500 shadow-[0_-20px_50px_rgba(0,0,0,0.8)]" id="pwa-install-sheet">
+            <div class="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6"></div>
+            <div class="flex items-center gap-4 mb-5">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-600 flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.3)] border border-[#D4AF37]/50 shrink-0">
+                    <i class="fas fa-fingerprint text-white text-3xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-black text-[#F8F1E5] leading-tight">Instal Si-Amoy App</h2>
+                    <p class="text-[10px] font-bold text-[#e8d5c4]/70 mt-1 uppercase tracking-widest">Akses Cepat & Layar Penuh</p>
+                </div>
+            </div>
+            <div id="pwa-instruction" class="bg-black/50 border border-white/5 rounded-xl p-4 mb-6 text-xs text-[#e8d5c4] font-medium leading-relaxed shadow-inner">
+                </div>
+            <div class="flex gap-3">
+                <button onclick="closePwaPrompt()" class="flex-1 py-3.5 bg-transparent border border-white/20 rounded-xl text-[#F8F1E5] font-bold text-xs hover:bg-white/5 transition-colors tracking-widest uppercase">Nanti Saja</button>
+                <button id="pwa-install-btn" class="flex-[2] py-3.5 bg-gradient-to-r from-[#D4AF37] to-amber-600 rounded-xl text-white font-black text-xs shadow-[0_5px_15px_rgba(212,175,55,0.4)] hover:shadow-[0_5px_20px_rgba(212,175,55,0.6)] transition-all tracking-widest uppercase active:scale-95">Instal Sekarang</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
