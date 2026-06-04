@@ -248,6 +248,24 @@
                 
                 if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < 12 * 60 * 60 * 1000) {
                     dataGAS = JSON.parse(cachedData);
+                    
+                    // 🚀 SOLUSI CELAH: Background Sync (Pembaruan Siluman)
+                    // Menarik data baru diam-diam tanpa loading screen agar selalu update
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) })
+                        .then(r => r.json())
+                        .then(freshData => {
+                            if(freshData.status === 'ready') {
+                                localStorage.setItem('aimoy_master_data', JSON.stringify(freshData));
+                                localStorage.setItem('aimoy_master_time', Date.now().toString());
+                                dbOutlet = freshData.dataOutlet; 
+                                dbShift = freshData.dataShift;
+                                if (freshData.dataKaryawan.length > 0) {
+                                    const labeled = freshData.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
+                                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.45); // Otak AI langsung di-update
+                                }
+                            }
+                        }).catch(e => console.log("Sync background gagal."));
+                        
                 } else {
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                     dataGAS = await res.json();
@@ -470,9 +488,23 @@
                 Swal.fire({ 
                     icon: 'error', 
                     title: '<span class="text-[#F8F1E5]">Lokasi Tidak Sesuai!</span>', 
-                    html: `<span class="text-[#e8d5c4] text-xs">Sistem mendeteksi Anda terdaftar di outlet <b class="text-white">${faceInfo.o}</b>, namun posisi Anda saat ini berada di luar jangkauan outlet tersebut.<br><br><div class="bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl mt-3 mb-2 text-left leading-relaxed">Jika Anda sedang halangan/sakit, silakan gunakan tombol <b>IZIN</b>.<br><br>Jika Anda telah dipindahtugaskan ke cabang ini, mohon segera <b>Lapor ke Admin/HRD</b> agar penempatan Anda diperbarui.</div></span>`, 
-                    confirmButtonText: 'Mengerti', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-3 text-xs tracking-widest hover:bg-white/20' }
-                }).then(() => { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }); 
+                    html: `<span class="text-[#e8d5c4] text-xs">Sistem mendeteksi Anda terdaftar di outlet <b class="text-white">${faceInfo.o}</b>, namun posisi Anda saat ini berada di luar jangkauan outlet tersebut.<br><br><div class="bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl mt-3 mb-2 text-left leading-relaxed">Jika Anda sedang halangan/sakit, silakan gunakan tombol <b>AJUKAN IZIN</b> di bawah ini.<br><br>Jika Anda telah dipindahtugaskan ke cabang ini, mohon segera <b>Lapor ke Admin/HRD</b>.</div></span>`, 
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-file-medical mr-1"></i> Ajukan Izin', 
+                    cancelButtonText: 'Tutup',
+                    background: 'rgba(26, 1, 1, 0.95)', 
+                    customClass: { 
+                        popup: 'swal2-popup', 
+                        confirmButton: 'bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-black px-6 py-3 text-xs tracking-widest transition-colors',
+                        cancelButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-3 text-xs tracking-widest hover:bg-white/20 transition-colors'
+                    }
+                }).then((result) => { 
+                    if (result.isConfirmed) {
+                        ajukanIzin(); // 🚀 Memicu popup izin otomatis
+                    } else {
+                        isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; 
+                    }
+                }); 
                 return;
             }
             
