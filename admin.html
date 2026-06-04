@@ -770,47 +770,7 @@
             document.getElementById('radar-outlet').innerHTML = outFilter;
         }
 
-        function showDetailModal(key) {
-            const data = summaryData[key] || []; 
-            const c = uiColors[key];
-            document.getElementById('drawer-title').innerText = titleMap[key].split(' ').slice(1).join(' '); 
-            const iconBox = document.getElementById('drawer-icon');
-            iconBox.className = `w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner border ${c.pillBorder} ${c.bgBtn} ${c.textMain}`;
-            iconBox.innerHTML = `<i class="${getIconForKey(key)}"></i>`;
-
-            let htmlContent = '';
-            if (data.length === 0) {
-                htmlContent = `
-                <div class="flex flex-col items-center justify-center h-[40vh] text-center opacity-60">
-                    <i class="${getIconForKey(key)} text-6xl mb-4 ${c.textMain}"></i>
-                    <h3 class="font-black text-slate-700 text-lg">Data Kosong</h3>
-                    <p class="text-sm font-bold text-slate-400 mt-1">Tidak ada staf di kategori ini.</p>
-                </div>`;
-            } else {
-                htmlContent += `<div class="relative pl-[1.1rem] border-l-2 ${c.pillBorder} space-y-5 ml-3 pb-8">`;
-                data.forEach(item => {
-                    let timeStr = item.jam ? `<i class="far fa-clock mr-1"></i> ${item.jam}` : `<i class="far fa-calendar-check mr-1"></i> -`;
-                    let infoStr = item.status || item.info || '';
-                    if (item.menit) infoStr = `Lembur ${item.menit} Menit`;
-                    let dotColor = c.dot || 'bg-slate-400';
-                    htmlContent += `
-                    <div class="relative">
-                        <div class="absolute -left-[1.58rem] top-1.5 w-3.5 h-3.5 rounded-full ${dotColor} border-[3px] border-white shadow-sm"></div>
-                        <div class="bg-white p-4 lg:p-5 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-slate-100 hover:border-slate-300 transition-colors group">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="font-black text-slate-800 text-sm md:text-base group-hover:text-blue-600 transition-colors">${item.nama}</span>
-                                <span class="text-[10px] md:text-xs font-black ${c.textMain} bg-slate-50 px-2 py-1 rounded-md border border-slate-100">${timeStr}</span>
-                            </div>
-                            ${infoStr ? `<p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest bg-slate-50 inline-block px-2.5 py-1 rounded-lg border border-slate-100">${infoStr}</p>` : ''}
-                        </div>
-                    </div>`;
-                });
-                htmlContent += `</div>`;
-            }
-
-            document.getElementById('drawer-detail-content').innerHTML = htmlContent;
-            openDrawer('drawer-detail');
-        }
+        
 
         function bukaModalMatrix() {
             const today = new Date();
@@ -1000,6 +960,7 @@
         function deleteRow(action, payload) { Swal.fire({ title: 'Yakin hapus?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48' }).then(res => { if (res.isConfirmed) runAPI(action, payload); }); }
 
         // --- CORE ANALYTICS ---
+        // --- CORE ANALYTICS ---
         async function generateAnalytics() {
             const mode = document.getElementById('mode-laporan').value;
             const outlet = document.getElementById('filter-outlet').value, karyawan = document.getElementById('filter-karyawan').value;
@@ -1014,7 +975,6 @@
             
             const logsRange = result.data.filter(r => r.tanggal >= tglStart && r.tanggal <= tglEnd && (outlet === 'Semua' || r.outlet === outlet) && (karyawan === 'Semua' || r.nama === karyawan) );
             
-            // Simpan ke Global Array untuk diakses fitur Kirim WA
             window.globalLogsRange = logsRange;
 
             let rajinList = [], telatList = [], izinList = [], liburList = [], lemburList = [], totalLemburMnt = 0;
@@ -1034,11 +994,12 @@
                 
                 if(!rekapAkumulasi[r.nama]) rekapAkumulasi[r.nama] = { outlet: r.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0, alpa: 0, total_masuk: 0 };
 
-                if(isIzin) { izinList.push({nama: r.nama, info: r.keterangan || r.info, jam: r.jam}); rekapAkumulasi[r.nama].izin++; }
-                else if(isLibur) { liburList.push({nama: r.nama, info: r.info, jam: r.jam}); rekapAkumulasi[r.nama].libur++; }
+                // 🚀 PERBAIKAN: Menambahkan TANGGAL dan SHIFT ke dalam array Timeline
+                if(isIzin) { izinList.push({nama: r.nama, info: r.keterangan || r.info, jam: r.jam, tanggal: r.tanggal, shift: r.shift}); rekapAkumulasi[r.nama].izin++; }
+                else if(isLibur) { liburList.push({nama: r.nama, info: r.info, jam: r.jam, tanggal: r.tanggal, shift: r.shift}); rekapAkumulasi[r.nama].libur++; }
                 else if(isMasuk) { 
-                    if(isTelat && !isManual) { telatList.push({nama: r.nama, jam: r.jam, status: r.status}); rekapAkumulasi[r.nama].telat++; }
-                    else { rajinList.push({nama: r.nama, jam: r.jam, status: r.status}); rekapAkumulasi[r.nama].rajin++; }
+                    if(isTelat && !isManual) { telatList.push({nama: r.nama, jam: r.jam, status: r.status, tanggal: r.tanggal, shift: r.shift}); rekapAkumulasi[r.nama].telat++; }
+                    else { rajinList.push({nama: r.nama, jam: r.jam, status: r.status, tanggal: r.tanggal, shift: r.shift}); rekapAkumulasi[r.nama].rajin++; }
                 }
                 
                 const shiftRule = gShift.find(s => s.kode === r.shift && s.outlet === r.outlet);
@@ -1046,13 +1007,13 @@
 
                 if(r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) >= batasLembur) {
                     const l = parseInt(r.lembur);
-                    totalLemburMnt += l; lemburList.push({nama: r.nama, jam: r.jam, menit: l});
+                    totalLemburMnt += l; lemburList.push({nama: r.nama, jam: r.jam, menit: l, tanggal: r.tanggal, shift: r.shift});
                     rekapAkumulasi[r.nama].lembur += l;
                 }
             });
 
             const loggedNames = [...new Set([...rajinList.map(x=>x.nama), ...telatList.map(x=>x.nama), ...izinList.map(x=>x.nama), ...liburList.map(x=>x.nama)])];
-            const alpaList = masterRoster.filter(k => !loggedNames.includes(k.nama)).map(k => ({nama: k.nama, info: 'Tidak ada log masuk hari ini'}));
+            const alpaList = masterRoster.filter(k => !loggedNames.includes(k.nama)).map(k => ({nama: k.nama, info: `Periode: ${tglStart} s/d ${tglEnd}`, tanggal: '-', jam: '-'}));
 
             summaryData = { rajin: rajinList, telat: telatList, izin: izinList, libur: liburList, alpa: alpaList, lembur: lemburList };
 
@@ -1164,6 +1125,75 @@
             Swal.close();
         }
 
+        // ==========================================
+        // 🚀 VERTICAL TIMELINE DRAWER FOR DETAILS
+        // ==========================================
+        function showDetailModal(key) {
+            const data = summaryData[key] || []; 
+            const c = uiColors[key];
+
+            document.getElementById('drawer-title').innerText = titleMap[key].split(' ').slice(1).join(' '); 
+            
+            const iconBox = document.getElementById('drawer-icon');
+            iconBox.className = `w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner border ${c.pillBorder} ${c.bgBtn} ${c.textMain}`;
+            iconBox.innerHTML = `<i class="${getIconForKey(key)}"></i>`;
+
+            let htmlContent = '';
+            
+            if (data.length === 0) {
+                htmlContent = `
+                <div class="flex flex-col items-center justify-center h-[40vh] text-center opacity-60">
+                    <i class="${getIconForKey(key)} text-6xl mb-4 ${c.textMain}"></i>
+                    <h3 class="font-black text-slate-700 text-lg">Data Kosong</h3>
+                    <p class="text-sm font-bold text-slate-400 mt-1">Tidak ada staf di kategori ini.</p>
+                </div>`;
+            } else {
+                htmlContent += `<div class="relative pl-[1.1rem] border-l-2 ${c.pillBorder} space-y-5 ml-3 pb-8">`;
+                
+                // 🚀 PERBAIKAN: Format Tanggal Hari Indonesia
+                const formatTanggalID = (tglStr) => {
+                    if(!tglStr || tglStr === '-') return '';
+                    try {
+                        const d = new Date(tglStr);
+                        if(isNaN(d.getTime())) return tglStr;
+                        return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                    } catch(e) { return tglStr; }
+                };
+
+                data.forEach(item => {
+                    let fTgl = formatTanggalID(item.tanggal);
+                    let displayTgl = fTgl ? `<i class="far fa-calendar-alt text-slate-400 mr-1"></i> ${fTgl}` : '';
+                    let timeStr = item.jam && item.jam !== '-' ? `<i class="far fa-clock mr-1"></i> ${item.jam}` : '';
+                    
+                    let infoStr = item.status || item.info || '';
+                    if (item.menit) infoStr = `Lembur ${item.menit} Menit`;
+                    
+                    let shiftBadge = item.shift && item.shift !== '-' ? `<span class="bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-widest font-black ml-2">${item.shift}</span>` : '';
+                    
+                    let dotColor = c.dot || 'bg-slate-400';
+
+                    htmlContent += `
+                    <div class="relative">
+                        <div class="absolute -left-[1.58rem] top-1.5 w-3.5 h-3.5 rounded-full ${dotColor} border-[3px] border-white shadow-sm"></div>
+                        <div class="bg-white p-4 lg:p-5 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-slate-100 hover:border-slate-300 transition-colors group">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex flex-col">
+                                    <span class="font-black text-slate-800 text-sm md:text-base group-hover:text-blue-600 transition-colors">${item.nama}</span>
+                                    <span class="text-[10px] md:text-[11px] font-bold text-slate-500 mt-1 flex items-center">${displayTgl} ${shiftBadge}</span>
+                                </div>
+                                ${timeStr ? `<span class="text-[10px] md:text-xs font-black ${c.textMain} bg-slate-50 px-2 py-1 rounded-md border border-slate-100 h-max whitespace-nowrap">${timeStr}</span>` : ''}
+                            </div>
+                            ${infoStr ? `<p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest bg-slate-50 inline-block px-2.5 py-1 rounded-lg border border-slate-100 mt-2">${infoStr}</p>` : ''}
+                        </div>
+                    </div>`;
+                });
+                
+                htmlContent += `</div>`;
+            }
+
+            document.getElementById('drawer-detail-content').innerHTML = htmlContent;
+            openDrawer('drawer-detail');
+        }
         // ==========================================
         // 🚀 FUNGSI BARU: KIRIM WA AUTO-GENERATE
         // ==========================================
