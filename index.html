@@ -77,16 +77,17 @@
             <div class="relative w-full h-full rounded-3xl overflow-hidden border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.8)] bg-black">
                 
                 <video id="video" class="absolute inset-0 w-full h-full object-cover transform -scale-x-100" autoplay muted playsinline></video>
-                <canvas id="overlay" class="absolute inset-0 w-full h-full z-10"></canvas>
                 
-                <div id="hud-scanner" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-2 border-dashed border-white/40 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 box-border">
+                <canvas id="overlay" class="absolute inset-0 w-full h-full object-cover transform -scale-x-100 z-10"></canvas>
+                
+                <div id="hud-scanner" class="absolute border-2 border-dashed border-white/40 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-100 ease-out box-border" style="left: 20%; top: 20%; width: 60%; height: 60%;">
                     <div class="flex justify-between w-full p-1">
                         <i class="fas fa-expand text-[#F8F1E5]/50 text-xs"></i>
                         <i class="fas fa-compress text-[#F8F1E5]/50 text-xs"></i>
                     </div>
                     <div class="scan-line"></div>
                     <div class="text-center pb-1">
-                        <span id="hud-percent" class="text-[10px] font-black text-white bg-black/60 px-2.5 py-1 rounded-md backdrop-blur-sm hidden tracking-widest">98% COCOK</span>
+                        <span id="hud-percent" class="text-[10px] font-black text-white bg-black/60 px-2.5 py-1 rounded-md backdrop-blur-sm hidden tracking-widest">0%</span>
                     </div>
                 </div>
 
@@ -139,8 +140,8 @@
                 </div>
                 
                 <div class="grid grid-cols-2 gap-2.5 pt-1">
-                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-black shadow-[0_0_15px_rgba(37,99,235,0.4)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-to-bracket"></i> MASUK</button>
-                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-rose-600 hover:bg-rose-500 text-white py-3.5 rounded-xl font-black shadow-[0_0_15px_rgba(225,29,72,0.4)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-from-bracket"></i> PULANG</button>
+                    <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-to-bracket text-blue-300"></i> MASUK</button>
+                    <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-rose-600 hover:bg-rose-500 text-white py-4 rounded-xl font-black shadow-[0_0_20px_rgba(225,29,72,0.3)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-from-bracket text-rose-300"></i> PULANG</button>
                 </div>
             </div>
 
@@ -150,7 +151,7 @@
                 </div>
                 <div class="relative">
                     <i class="fas fa-id-card absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                    <input type="text" id="reg-nama" placeholder="Nama Lengkap Sesuai KTP" class="w-full p-3.5 pl-8 glass-input rounded-xl text-xs font-bold outline-none placeholder:text-slate-600">
+                    <input type="text" id="reg-nama" placeholder="Nama Lengkap Sesuai KTP" class="w-full p-4 pl-9 glass-input rounded-xl text-xs font-bold outline-none placeholder:text-slate-600">
                 </div>
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="relative">
@@ -243,7 +244,8 @@
                     faceMatcher = new faceapi.FaceMatcher(labeled, 0.45);
                 }
                 
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } } })
+                // PERBAIKAN 3: Jangan paksa 720/1280. Biarkan device memilih resolusi natural agar tidak zoom
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
                     .then(s => { video.srcObject = s; Swal.close(); })
                     .catch(e => Swal.fire('Akses Ditolak', 'Kamera harus diizinkan untuk verifikasi biometrik.', 'error'));
             } catch (e) { Swal.fire('Koneksi Gagal', 'Gagal memuat pangkalan data server.', 'error'); }
@@ -310,13 +312,32 @@
                 if (!document.getElementById('panel-absen').classList.contains('hidden')) {
                     if (detections.length > 0 && faceMatcher) {
                         
+                        // PERBAIKAN 4: Kalkulasi Bounding Box Statis/Sempurna dengan Matematika Mirror
+                        const box = resized[0].detection.box;
+                        const containerW = video.clientWidth;
+                        const containerH = video.clientHeight;
+                        
+                        // Skala Cover (Mengambil proporsi terbesar untuk mengisi layar)
+                        const scaleCover = Math.max(containerW / size.width, containerH / size.height);
+                        const renderedW = size.width * scaleCover;
+                        const renderedH = size.height * scaleCover;
+                        const offsetX = (containerW - renderedW) / 2;
+                        const offsetY = (containerH - renderedH) / 2;
+
+                        // Kalkulasi Balikan (Karena video di cerminkan lewat CSS)
+                        const mirroredX = size.width - box.x - box.width;
+                        
+                        hudScanner.style.left = `${(mirroredX * scaleCover) + offsetX}px`;
+                        hudScanner.style.top = `${(box.y * scaleCover) + offsetY}px`;
+                        hudScanner.style.width = `${box.width * scaleCover}px`;
+                        hudScanner.style.height = `${box.height * scaleCover}px`;
+                        
                         const match = faceMatcher.findBestMatch(resized[0].descriptor);
                         const matchPercent = Math.round((1 - match.distance) * 100);
                         const percentEl = document.getElementById('hud-percent');
                         
                         if (match.label !== 'unknown') {
-                            // Wajah Cocok - Ganti border statis jadi biru
-                            hudScanner.className = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-4 border-solid border-blue-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 shadow-[inset_0_0_30px_rgba(59,130,246,0.3)] bg-blue-500/5";
+                            hudScanner.className = "absolute border-4 border-solid border-blue-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-100 ease-out shadow-[inset_0_0_30px_rgba(59,130,246,0.3)] bg-blue-500/5 box-border";
                             percentEl.classList.remove('hidden'); percentEl.innerText = `${matchPercent}% COCOK`;
                             percentEl.className = "text-[10px] font-black text-white bg-blue-600 px-2.5 py-1 rounded-md shadow-md tracking-widest";
 
@@ -330,8 +351,7 @@
                                 return;
                             }
                             
-                            // Liveness Passed - Border Hijau
-                            hudScanner.className = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-4 border-solid border-emerald-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 shadow-[inset_0_0_30px_rgba(16,185,129,0.3)] bg-emerald-500/5";
+                            hudScanner.className = "absolute border-4 border-solid border-emerald-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-100 ease-out shadow-[inset_0_0_30px_rgba(16,185,129,0.3)] bg-emerald-500/5 box-border";
                             percentEl.className = "text-[10px] font-black text-white bg-emerald-600 px-2.5 py-1 rounded-md shadow-md tracking-widest";
 
                             if(lastRecognizedName !== info.n) { 
@@ -348,20 +368,27 @@
                             } else { currentFace = info; updateUI(true, "READY"); }
                             
                         } else { 
-                            hudScanner.className = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-4 border-solid border-rose-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 shadow-[inset_0_0_30px_rgba(225,29,72,0.3)] bg-rose-500/5";
+                            hudScanner.className = "absolute border-4 border-solid border-rose-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-100 ease-out shadow-[inset_0_0_30px_rgba(225,29,72,0.3)] bg-rose-500/5 box-border";
                             percentEl.classList.remove('hidden'); percentEl.innerText = "TIDAK DIKENAL";
                             percentEl.className = "text-[10px] font-black text-white bg-rose-600 px-2.5 py-1 rounded-md shadow-md tracking-widest";
                             lastRecognizedName = null; isLivenessPassed = false; updateUI(false); 
                         }
                     } else { 
-                        hudScanner.className = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] max-w-[220px] aspect-[3/4] border-2 border-dashed border-white/40 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 status-search";
+                        hudScanner.className = "absolute border-2 border-dashed border-white/40 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 status-search box-border";
+                        // Kembalikan ke tengah saat tak ada wajah
+                        hudScanner.style.left = "20%"; hudScanner.style.top = "20%"; hudScanner.style.width = "60%"; hudScanner.style.height = "60%";
                         document.getElementById('hud-percent').classList.add('hidden');
                         lastRecognizedName = null; isLivenessPassed = false; updateUI(false); 
                     }
                 } else {
-                    if (!document.getElementById('panel-reg').classList.contains('hidden')) { faceapi.draw.drawFaceLandmarks(canvas, resized); }
+                    // TAB REGISTRASI (Garis Wajah Akurat Karena Canvas Sekarang Di-Mirror)
+                    if (!document.getElementById('panel-reg').classList.contains('hidden')) { 
+                        const drawOptions = { lineWidth: 2, color: '#D4AF37' };
+                        const drawBox = new faceapi.draw.DrawFaceLandmarksOptions(drawOptions);
+                        faceapi.draw.drawFaceLandmarks(canvas, resized, drawBox); 
+                    }
                 }
-            }, 600); 
+            }, 300); // Dipercepat agar kotak tidak terlalu ngelag
         });
 
         function updateUI(found, state = "SEARCH") {
@@ -487,7 +514,7 @@
                     Swal.fire({
                         icon: 'success', 
                         title: '<span class="text-[#F8F1E5] text-xl font-black">Absen Sukses!</span>',
-                        html: `<div class="text-[#e8d5c4] text-xs">Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.<br><br><div class="bg-black/50 p-4 rounded-xl border border-white/5"><span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span><b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b></div><br><a href="${waLink}" target="_blank" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all mt-2"><i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA</a></div>`,
+                        html: `<div class="text-[#e8d5c4] text-xs">Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.<br><br><div class="bg-black/50 p-4 rounded-xl border border-white/5"><span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span><b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b></div><br><a href="${waLink}" target="_blank" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2"><i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA</a></div>`,
                         showConfirmButton: false, timer: 15000, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
                     }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
                 } else { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Ditolak Sistem</span>', html: `<span class="text-[#e8d5c4] text-xs">${result.message}</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
