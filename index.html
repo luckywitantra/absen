@@ -386,28 +386,76 @@
         }
 
         async function kirimAbsen(tipe) {
-            isPrompting = true; 
-            const out = document.getElementById('sel-outlet').value, shf = document.getElementById('sel-shift');
-            const shfM = shf.options[shf.selectedIndex].getAttribute('data-jamm'), shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk'), shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
-            const fotoData = ambilFotoKamera();
+    isPrompting = true; 
+    const out = document.getElementById('sel-outlet').value;
+    const shf = document.getElementById('sel-shift');
+    const shfM = shf.options[shf.selectedIndex].getAttribute('data-jamm');
+    const shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk');
+    const shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
+    const fotoData = ambilFotoKamera();
 
-            Swal.fire({ title: 'Merekam Foto & Log...', html: 'Tunggu sebentar...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, tipe: tipe, jarak: distance, foto: fotoData } }) });
-                const result = await res.json();
-                
-                if (result.status === 'success') {
-                    const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}`;
-                    const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
+    Swal.fire({ 
+        title: 'Merekam Foto & Log...', 
+        html: 'Tunggu sebentar...', 
+        allowOutsideClick: false, 
+        didOpen: () => Swal.showLoading() 
+    });
 
-                    Swal.fire({
-                        icon: 'success', title: 'Absen Berhasil!',
-                        html: `<b>${currentFace.n}</b> berhasil ${tipe}.<br>Status: <b class="text-blue-600">${result.statusWaktu}</b><br><br><a href="${waLink}" target="_blank" class="bg-emerald-500 text-white px-4 py-3 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all shadow-emerald-500/50">💬 LAPORKAN KE GRUP WA</a>`,
-                        showConfirmButton: false, timer: 15000
-                    }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
-                } else { Swal.fire('Ditolak Sistem', result.message, 'error').then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
-            } catch (e) { Swal.fire('Gagal', 'Gangguan server.', 'error').then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+    try {
+        const res = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: 'absen', 
+                payload: { 
+                    nama: currentFace.n, 
+                    role: currentFace.r, 
+                    outlet: out, 
+                    namaShift: shf.value, 
+                    shiftTarget: shfM, 
+                    shiftKeluar: shfK, 
+                    toleransi: shfTol, 
+                    tipe: tipe, 
+                    jarak: distance, 
+                    foto: fotoData 
+                } 
+            }) 
+        });
+        const result = await res.json();
+        
+        if (result.status === 'success') {
+            // Menggabungkan notifikasi harian dengan result.summaryWA dari backend
+            const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}%0A%0A======================%0A%0A${result.summaryWA}`;
+            
+            const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
+
+            Swal.fire({
+                icon: 'success', 
+                title: 'Absen Berhasil!',
+                html: `<b>${currentFace.n}</b> berhasil ${tipe}.<br>Status: <b class="text-blue-600">${result.statusWaktu}</b><br><br><a href="${waLink}" target="_blank" class="bg-emerald-500 text-white px-4 py-3 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all shadow-emerald-500/50">💬 LAPORKAN KE GRUP WA</a>`,
+                showConfirmButton: false, 
+                timer: 15000
+            }).then(() => { 
+                isPrompting = false; 
+                lastRecognizedName = null; 
+                isLivenessPassed = false; 
+                document.getElementById('sel-shift').value = ""; 
+                updateUI(false); 
+            });
+        } else { 
+            Swal.fire('Ditolak Sistem', result.message, 'error').then(() => { 
+                isPrompting = false; 
+                lastRecognizedName = null; 
+                isLivenessPassed = false; 
+            }); 
         }
+    } catch (e) { 
+        Swal.fire('Gagal', 'Gangguan server.', 'error').then(() => { 
+            isPrompting = false; 
+            lastRecognizedName = null; 
+            isLivenessPassed = false; 
+        }); 
+    }
+}
 
         async function ajukanIzin() {
             isPrompting = true;
