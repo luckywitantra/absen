@@ -1050,11 +1050,47 @@
                 let htmlLog = "";
                 tableLogsToRender.forEach(r => {
                     let badge = '<span class="bg-slate-100 text-slate-600 px-2 py-1 rounded font-bold text-[9px] md:text-[10px]">TIDAK DIKETAHUI</span>';
-                    if(r.status === 'ALPA') badge = `<span class="bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px] shadow-sm uppercase tracking-widest"><i class="fas fa-exclamation-triangle mr-1"></i> ALPA / BOLOS</span>`; else if(r.status.includes('TERLAMBAT')) badge = `<span class="bg-rose-100 text-rose-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('PULANG AWAL')) badge = `<span class="bg-orange-100 text-orange-600 border border-orange-200 shadow-sm px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px] uppercase tracking-widest"><i class="fas fa-person-running mr-1"></i> ${r.status}</span>`; else if(r.status.includes('IZIN')) badge = `<span class="bg-amber-100 text-amber-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">IZIN / SAKIT</span>`; else if(r.status.includes('DAY OFF')) badge = `<span class="bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">DAY OFF</span>`; else if(r.status.includes('LEMBUR')) badge = `<span class="bg-blue-100 text-blue-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('MANUAL')) badge = `<span class="bg-purple-100 text-purple-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">${r.status}</span>`; else if(r.status.includes('ON TIME')) badge = '<span class="bg-emerald-100 text-emerald-600 px-2.5 py-1 rounded-md border border-emerald-200 shadow-sm font-bold text-[9px] md:text-[10px] uppercase tracking-widest">ON TIME</span>';
-                    const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http") && r.foto !== "Bypass HRD") ? `<a href="${r.foto}" target="_blank" class="bg-white border border-slate-200 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-50 transition-colors text-[9px] md:text-[10px] shadow-sm flex items-center gap-1.5 w-max"><i class="fas fa-camera"></i> Lihat Foto</a>` : `<span class="text-[9px] md:text-[10px] text-slate-400 font-bold italic">${r.foto}</span>`;
-                    const btnHapus = r.status === 'ALPA' ? '' : `<button onclick="deleteRow('hapus_absen', {ts: '${r.ts}'})" class="bg-white border border-slate-200 text-rose-500 px-3 py-1.5 rounded-lg text-[9px] md:text-[10px] font-bold mt-1 md:mt-0 md:ml-2 hover:bg-rose-50 hover:border-rose-300 transition-colors shadow-sm" title="Hapus Log"><i class="fas fa-trash"></i></button>`;
-                    htmlLog += `<tr class="hover:bg-slate-50/50 border-b border-slate-100/60 transition-colors"><td class="px-6 py-5 font-black leading-tight text-slate-800">${r.tanggal}<br><span class="text-slate-500 font-bold">${r.jam}</span></td><td class="px-6 py-5 font-bold text-slate-800">${r.nama}</td><td class="px-6 py-5 font-bold text-blue-600 leading-tight">${r.outlet} <br><span class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest">${r.shift}</span></td><td class="px-6 py-5 font-black uppercase text-[9px] md:text-[10px]">${r.tipe}</td><td class="px-6 py-5 leading-tight">${badge} <br><span class="text-[9px] md:text-[10px] text-slate-400 mt-1.5 block">${r.info}</span></td><td class="px-6 py-5 whitespace-normal md:whitespace-nowrap align-middle"><div class="flex items-center">${linkFoto} ${btnHapus}</div></td></tr>`;
+                    
+                    // Struktur if-else yang jauh lebih mudah dibaca dan dikelola
+                    if (r.status === 'ALPA') {
+                        badge = `<span class="bg-red-50 text-red-600 border border-red-200 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px] shadow-sm uppercase tracking-widest"><i class="fas fa-exclamation-triangle mr-1"></i> ALPA / BOLOS</span>`;
+                    } else if (r.status.includes('TERLAMBAT')) {
+                        badge = `<span class="bg-rose-100 text-rose-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">${r.status}</span>`;
+                    } else if (r.status.includes('PULANG AWAL')) {
+                        badge = `<span class="bg-orange-100 text-orange-600 border border-orange-200 shadow-sm px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px] uppercase tracking-widest"><i class="fas fa-person-running mr-1"></i> ${r.status}</span>`;
+                    } else if (r.status.includes('IZIN')) {
+                        badge = `<span class="bg-amber-100 text-amber-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">IZIN / SAKIT</span>`;
+                    } else if (r.status.includes('DAY OFF')) {
+                        badge = `<span class="bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">DAY OFF</span>`;
+                    } else if (r.status.includes('LEMBUR')) {
+                        badge = `<span class="bg-blue-100 text-blue-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">${r.status}</span>`;
+                    } else if (r.status.includes('MANUAL')) {
+                        badge = `<span class="bg-purple-100 text-purple-600 px-2.5 py-1 rounded-md font-bold text-[9px] md:text-[10px]">${r.status}</span>`;
+                    } else if (r.status.includes('ON TIME')) {
+                        badge = `<span class="bg-emerald-100 text-emerald-600 px-2.5 py-1 rounded-md border border-emerald-200 shadow-sm font-bold text-[9px] md:text-[10px] uppercase tracking-widest">ON TIME</span>`;
+                    }
+
+                    // Tautan Foto Bukti
+                    const linkFoto = (r.foto && r.foto !== "-" && r.foto.includes("http") && r.foto !== "Bypass HRD") 
+                        ? `<a href="${r.foto}" target="_blank" class="bg-white border border-slate-200 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-50 transition-colors text-[9px] md:text-[10px] shadow-sm flex items-center gap-1.5 w-max"><i class="fas fa-camera"></i> Lihat Foto</a>` 
+                        : `<span class="text-[9px] md:text-[10px] text-slate-400 font-bold italic">${r.foto}</span>`;
+                    
+                    // Tombol Hapus (Disembunyikan jika statusnya ALPA)
+                    const btnHapus = r.status === 'ALPA' 
+                        ? '' 
+                        : `<button onclick="deleteRow('hapus_absen', {ts: '${r.ts}'})" class="bg-white border border-slate-200 text-rose-500 px-3 py-1.5 rounded-lg text-[9px] md:text-[10px] font-bold mt-1 md:mt-0 md:ml-2 hover:bg-rose-50 hover:border-rose-300 transition-colors shadow-sm" title="Hapus Log"><i class="fas fa-trash"></i></button>`;
+                    
+                    // Render Baris Tabel
+                    htmlLog += `<tr class="hover:bg-slate-50/50 border-b border-slate-100/60 transition-colors">
+                        <td class="px-6 py-5 font-black leading-tight text-slate-800">${r.tanggal}<br><span class="text-slate-500 font-bold">${r.jam}</span></td>
+                        <td class="px-6 py-5 font-bold text-slate-800">${r.nama}</td>
+                        <td class="px-6 py-5 font-bold text-blue-600 leading-tight">${r.outlet} <br><span class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest">${r.shift}</span></td>
+                        <td class="px-6 py-5 font-black uppercase text-[9px] md:text-[10px]">${r.tipe}</td>
+                        <td class="px-6 py-5 leading-tight">${badge} <br><span class="text-[9px] md:text-[10px] text-slate-400 mt-1.5 block">${r.info}</span></td>
+                        <td class="px-6 py-5 whitespace-normal md:whitespace-nowrap align-middle"><div class="flex items-center">${linkFoto} ${btnHapus}</div></td>
+                    </tr>`;
                 });
+                
                 document.getElementById('body-rinci').innerHTML = htmlLog || `<tr><td colspan="6" class="p-12 text-center italic text-slate-400 text-sm">Tidak ada data untuk filter ini.</td></tr>`;
                 document.getElementById('log-count').innerText = `${tableLogsToRender.length} Data Tersaring`;
 
