@@ -424,7 +424,7 @@
         
         if (result.status === 'success') {
             // Menggabungkan notifikasi harian dengan result.summaryWA dari backend
-            const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}%0A%0A======================%0A%0A${result.summaryWA}`;
+            const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}%0A${result.summaryWA}`;
             
             const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
