@@ -6,7 +6,7 @@
     <title>AiMoy Super HC - Admin</title>
     
     <!-- PWA META TAGS -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest-admin.json">
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1574,6 +1574,84 @@
             } catch (e) {
                 document.getElementById('radar-list-alpa').innerHTML = '<span class="text-rose-500 text-[10px]">Gagal memuat.</span>';
             }
+        }
+    </script>
+
+    <div id="pwa-install-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[999] hidden flex-col justify-end transition-opacity duration-300">
+        <div class="bg-white rounded-t-[2.5rem] p-6 pb-8 transform translate-y-full transition-transform duration-500 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]" id="pwa-install-sheet">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
+            <div class="flex items-center gap-4 mb-5">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">
+                    <i class="fas fa-user-tie text-white text-3xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-slate-800 leading-tight">Instal AiMoy Admin</h2>
+                    <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Akses Cepat & Layar Penuh</p>
+                </div>
+            </div>
+            <div id="pwa-instruction" class="bg-slate-50 border border-slate-100 rounded-xl p-4 mb-6 text-xs text-slate-600 font-medium leading-relaxed shadow-inner">
+                </div>
+            <div class="flex gap-3">
+                <button onclick="closePwaPrompt()" class="flex-1 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors tracking-widest uppercase shadow-sm">Nanti</button>
+                <button id="pwa-install-btn" class="flex-[2] py-3.5 bg-blue-600 rounded-xl text-white font-black text-xs shadow-[0_8px_15px_rgba(37,99,235,0.3)] hover:bg-blue-700 transition-all tracking-widest uppercase active:scale-95">Instal Sekarang</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 🚀 SISTEM DETEKSI & INSTALASI PWA ADMIN
+        // ==========================================
+        let deferredPromptAdmin;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPromptAdmin = e; cekDanTampilkanPwaPromptAdmin();
+        });
+
+        window.addEventListener('load', () => {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if(isIOS) setTimeout(cekDanTampilkanPwaPromptAdmin, 2500);
+        });
+
+        function cekDanTampilkanPwaPromptAdmin() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+            if (isStandalone) return; 
+
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isAndroid = /android/i.test(navigator.userAgent);
+            const overlay = document.getElementById('pwa-install-overlay');
+            const sheet = document.getElementById('pwa-install-sheet');
+            const instruction = document.getElementById('pwa-instruction');
+            const btnInstall = document.getElementById('pwa-install-btn');
+
+            if (isIOS) {
+                instruction.innerHTML = `Apple iOS mengharuskan instalasi manual:<br><br>1. Ketuk ikon <b>Bagikan (Share)</b> <i class="fas fa-arrow-up-from-bracket text-blue-500 mx-1"></i> di menu Safari.<br>2. Pilih <b>"Tambah ke Layar Utama"</b> (Add to Home Screen) <i class="fas fa-square-plus text-slate-400 mx-1"></i>.`;
+                btnInstall.classList.add('hidden'); 
+                tampilkanPwaUIAdmin(overlay, sheet);
+            } else if (isAndroid && deferredPromptAdmin) {
+                instruction.innerHTML = `Instal dasbor Admin AiMoy ke HP Anda untuk memantau kehadiran staf dari mana saja dengan nyaman layaknya aplikasi native.`;
+                btnInstall.onclick = async () => {
+                    deferredPromptAdmin.prompt();
+                    const { outcome } = await deferredPromptAdmin.userChoice;
+                    if (outcome === 'accepted') closePwaPrompt();
+                    deferredPromptAdmin = null;
+                };
+                tampilkanPwaUIAdmin(overlay, sheet);
+            }
+        }
+
+        function tampilkanPwaUIAdmin(overlay, sheet) {
+            setTimeout(() => {
+                overlay.classList.remove('hidden'); overlay.classList.add('flex');
+                setTimeout(() => { sheet.classList.remove('translate-y-full'); }, 50);
+            }, 3000); // Muncul 3 detik setelah admin membuka web
+        }
+
+        function closePwaPrompt() {
+            const overlay = document.getElementById('pwa-install-overlay');
+            const sheet = document.getElementById('pwa-install-sheet');
+            sheet.classList.add('translate-y-full');
+            setTimeout(() => { overlay.classList.remove('flex'); overlay.classList.add('hidden'); }, 400);
         }
     </script>
 </body>
