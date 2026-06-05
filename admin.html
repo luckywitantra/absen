@@ -551,10 +551,18 @@
                     <p class="text-[9px] text-slate-500 font-medium mt-4 leading-relaxed"><i class="fas fa-info-circle text-indigo-400"></i> Lembur di bawah batas waktu syarat tidak akan diakui oleh sistem penggajian.</p>
                 </div>
             </div>
-            <div class="p-5 lg:p-6 border-t border-slate-100 bg-white shrink-0 flex gap-3">
-                <button onclick="closeAllDrawers()" class="flex-[1] py-3.5 bg-white border border-slate-200 font-bold rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-sm shadow-sm">Batal</button>
-                <button onclick="simpanData('shift')" class="flex-[2] py-3.5 bg-emerald-600 text-white font-black rounded-xl hover:bg-emerald-700 shadow-[0_8px_15px_rgba(16,185,129,0.3)] transition-all active:scale-95 text-sm flex justify-center items-center gap-2"><i class="fas fa-save text-emerald-200 text-lg"></i> Simpan Aturan</button>
+           <div class="p-5 lg:p-6 border-t border-slate-200 bg-white shrink-0 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-[10px] text-slate-500 font-bold leading-relaxed text-center sm:text-left bg-slate-50 p-3 rounded-xl border border-slate-200/60 shadow-inner flex-1"><i class="fas fa-info-circle text-indigo-500 mr-1 text-sm align-middle"></i> Anda dapat menggeser nama staf ke atas/bawah. Jika Anda mengganti jadwal yang sudah ada, <b class="text-rose-500">absen lama akan tertimpa otomatis</b>.</p>
+            
+            <div class="flex w-full sm:w-auto gap-3">
+                <button onclick="downloadMatrixPDF()" class="flex-1 sm:flex-none bg-white text-rose-600 border border-rose-200 px-6 py-4 rounded-xl font-black shadow-sm hover:bg-rose-50 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm tracking-wide">
+                    <i class="fas fa-file-pdf text-rose-500 text-lg"></i> EXPORT PDF
+                </button>
+                <button onclick="simpanMatrix()" class="flex-[2] sm:flex-none bg-indigo-600 text-white px-8 py-4 rounded-xl font-black shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:bg-indigo-700 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm tracking-wide">
+                    <i class="fas fa-cloud-upload-alt text-indigo-200 text-xl"></i> SIMPAN MATRIKS
+                </button>
             </div>
+        </div>
         </div>
     </div>
 
@@ -925,6 +933,118 @@
                     } catch(err) { Swal.fire('Error', 'Gagal memproses matriks ke database.', 'error'); }
                 }
             });
+        }
+
+        function downloadMatrixPDF() {
+            const bulanVal = document.getElementById('matrix-bulan').value;
+            const outletVal = document.getElementById('matrix-outlet').value;
+            
+            if (!bulanVal || !outletVal) {
+                return Swal.fire('Peringatan', 'Silakan pilih Bulan dan Cabang terlebih dahulu.', 'warning');
+            }
+
+            const [yyyy, mm] = bulanVal.split('-');
+            const daysInMonth = new Date(yyyy, mm, 0).getDate();
+            const monthName = new Date(yyyy, mm - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+            const { jsPDF } = window.jspdf;
+            // Gunakan format A4 Landscape agar muat 31 hari
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+
+            // --- HEADER TEKS ---
+            doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42); 
+            doc.text("LAPORAN ROSTER & MATRIX WFM", 14, 20);
+            
+            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
+            doc.text(`Cabang: ${outletVal}   |   Periode: ${monthName}`, 14, 26);
+
+            // --- HEADER TABEL ---
+            let headRow = ["NAMA STAF"];
+            for (let i = 1; i <= daysInMonth; i++) { headRow.push(i.toString()); }
+            headRow.push("HADIR", "OFF", "IZIN"); // Kolom rekap ekstra di ujung tabel
+
+            // --- BACA DATA LANGSUNG DARI LAYAR (DOM) ---
+            let bodyData = [];
+            const trs = document.querySelectorAll('#tbody-matrix tr');
+            
+            if (trs.length === 0 || trs[0].innerText.includes('Silakan pilih')) return Swal.fire('Peringatan', 'Data matriks kosong.', 'warning');
+
+            trs.forEach(tr => {
+                let rowData = [];
+                let nama = tr.querySelector('span') ? tr.querySelector('span').innerText : '';
+                if (!nama) return;
+                rowData.push(nama);
+
+                let selects = tr.querySelectorAll('.sel-matrix');
+                let countHadir = 0, countOff = 0, countIzin = 0;
+
+                selects.forEach(sel => {
+                    let val = sel.value;
+                    if (val === 'OFF') { countOff++; rowData.push('OFF'); }
+                    else if (val === 'IZIN') { countIzin++; rowData.push('IZIN'); }
+                    else if (val === '') { rowData.push('-'); }
+                    else { countHadir++; rowData.push(val); }
+                });
+
+                rowData.push(`${countHadir}`, `${countOff}`, `${countIzin}`);
+                bodyData.push(rowData);
+            });
+
+            // --- RENDER TABEL CANTIK (AUTOTABLE) ---
+            doc.autoTable({
+                head: [headRow],
+                body: bodyData,
+                startY: 32,
+                theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', valign: 'middle', lineColor: [226, 232, 240], lineWidth: 0.1 },
+                headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
+                columnStyles: { 0: { halign: 'left', fontStyle: 'bold', minCellWidth: 35 } }, // Kunci lebar kolom nama
+                didParseCell: function(data) {
+                    // Mewarnai Teks secara Otomatis
+                    if (data.section === 'body') {
+                        let val = data.cell.raw;
+                        if (val === 'OFF') { data.cell.styles.textColor = [225, 29, 72]; data.cell.styles.fontStyle = 'bold'; } // Merah
+                        else if (val === 'IZIN') { data.cell.styles.textColor = [217, 119, 6]; data.cell.styles.fontStyle = 'bold'; } // Kuning/Amber
+                        else if (val !== '-' && data.column.index > 0 && data.column.index <= daysInMonth) { data.cell.styles.textColor = [16, 185, 129]; data.cell.styles.fontStyle = 'bold'; } // Hijau
+                        
+                        // Mewarnai Background Kolom Rekap di Paling Ujung
+                        if (data.column.index > daysInMonth) {
+                            data.cell.styles.fillColor = [248, 250, 252]; data.cell.styles.fontStyle = 'bold';
+                            if(data.column.index === daysInMonth + 1) data.cell.styles.textColor = [16, 185, 129]; // Total Hadir
+                            if(data.column.index === daysInMonth + 2) data.cell.styles.textColor = [225, 29, 72]; // Total Off
+                            if(data.column.index === daysInMonth + 3) data.cell.styles.textColor = [217, 119, 6]; // Total Izin
+                        }
+                    }
+                }
+            });
+
+            // --- LEGEDA KETERANGAN DI BAWAH TABEL ---
+            let finalY = doc.lastAutoTable.finalY + 8;
+            doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42);
+            doc.text("KETERANGAN SIMBOL & KODE SHIFT:", 14, finalY);
+            
+            doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
+            doc.text("- OFF : Jadwal Libur (Day Off)", 14, finalY + 5);
+            doc.text("- IZIN : Cuti / Sakit / Izin", 14, finalY + 9);
+            doc.text("- (-) : Belum ada jadwal", 14, finalY + 13);
+            
+            // Render dinamis jam operasional dari Master Shift
+            let shiftRules = gShift.filter(s => s.outlet === outletVal);
+            if(shiftRules.length > 0) {
+                let yOffset = 5;
+                shiftRules.forEach(s => {
+                    doc.text(`* ${s.kode} = ${s.jamMasuk} s/d ${s.jamKeluar}`, 80, finalY + yOffset);
+                    yOffset += 4;
+                });
+            }
+
+            // Footer Timestamp
+            const printDate = new Date().toLocaleString('id-ID');
+            doc.setFontSize(7);
+            doc.text(`Dicetak pada: ${printDate} oleh Sistem AiMoy HC`, 14, doc.internal.pageSize.getHeight() - 8);
+
+            // Trigger Download
+            doc.save(`Roster_Matrix_${outletVal}_${yyyy}${mm}.pdf`);
         }
 
         function initMap(lat, lng) { 
