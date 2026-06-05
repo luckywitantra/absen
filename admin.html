@@ -951,23 +951,21 @@
             const monthName = new Date(yyyy, mm - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
             const { jsPDF } = window.jspdf;
-            // Gunakan format A4 Landscape agar muat 31 hari
-            const doc = new jsPDF('landscape', 'mm', 'a4');
+            // 🚀 PERBAIKAN 1: Gunakan format Legal Landscape agar lebih panjang (muat 31 hari tanpa dempet)
+            const doc = new jsPDF('landscape', 'mm', 'legal');
 
-            // --- HEADER TEKS ---
-            doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42); 
-            doc.text("LAPORAN ROSTER & MATRIX WFM", 14, 20);
+            doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42); 
+            doc.text("LAPORAN ROSTER & MATRIX WFM", 10, 15);
             
-            doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
-            doc.text(`Cabang: ${outletVal}   |   Periode: ${monthName}`, 14, 26);
+            doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
+            doc.text(`Cabang: ${outletVal}   |   Periode: ${monthName}`, 10, 21);
 
-            // --- HEADER TABEL ---
             let headRow = ["NAMA STAF"];
             for (let i = 1; i <= daysInMonth; i++) { headRow.push(i.toString()); }
-            headRow.push("HADIR", "OFF", "IZIN"); // Kolom rekap ekstra di ujung tabel
+            headRow.push("HDR", "OFF", "IZN");
 
-            // --- BACA DATA LANGSUNG DARI LAYAR (DOM) ---
             let bodyData = [];
+            let rincianPegawai = []; // Untuk keterangan di bawah tabel
             const trs = document.querySelectorAll('#tbody-matrix tr');
             
             if (trs.length === 0 || trs[0].innerText.includes('Silakan pilih')) return Swal.fire('Peringatan', 'Data matriks kosong.', 'warning');
@@ -984,72 +982,107 @@
                 selects.forEach(sel => {
                     let val = sel.value;
                     if (val === 'OFF') { countOff++; rowData.push('OFF'); }
-                    else if (val === 'IZIN') { countIzin++; rowData.push('IZIN'); }
+                    else if (val === 'IZIN') { countIzin++; rowData.push('IZN'); }
                     else if (val === '') { rowData.push('-'); }
-                    else { countHadir++; rowData.push(val); }
+                    else { 
+                        countHadir++; 
+                        // 🚀 PERBAIKAN 2: Singkat shift menjadi maks 4 huruf (contoh: PAGI, SIAN) agar tidak memecah baris
+                        rowData.push(val.substring(0, 4).toUpperCase()); 
+                    }
                 });
 
                 rowData.push(`${countHadir}`, `${countOff}`, `${countIzin}`);
                 bodyData.push(rowData);
+                
+                // 🚀 PERBAIKAN 3: Menyusun kalimat penjelasan untuk dicetak di bawah tabel
+                rincianPegawai.push(`• ${nama}: Total jadwal masuk ${countHadir} hari, libur ${countOff} hari, dan izin/sakit ${countIzin} hari.`);
             });
 
-            // --- RENDER TABEL CANTIK (AUTOTABLE) ---
             doc.autoTable({
                 head: [headRow],
                 body: bodyData,
-                startY: 32,
+                startY: 26,
                 theme: 'grid',
-                styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', valign: 'middle', lineColor: [226, 232, 240], lineWidth: 0.1 },
+                styles: { fontSize: 6.5, cellPadding: 1, halign: 'center', valign: 'middle', lineColor: [226, 232, 240], lineWidth: 0.1 },
                 headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
-                columnStyles: { 0: { halign: 'left', fontStyle: 'bold', minCellWidth: 35 } }, // Kunci lebar kolom nama
+                columnStyles: { 0: { halign: 'left', fontStyle: 'bold', cellWidth: 35 } }, // Lebar kolom nama dikunci
+                margin: { left: 10, right: 10 },
                 didParseCell: function(data) {
-                    // Mewarnai Teks secara Otomatis
                     if (data.section === 'body') {
                         let val = data.cell.raw;
-                        if (val === 'OFF') { data.cell.styles.textColor = [225, 29, 72]; data.cell.styles.fontStyle = 'bold'; } // Merah
-                        else if (val === 'IZIN') { data.cell.styles.textColor = [217, 119, 6]; data.cell.styles.fontStyle = 'bold'; } // Kuning/Amber
-                        else if (val !== '-' && data.column.index > 0 && data.column.index <= daysInMonth) { data.cell.styles.textColor = [16, 185, 129]; data.cell.styles.fontStyle = 'bold'; } // Hijau
+                        if (val === 'OFF') { data.cell.styles.textColor = [225, 29, 72]; data.cell.styles.fontStyle = 'bold'; }
+                        else if (val === 'IZN') { data.cell.styles.textColor = [217, 119, 6]; data.cell.styles.fontStyle = 'bold'; }
+                        else if (val !== '-' && data.column.index > 0 && data.column.index <= daysInMonth) { data.cell.styles.textColor = [16, 185, 129]; data.cell.styles.fontStyle = 'bold'; }
                         
-                        // Mewarnai Background Kolom Rekap di Paling Ujung
+                        // Kolom Rekap (Hadir, Off, Izin)
                         if (data.column.index > daysInMonth) {
                             data.cell.styles.fillColor = [248, 250, 252]; data.cell.styles.fontStyle = 'bold';
-                            if(data.column.index === daysInMonth + 1) data.cell.styles.textColor = [16, 185, 129]; // Total Hadir
-                            if(data.column.index === daysInMonth + 2) data.cell.styles.textColor = [225, 29, 72]; // Total Off
-                            if(data.column.index === daysInMonth + 3) data.cell.styles.textColor = [217, 119, 6]; // Total Izin
+                            if(data.column.index === daysInMonth + 1) data.cell.styles.textColor = [16, 185, 129]; // Hadir
+                            if(data.column.index === daysInMonth + 2) data.cell.styles.textColor = [225, 29, 72]; // Off
+                            if(data.column.index === daysInMonth + 3) data.cell.styles.textColor = [217, 119, 6]; // Izin
                         }
                     }
                 }
             });
 
-            // --- LEGEDA KETERANGAN DI BAWAH TABEL ---
             let finalY = doc.lastAutoTable.finalY + 8;
+            
+            // --- KETERANGAN KODE SHIFT ---
             doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42);
-            doc.text("KETERANGAN SIMBOL & KODE SHIFT:", 14, finalY);
+            doc.text("KETERANGAN KODE:", 10, finalY);
             
             doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
-            doc.text("- OFF : Jadwal Libur (Day Off)", 14, finalY + 5);
-            doc.text("- IZIN : Cuti / Sakit / Izin", 14, finalY + 9);
-            doc.text("- (-) : Belum ada jadwal", 14, finalY + 13);
+            doc.text("- OFF : Libur / Day Off", 10, finalY + 4);
+            doc.text("- IZN : Cuti / Izin / Sakit", 10, finalY + 8);
+            doc.text("- (-) : Belum Dijadwalkan", 10, finalY + 12);
             
-            // Render dinamis jam operasional dari Master Shift
             let shiftRules = gShift.filter(s => s.outlet === outletVal);
             if(shiftRules.length > 0) {
-                let yOffset = 5;
+                let yOffset = 4;
                 shiftRules.forEach(s => {
-                    doc.text(`* ${s.kode} = ${s.jamMasuk} s/d ${s.jamKeluar}`, 80, finalY + yOffset);
+                    let singkatan = s.kode.substring(0, 4).toUpperCase();
+                    doc.text(`- ${singkatan} : ${s.kode} (${s.jamMasuk} s/d ${s.jamKeluar})`, 50, finalY + yOffset);
                     yOffset += 4;
                 });
+            }
+
+            // --- RINCIAN PENJELASAN PEGAWAI ---
+            finalY += 20; // Jarak turun ke blok penjelasan
+            
+            // Auto Page-Break: Jika tabel terlalu panjang dan menyentuh dasar kertas, buat halaman baru
+            if (finalY > doc.internal.pageSize.getHeight() - 30) {
+                doc.addPage();
+                finalY = 20;
+            }
+
+            doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42);
+            doc.text("RINCIAN KEHADIRAN PEGAWAI:", 10, finalY);
+            
+            doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 116, 139);
+            finalY += 5;
+            
+            // Bagi daftar penjelasan menjadi 2 kolom agar muat banyak dan terlihat seperti artikel koran
+            let col1 = [], col2 = [];
+            const halfLength = Math.ceil(rincianPegawai.length / 2);
+            rincianPegawai.forEach((rincian, index) => {
+                if (index < halfLength) col1.push(rincian);
+                else col2.push(rincian);
+            });
+            
+            doc.text(col1, 10, finalY);
+            if (col2.length > 0) {
+                doc.text(col2, 175, finalY); // Mencetak sisa nama di kolom kanan (X=175)
             }
 
             // Footer Timestamp
             const printDate = new Date().toLocaleString('id-ID');
             doc.setFontSize(7);
-            doc.text(`Dicetak pada: ${printDate} oleh Sistem AiMoy HC`, 14, doc.internal.pageSize.getHeight() - 8);
+            doc.text(`Dicetak pada: ${printDate} oleh Sistem AiMoy HC`, 10, doc.internal.pageSize.getHeight() - 8);
 
-            // Trigger Download
+            // Eksekusi Download File
             doc.save(`Roster_Matrix_${outletVal}_${yyyy}${mm}.pdf`);
         }
-
+        
         function initMap(lat, lng) { 
             if(!map) { 
                 map = L.map('map').setView([lat, lng], 14); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); marker = L.marker([lat, lng]).addTo(map); 
