@@ -526,16 +526,47 @@
             });
         }
         
-        function ambilFotoKamera() {
+       function ambilFotoKamera(tipe_absen = "FOTO") {
             const tempCanvas = document.createElement('canvas'); 
-            const MAX_WIDTH = 320; 
+            const MAX_WIDTH = 360; // Diperlebar sedikit agar teks muat
             const scale = MAX_WIDTH / video.videoWidth; 
             tempCanvas.width = MAX_WIDTH; 
             tempCanvas.height = video.videoHeight * scale;
             const ctx = tempCanvas.getContext('2d'); 
-            ctx.translate(tempCanvas.width, 0); ctx.scale(-1, 1); 
+            
+            // 1. Cetak Foto (Efek Cermin)
+            ctx.save();
+            ctx.translate(tempCanvas.width, 0); 
+            ctx.scale(-1, 1); 
             ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-            return tempCanvas.toDataURL('image/jpeg', 0.4); 
+            ctx.restore(); // Kembalikan ke normal agar teks watermark tidak terbalik
+
+            // 2. Ambil Data Real-time
+            const nama = currentFace ? currentFace.n : "Tidak Dikenal";
+            const outlet = document.getElementById('sel-outlet').value || "Lokasi Tidak Diketahui";
+            const shift = document.getElementById('sel-shift').value || "-";
+            const now = new Date();
+            const tglStr = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+            const jamStr = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+
+            // 3. Buat Latar Belakang Transparan untuk Teks di bawah foto
+            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+            ctx.fillRect(0, tempCanvas.height - 80, tempCanvas.width, 80);
+
+            // 4. Cetak Teks Watermark
+            ctx.textAlign = "left";
+            ctx.font = "bold 12px sans-serif";
+            
+            ctx.fillStyle = "#F8F1E5"; // Warna Putih Krem
+            ctx.fillText(`[ ${tipe_absen.toUpperCase()} ] • ${tglStr} ${jamStr}`, 12, tempCanvas.height - 58);
+            
+            ctx.fillStyle = "#D4AF37"; // Warna Emas
+            ctx.fillText(`👤 ${nama}`, 12, tempCanvas.height - 38);
+            
+            ctx.fillStyle = "#10b981"; // Warna Hijau
+            ctx.fillText(`🏢 ${outlet}  |  💼 Shift: ${shift}`, 12, tempCanvas.height - 18);
+
+            return tempCanvas.toDataURL('image/jpeg', 0.5); // Kualitas dinaikkan sedikit agar teks tajam
         }
 
         async function kirimAbsen(tipe) {
@@ -546,7 +577,7 @@
             const shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk');
             const shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
             const shfLembur = shf.options[shf.selectedIndex].getAttribute('data-lembur') || 60;
-            const fotoData = ambilFotoKamera();
+            const fotoData = ambilFotoKamera(tipe);
 
             const flash = document.getElementById('flash-overlay');
             if(flash) { flash.style.opacity = '1'; setTimeout(() => { flash.style.opacity = '0'; }, 150); }
@@ -589,7 +620,7 @@
             });
             
             if (alasan) {
-                const fotoData = ambilFotoKamera();
+                const fotoData = ambilFotoKamera("IZIN");
                 const flash = document.getElementById('flash-overlay');
                 if(flash) { flash.style.opacity = '1'; setTimeout(() => { flash.style.opacity = '0'; }, 150); }
 
