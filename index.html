@@ -563,7 +563,7 @@
                 const result = await res.json();
                 
                 if (result.status === 'success') {
-                    const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}%0A%0A======================%0A${result.summaryWA}`;
+                    const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}%0A======================%0A${result.summaryWA}`;
                     const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
                     let statusColor = result.statusWaktu.includes('TERLAMBAT') || result.statusWaktu.includes('GAGAL') ? 'text-rose-400' : 'text-emerald-400';
