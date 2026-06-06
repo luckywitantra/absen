@@ -781,19 +781,7 @@
             }
         }
 
-        // Fungsi untuk Auto-Copy ke Clipboard sebelum membuka WA
-        function salinDanBukaWA(link, teks) {
-            navigator.clipboard.writeText(teks).then(() => {
-                // Buka tab baru ke aplikasi WhatsApp
-                window.open(link, '_blank');
-                // Setelah diklik, barulah paksa modal tertutup
-                Swal.close();
-            }).catch(err => {
-                // Jika gagal copy, tetap buka WA
-                window.open(link, '_blank');
-                Swal.close();
-            });
-        }
+       
 
         function tampilkanPwaUI(overlay, sheet) {
             setTimeout(() => {
