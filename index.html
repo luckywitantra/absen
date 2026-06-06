@@ -594,19 +594,71 @@
                 const result = await res.json();
                 
                 if (result.status === 'success') {
-                    const textWA = `*NOTIFIKASI ABSENSI AIMOY*%0A%0A👤 *Nama:* ${currentFace.n}%0A💼 *Shift:* ${shf.value} (${shfM}-${shfK})%0A🏢 *Lokasi:* ${out}%0A📍 *Tipe:* ${tipe.toUpperCase()}%0A⏰ *Waktu:* ${result.jam}%0A✅ *Status:* ${result.statusWaktu}%0A📸 *Bukti Foto:* ${result.linkFoto}%0A======================%0A${result.summaryWA}`;
+                    // 1. Teks Mentah (Untuk disalin / di-copy)
+                    // (Menggunakan \n untuk baris baru agar bisa disalin dengan rapi)
+                    let rawSummary = result.summaryWA ? result.summaryWA.replace(/%0A/g, '\n') : '';
+                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shf.value} (${shfM}-${shfK})\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipe.toUpperCase()}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* ${result.linkFoto}\n\n======================\n${rawSummary}`;
+                    
+                    // 2. Teks URL Encode (Untuk Link WA)
+                    const textWA = encodeURIComponent(rawText);
                     const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
-                    let statusColor = result.statusWaktu.includes('TERLAMBAT') || result.statusWaktu.includes('GAGAL') ? 'text-rose-400' : 'text-emerald-400';
+                    let statusColor = result.statusWaktu.includes('TERLAMBAT') || result.statusWaktu.includes('GAGAL') || result.statusWaktu.includes('PULANG AWAL') ? 'text-rose-400' : 'text-emerald-400';
 
                     Swal.fire({
                         icon: 'success', 
                         title: '<span class="text-[#F8F1E5] text-xl font-black">Absen Sukses!</span>',
-                        html: `<div class="text-[#e8d5c4] text-xs">Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.<br><br><div class="bg-black/50 p-4 rounded-xl border border-white/5"><span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span><b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b></div><br><a href="${waLink}" target="_blank" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2"><i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA</a></div>`,
-                        showConfirmButton: false, timer: 15000, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
-                    }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); });
-                } else { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Ditolak Sistem</span>', html: `<span class="text-[#e8d5c4] text-xs">${result.message}</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
-            } catch (e) { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gangguan Sinyal</span>', html: '<span class="text-[#e8d5c4] text-xs">Gagal terhubung ke pangkalan data.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); }
+                        html: `<div class="text-[#e8d5c4] text-xs">Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.<br><br>
+                        <div class="bg-black/50 p-4 rounded-xl border border-white/5 mb-3">
+                            <span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span>
+                            <b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b>
+                        </div>
+                        <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
+                            <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA
+                        </button>
+                        <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan <b>otomatis disalin</b>. Silakan buka aplikasi WA manual dan Tempel (Paste).</p>
+                        </div>`,
+                        showConfirmButton: false, 
+                        allowOutsideClick: false, // Wajib lapor WA sebelum bisa tutup
+                        background: 'rgba(26, 1, 1, 0.95)', 
+                        customClass: { popup: 'swal2-popup' }
+                    }).then(() => { 
+                        isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); 
+                    });
+                } else { 
+                    Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Ditolak Sistem</span>', html: `<span class="text-[#e8d5c4] text-xs">${result.message}</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); 
+                }
+            } catch (e) { 
+                Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gangguan Sinyal</span>', html: '<span class="text-[#e8d5c4] text-xs">Gagal terhubung ke pangkalan data.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); 
+            }
+        }
+
+        // ==========================================
+        // 🚀 FUNGSI BANTUAN UNTUK AUTO-COPY WA
+        // ==========================================
+        function salinDanBukaWA(link, teks) {
+            // Gunakan metode textarea untuk fallback jika navigator.clipboard tidak didukung di in-app browser
+            const textArea = document.createElement("textarea");
+            textArea.value = teks;
+            textArea.style.position = "fixed";  // Hindari scrolling
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.error('Gagal menyalin teks', err);
+            }
+            document.body.removeChild(textArea);
+
+            // Buka aplikasi WhatsApp
+            window.open(link, '_blank');
+            
+            // Tutup pop-up setelah tombol ditekan
+            Swal.close();
         }
 
         async function ajukanIzin() {
@@ -727,6 +779,20 @@
                 };
                 tampilkanPwaUI(overlay, sheet);
             }
+        }
+
+        // Fungsi untuk Auto-Copy ke Clipboard sebelum membuka WA
+        function salinDanBukaWA(link, teks) {
+            navigator.clipboard.writeText(teks).then(() => {
+                // Buka tab baru ke aplikasi WhatsApp
+                window.open(link, '_blank');
+                // Setelah diklik, barulah paksa modal tertutup
+                Swal.close();
+            }).catch(err => {
+                // Jika gagal copy, tetap buka WA
+                window.open(link, '_blank');
+                Swal.close();
+            });
         }
 
         function tampilkanPwaUI(overlay, sheet) {
