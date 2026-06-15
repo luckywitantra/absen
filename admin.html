@@ -114,6 +114,12 @@
                 Dashboard
             </button>
 
+            <button id="nav-otorisasi" onclick="switchView('view-otorisasi')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-600 hover:bg-slate-50 relative overflow-hidden group mt-1.5">
+                <div class="absolute inset-y-0 left-0 w-1.5 bg-blue-600 rounded-r-full nav-indicator hidden"></div>
+                <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center group-hover:scale-110 transition-transform nav-icon-box"><i class="fas fa-check-double text-sm"></i></div>
+                Otorisasi Shift
+            </button>
+
             <p class="px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-8 mb-3">Manajemen Data</p>
 
             <button id="nav-karyawan" onclick="switchView('view-karyawan')" class="nav-btn w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 text-sm font-bold text-slate-600 hover:bg-slate-50 relative overflow-hidden group">
@@ -340,6 +346,16 @@
             </div>
 
             <!-- VIEW: KARYAWAN -->
+            <div id="view-otorisasi" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div><h2 class="text-2xl font-black text-slate-800">Otorisasi Tukar Shift</h2><p class="text-xs font-bold text-slate-400 mt-1">Persetujuan penggantian jadwal staf.</p></div>
+                    <button onclick="muatDataOtorisasi()" class="bg-white border border-slate-200 text-slate-600 px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm hover:bg-slate-50 active:scale-95 transition-all"><i class="fas fa-sync-alt mr-1.5 text-blue-500"></i> Segarkan Data</button>
+                </div>
+                <div id="container-otorisasi" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-2">
+                    <div class="col-span-full text-center text-slate-400 italic py-10 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm">Memuat data...</div>
+                </div>
+            </div>
+            
             <div id="view-karyawan" class="view-content flex-col gap-6 w-full max-w-7xl mx-auto">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div><h2 class="text-2xl font-black text-slate-800">Direktori Karyawan</h2><p class="text-xs font-bold text-slate-400 mt-1">Data master seluruh staf HC.</p></div>
@@ -396,7 +412,7 @@
     </main>
 
     <!-- MOBILE BOTTOM NAV BAR -->
-    <nav class="fixed bottom-0 left-0 w-full glass-bottom-nav flex justify-around p-2 pb-safe lg:hidden z-[50]" id="bottom-nav-bar">
+    <nav class="fixed bottom-0 left-0 w-full glass-bottom-nav flex overflow-x-auto custom-scroll p-2 pb-safe lg:hidden z-[50] scroll-smooth hide-scroll" id="bottom-nav-bar" style="-ms-overflow-style: none; scrollbar-width: none;">         ```  Dan jangan lupa tambahkan kelas pembantu `min-w-[72px]` pada setiap `<button>` di dalamnya agar mereka tidak tergencet:  ```html         <button id="nav-mob-laporan" onclick="switchView('view-laporan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-blue-600 min-w-[72px] transition-colors relative">             <div class="w-12 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-chart-pie text-lg"></i></div>             <span class="text-[9px] font-extrabold tracking-wide">Analitik</span>         </button>         ```  Dengan dua perbaikan sederhana ini, aplikasi *Admin* Anda sudah 100% matang, bersih dari *bug*, dan tampil sangat memukau baik di PC maupun *smartphone*! Silakan disimpan dan dicoba.
         <button id="nav-mob-laporan" onclick="switchView('view-laporan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-blue-600 w-full transition-colors relative">
             <div class="w-12 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-chart-pie text-lg"></i></div>
             <span class="text-[9px] font-extrabold tracking-wide">Analitik</span>
@@ -722,6 +738,7 @@
 
             const navBtnMap = {
                 'view-laporan': { desk: 'nav-laporan', mob: 'nav-mob-laporan', title: 'Laporan & Analitik' },
+                'view-otorisasi': { desk: 'nav-otorisasi', mob: 'nav-mob-otorisasi', title: 'Otorisasi Tukar Shift' },
                 'view-karyawan': { desk: 'nav-karyawan', mob: 'nav-mob-karyawan', title: 'Direktori Staf' },
                 'view-outlet': { desk: 'nav-outlet', mob: 'nav-mob-outlet', title: 'Master Outlet' },
                 'view-shift': { desk: 'nav-shift', mob: 'nav-mob-shift', title: 'Aturan Waktu' }
@@ -747,6 +764,8 @@
             if (window.innerWidth < 1024 && !sidebar.classList.contains('-translate-x-full')) {
                 toggleSidebar();
             }
+            // Pemicu otomatis memuat data saat tab Otorisasi dibuka
+            if(viewId === 'view-otorisasi') muatDataOtorisasi();
         }
 
         async function syncDatabase(silent = false) {
@@ -1413,167 +1432,96 @@
         // Pasang pemicu otomatis saat halaman dimuat
         window.addEventListener('load', () => { setTimeout(cekApprovalTukar, 3000); });
 
-        async function cekApprovalTukar() {
+        // ==========================================
+        // 🚀 MENU OTORISASI TUKAR SHIFT
+        // ==========================================
+        async function muatDataOtorisasi() {
+            const container = document.getElementById('container-otorisasi');
+            container.innerHTML = '<div class="col-span-full text-center text-slate-400 italic py-10 bg-white rounded-[1.5rem] border border-slate-100 shadow-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Mencari data persetujuan...</div>';
+            
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: 'Semua' } }) });
                 const result = await res.json();
                 const logs = result.data || [];
-
-                pendingApprovals = [];
+                
                 const tukarLogs = logs.filter(r => r.tipe === 'Tukar Shift');
-
+                let pending = [];
+                
                 tukarLogs.forEach(r => {
                     const infoText = r.info || '';
-                    // REGEX BARU: Menangkap format (Ganti Tgl: YYYY-MM-DD)
-                    const match = infoText.match(/Menggantikan (.*?) \(Ganti Tgl: (.*?)\) - (.*)/);
+                    const match = infoText.match(/Menggantikan (.*?) - (.*)/); 
                     
                     if (match) {
                         const namaB = match[1].trim();
-                        const tglGanti = match[2].trim();
-                        const alasan = match[3].trim();
+                        const alasan = match[2].trim();
                         
-                        // Cek apakah sudah di-ACC dengan melihat apakah ada log Izin (ACC Owner) atas nama B di tanggal r.tanggal
+                        // Cek apakah Staf B (yang diganti) sudah disuntikkan status Izin oleh Admin
                         const isApproved = logs.some(l => l.tanggal === r.tanggal && l.nama === namaB && (l.info || '').includes('ACC Owner'));
-
                         if (!isApproved) {
-                            pendingApprovals.push({ ts: r.ts, tanggal: r.tanggal, outlet: r.outlet, shiftTarget: r.shift, namaA: r.nama, namaB: namaB, tglGanti: tglGanti, alasan: alasan, foto: r.foto });
+                            pending.push({ ts: r.ts, tanggal: r.tanggal, outlet: r.outlet, shiftTarget: r.shift, namaA: r.nama, namaB: namaB, alasan: alasan, foto: r.foto });
                         }
                     }
                 });
 
-                const btnNotif = document.getElementById('btn-notif-approval');
-                if (pendingApprovals.length > 0) {
-                    btnNotif.style.display = 'flex';
-                    document.getElementById('text-notif-approval').innerText = `${pendingApprovals.length} PERMINTAAN TUKAR`;
-                } else {
-                    btnNotif.style.display = 'none';
+                if (pending.length === 0) {
+                    container.innerHTML = '<div class="col-span-full text-center text-slate-400 font-bold py-16 bg-white rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center"><div class="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-4xl mb-4"><i class="fas fa-check"></i></div>Tuntas! Tidak ada permintaan otorisasi yang menunggu.</div>';
+                    return;
                 }
-            } catch(e) { console.error("Gagal cek persetujuan", e); }
-        }
 
-        function bukaModalApproval() {
-            let html = '';
-            if (pendingApprovals.length === 0) {
-                html = '<div class="text-center text-slate-400 text-sm italic py-5 border border-dashed border-slate-200 rounded-xl">Tidak ada permintaan yang menunggu.</div>';
-            } else {
-                pendingApprovals.forEach(p => {
-                    let btnHtml = `<button onclick="setujuiTukar('${p.tanggal}', '${p.namaA}', '${p.namaB}', '${p.outlet}', '${p.shiftTarget}', '${p.tglGanti}')" class="w-full bg-emerald-500 text-white py-2.5 rounded-lg font-black text-xs hover:bg-emerald-600 active:scale-95 transition-all shadow-[0_4px_10px_rgba(16,185,129,0.3)] mt-3"><i class="fas fa-check-circle mr-1"></i> SETUJUI & TUKAR OTOMATIS</button>`;
-
+                let html = '';
+                pending.forEach(p => {
                     html += `
-                    <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
-                        <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-2">
-                            <div class="font-black text-slate-800 text-sm">${p.namaA} <i class="fas fa-arrow-right text-slate-300 mx-1"></i> <span class="text-purple-600">${p.namaB}</span></div>
-                            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold">${p.tanggal}</span>
+                    <div class="bg-white border border-slate-200 p-6 rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-500 to-indigo-500"></div>
+                        <div>
+                            <div class="flex justify-between items-start mb-4 border-b border-slate-50 pb-3">
+                                <div>
+                                    <div class="font-black text-slate-800 text-sm">${p.namaA}</div>
+                                    <div class="text-[9px] text-slate-500 font-bold mt-1 uppercase tracking-widest"><i class="fas fa-exchange-alt text-purple-400 mx-1"></i> Ganti: <span class="text-purple-600 font-black">${p.namaB}</span></div>
+                                </div>
+                                <span class="text-[9px] bg-slate-100 text-slate-600 px-2.5 py-1.5 rounded-lg font-black tracking-widest border border-slate-200"><i class="far fa-calendar-alt mr-1 text-slate-400"></i> ${p.tanggal}</span>
+                            </div>
+                            <div class="text-[11px] text-slate-600 mb-4 bg-slate-50 p-3.5 rounded-xl border border-slate-100 leading-relaxed"><i class="fas fa-quote-left text-slate-300 mr-1.5"></i> ${p.alasan}</div>
                         </div>
-                        <div class="text-xs text-slate-600 mb-1.5 flex gap-2"><i class="fas fa-quote-left text-slate-300"></i> ${p.alasan}</div>
-                        
-                        <div class="text-[10px] text-emerald-600 font-bold mb-3 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex flex-col gap-1">
-                            <span><i class="fas fa-calendar-day w-4 text-center"></i> Ganti Libur Pada: <b>${p.tglGanti}</b></span>
-                            <span><i class="fas fa-briefcase w-4 text-center"></i> Hutang Shift: <b>${p.shiftTarget}</b> (Si B yang wajib masuk)</span>
+                        <div class="flex flex-col gap-2 mt-auto">
+                            <a href="${p.foto}" target="_blank" class="text-xs text-blue-600 font-bold hover:bg-blue-100 bg-blue-50 px-4 py-3 rounded-xl border border-blue-100 text-center transition-colors"><i class="fas fa-camera mr-1"></i> Cek Foto Kehadiran</a>
+                            <button onclick="setujuiOtorisasi('${p.tanggal}', '${p.namaA}', '${p.namaB}', '${p.outlet}', '${p.shiftTarget}')" class="bg-purple-600 text-white px-4 py-3.5 rounded-xl font-black text-xs hover:bg-purple-700 active:scale-95 transition-all shadow-[0_8px_15px_rgba(147,51,234,0.25)] flex justify-center items-center gap-2"><i class="fas fa-check-circle text-purple-200"></i> SETUJUI OTORISASI</button>
                         </div>
-
-                        <a href="${p.foto}" target="_blank" class="text-[10px] text-blue-500 font-bold hover:underline bg-blue-50 px-3 py-1.5 rounded-md"><i class="fas fa-camera"></i> Lihat Foto Bukti Di Toko</a>
-                        ${btnHtml}
                     </div>`;
                 });
+                container.innerHTML = html;
+            } catch(e) { 
+                container.innerHTML = '<div class="col-span-full text-center text-rose-400 font-bold py-10">Gagal terhubung ke pangkalan data.</div>';
             }
-            document.getElementById('list-approval').innerHTML = html;
-            openDrawer('drawer-approval');
         }
 
-        function setujuiTukar(tanggal, namaA, namaB, outlet, shiftTarget, tglGanti) {
+        function setujuiOtorisasi(tanggal, namaA, namaB, outlet, shiftTarget) {
             Swal.fire({
                 title: 'Setujui Tukar Shift?',
-                html: `<div class="text-xs text-slate-600 text-left bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2">
-                        <b>EKSEKUSI HARI INI (${tanggal}):</b><br>
-                        <b class="text-emerald-600">✅ ${namaA}</b> -> Shift ${shiftTarget}<br>
-                        <b class="text-rose-500">🏖️ ${namaB}</b> -> Izin / Sakit<br><br>
-                        
-                        <b>EKSEKUSI MASA DEPAN (${tglGanti}):</b><br>
-                        <b class="text-rose-500">🏖️ ${namaA}</b> -> Libur (Ganti Off)<br>
-                        <b class="text-emerald-600">✅ ${namaB}</b> -> Masuk (Bayar Hutang Shift ${shiftTarget})
-                       </div>`,
-                icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Setujui', cancelButtonText: 'Batal',
-                customClass: { popup: 'swal2-popup', confirmButton: 'bg-emerald-500 text-white rounded-xl font-black px-6 py-3 text-xs shadow-lg hover:bg-emerald-600', cancelButton: 'bg-white border border-slate-200 text-slate-500 font-bold px-6 py-3 rounded-xl text-xs hover:bg-slate-50 ml-2' }
+                html: `<div class="text-xs text-slate-600 text-left bg-slate-50 p-5 rounded-2xl border border-slate-200 mt-2 shadow-inner">Dengan menyetujui, sistem akan otomatis merubah matriks absen hari ini:<br><br><b class="text-emerald-600"><i class="fas fa-check-circle w-4"></i> ${namaA}</b> diakui masuk (Shift ${shiftTarget}).<br><b class="text-rose-500"><i class="fas fa-file-medical w-4"></i> ${namaB}</b> otomatis dialihkan ke status Izin/Sakit.</div>`,
+                icon: 'question', showCancelButton: true, confirmButtonText: 'Setujui Sekarang', cancelButtonText: 'Batal',
+                customClass: { popup: 'swal2-popup', confirmButton: 'bg-purple-600 text-white rounded-xl font-black px-6 py-3.5 text-xs shadow-lg hover:bg-purple-700', cancelButton: 'bg-white border border-slate-200 text-slate-500 font-bold px-6 py-3.5 rounded-xl text-xs hover:bg-slate-50 ml-2' }
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({ title: 'Memperbarui Matriks...', html: 'Menyuntikkan jadwal masa depan...', didOpen: () => Swal.showLoading() });
-                    
-                    // 🚀 DATA INJECTION (3 BARIS SEKALIGUS)
+                    Swal.fire({ title: 'Memproses Otorisasi...', didOpen: () => Swal.showLoading() });
+                    // 🚀 PERBAIKAN: Menyuntikkan 2 baris data sekaligus (Untuk B dan A)
                     const dataToImport = [
-                        // HARI INI
                         { tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Izin', keterangan: `Digantikan oleh ${namaA} (ACC Owner)` },
-                        // MASA DEPAN (Hari Pengganti)
-                        { tanggal: tglGanti, jam: '00:00', nama: namaA, outlet: outlet, shift: '-', tipe: 'Libur', keterangan: `Tukar Libur dari Tgl ${tanggal} (ACC Owner)` },
-                        { tanggal: tglGanti, jam: '00:00', nama: namaB, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Bayar Shift ke ${namaA} (ACC Owner)` }
+                        { tanggal: tanggal, jam: '00:00', nama: namaA, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Menggantikan ${namaB} (ACC Owner)` }
                     ];
-
                     try {
                         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
                         const apiRes = await res.json();
                         if (apiRes.status === 'success') {
-                            Swal.fire('Otomatisasi Berhasil!', 'Matriks masa lalu dan masa depan berhasil ditukar.', 'success');
-                            closeAllDrawers();
-                            cekApprovalTukar(); // Segarkan notifikasi
-                            if (!document.getElementById('tabel-mode-rinci').classList.contains('hidden')) generateAnalytics();
+                            Swal.fire('Disetujui!', 'Matriks kehadiran berhasil diotomatisasi.', 'success');
+                            muatDataOtorisasi(); // Segarkan tampilan kartu otorisasi
+                            if (!document.getElementById('tabel-mode-rinci').classList.contains('hidden')) generateAnalytics(); // Segarkan rekap tabel jika terbuka
                         } else { Swal.fire('Gagal', apiRes.message, 'error'); }
                     } catch(e) { Swal.fire('Error', 'Gagal memproses ke server.', 'error'); }
                 }
             });
         }
-
-        function bukaModalApproval() {
-            let html = '';
-            if (pendingApprovals.length === 0) {
-                html = '<div class="text-center text-slate-400 text-sm italic py-5 border border-dashed border-slate-200 rounded-xl">Tidak ada permintaan yang menunggu.</div>';
-            } else {
-                pendingApprovals.forEach(p => {
-                    let btnHtml = `<button onclick="setujuiTukar('${p.tanggal}', '${p.namaA}', '${p.namaB}', '${p.outlet}', '${p.shiftTarget}')" class="w-full bg-emerald-500 text-white py-2.5 rounded-lg font-black text-xs hover:bg-emerald-600 active:scale-95 transition-all shadow-[0_4px_10px_rgba(16,185,129,0.3)] mt-3"><i class="fas fa-check-circle mr-1"></i> SETUJUI & UPDATE MATRIKS</button>`;
-
-                    html += `
-                    <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
-                        <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-2">
-                            <div class="font-black text-slate-800 text-sm">${p.namaA} <i class="fas fa-arrow-right text-slate-300 mx-1"></i> <span class="text-purple-600">${p.namaB}</span></div>
-                            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold">${p.tanggal}</span>
-                        </div>
-                        <div class="text-xs text-slate-600 mb-1.5 flex gap-2"><i class="fas fa-quote-left text-slate-300"></i> ${p.alasan}</div>
-                        <div class="text-[10px] text-slate-500 font-bold mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">🏠 ${p.outlet} &nbsp;|&nbsp; 💼 Masuk Shift: ${p.shiftTarget}</div>
-                        <a href="${p.foto}" target="_blank" class="text-[10px] text-blue-500 font-bold hover:underline bg-blue-50 px-3 py-1.5 rounded-md"><i class="fas fa-camera"></i> Lihat Foto Bukti Di Toko</a>
-                        ${btnHtml}
-                    </div>`;
-                });
-            }
-            document.getElementById('list-approval').innerHTML = html;
-            openDrawer('drawer-approval');
-        }
-
-        function setujuiTukar(tanggal, namaA, namaB, outlet, shiftTarget) {
-            Swal.fire({
-                title: 'Setujui Tukar Shift?',
-                html: `<div class="text-xs text-slate-600 text-left bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2">Sistem akan otomatis mengubah matriks:<br><br><b class="text-emerald-600">✅ ${namaA}</b> akan tercatat masuk <b>Shift ${shiftTarget}</b><br><b class="text-rose-500">🏖️ ${namaB}</b> akan otomatis diubah menjadi <b>Izin / Sakit</b></div>`,
-                icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Setujui', cancelButtonText: 'Batal',
-                customClass: { popup: 'swal2-popup', confirmButton: 'bg-emerald-500 text-white rounded-xl font-black px-6 py-3 text-xs shadow-lg hover:bg-emerald-600', cancelButton: 'bg-white border border-slate-200 text-slate-500 font-bold px-6 py-3 rounded-xl text-xs hover:bg-slate-50 ml-2' }
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({ title: 'Memperbarui Matriks...', didOpen: () => Swal.showLoading() });
-                    // Menyuntikkan log Izin otomatis untuk rekan yang digantikan
-                    const dataToImport = [{ tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Izin', keterangan: `Digantikan oleh ${namaA} (ACC Owner)` }];
-
-                    try {
-                        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
-                        const apiRes = await res.json();
-                        if (apiRes.status === 'success') {
-                            Swal.fire('Disetujui!', 'Matriks HRD dan rekap gaji berhasil disesuaikan secara otomatis.', 'success');
-                            closeAllDrawers();
-                            cekApprovalTukar(); // Segarkan notifikasi
-                            if (!document.getElementById('tabel-mode-rinci').classList.contains('hidden')) generateAnalytics(); // Segarkan tabel jika sedang dibuka
-                        } else { Swal.fire('Gagal', apiRes.message, 'error'); }
-                    } catch(e) { Swal.fire('Error', 'Gagal memproses ke server.', 'error'); }
-                }
-            });
-        }
-
-        
+    
         function kirimWA(nama) {
             const tglStart = document.getElementById('filter-start').value;
             const tglEnd = document.getElementById('filter-end').value;
