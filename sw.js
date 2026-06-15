@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aimoy-kiosk-v21';
+const CACHE_NAME = 'aimoy-kiosk-v22';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
