@@ -641,8 +641,6 @@
                     
                     // 2. Teks URL Encode (Untuk Link WA)
                     const textWA = encodeURIComponent(rawText);
-                    const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
-
                     let statusColor = result.statusWaktu.includes('TERLAMBAT') || result.statusWaktu.includes('GAGAL') || result.statusWaktu.includes('PULANG AWAL') ? 'text-rose-400' : 'text-emerald-400';
 
                     Swal.fire({
