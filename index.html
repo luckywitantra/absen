@@ -326,19 +326,19 @@
             if (shifts.length === 0) return null;
 
             // 🚀 1. LOGIKA SHIFT MENGGANTUNG (PRIORITAS UTAMA)
-            // Mengecek apakah staf ini tadi sudah absen "Masuk" tapi belum absen "Pulang"
-            if (namaKaryawan && window.gJadwalHariIni) {
-                const myLogs = window.gJadwalHariIni.filter(r => r.nama === namaKaryawan);
+            // PERBAIKAN: Menghapus awalan 'window.' agar memori jadwal bisa terbaca
+            if (namaKaryawan && typeof gJadwalHariIni !== 'undefined' && gJadwalHariIni.length > 0) {
+                const myLogs = gJadwalHariIni.filter(r => r.nama === namaKaryawan);
                 const masukLogs = myLogs.filter(r => r.tipe === 'Masuk' || r.tipe === 'Tukar Shift');
                 const pulangLogs = myLogs.filter(r => r.tipe === 'Pulang');
                 
-                // Jika jumlah log Masuk lebih banyak dari Pulang, berarti dia MASIH BEKERJA!
+                // Jika jumlah log Masuk lebih banyak dari Pulang, berarti dia MASIH BEKERJA
                 if (masukLogs.length > pulangLogs.length) {
                     const namaShiftAktif = masukLogs[masukLogs.length - 1].shift;
                     const shiftGantung = shifts.find(s => s.kode === namaShiftAktif);
                     
                     if (shiftGantung) {
-                        return shiftGantung; // Kunci paksa ke shift yang sedang ia kerjakan
+                        return shiftGantung; // Kunci paksa ke shift yang sedang ia kerjakan!
                     }
                 }
             }
