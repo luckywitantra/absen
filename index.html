@@ -120,7 +120,7 @@
                             <p id="ai-role" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">Arahkan kamera ke wajah Anda</p>
                         </div>
                     </div>
-                    <button id="btn-izin" onclick="ajukanIzin()" disabled class="shrink-0 bg-transparent hover:bg-amber-500/20 text-amber-500 border border-amber-500/40 px-3 py-2 rounded-lg font-black disabled:opacity-20 disabled:border-transparent transition-all text-[9px] tracking-widest flex flex-col items-center"><i class="fas fa-file-medical mb-0.5"></i> IZIN</button>
+                    <div class="flex gap-2 shrink-0">     <button id="btn-izin" onclick="ajukanIzin()" disabled class="bg-transparent hover:bg-amber-500/20 text-amber-500 border border-amber-500/40 px-3 py-2 rounded-lg font-black disabled:opacity-20 disabled:border-transparent transition-all text-[9px] tracking-widest flex flex-col items-center"><i class="fas fa-file-medical mb-0.5"></i> IZIN</button>     <button id="btn-tukar" onclick="ajukanTukarShift()" disabled class="bg-transparent hover:bg-purple-500/20 text-purple-400 border border-purple-500/40 px-3 py-2 rounded-lg font-black disabled:opacity-20 disabled:border-transparent transition-all text-[9px] tracking-widest flex flex-col items-center"><i class="fas fa-people-arrows mb-0.5"></i> TUKAR</button> </div>
                 </div>
 
                 <div id="dist-alert" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 px-3 py-2 rounded-xl text-[10px] font-bold text-center shadow-inner flex items-center justify-center gap-2">
@@ -462,7 +462,7 @@
                     
                     livenessOverlay.classList.add('hidden'); livenessOverlay.classList.remove('flex');
                     
-                    if(outSel.value) btnIzin.disabled = false; else btnIzin.disabled = true;
+                    if(outSel.value) { btnIzin.disabled = false; document.getElementById('btn-tukar').disabled = false; }  else { btnIzin.disabled = true; document.getElementById('btn-tukar').disabled = true; }
                     if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
                 }
             } else { 
@@ -681,11 +681,97 @@
                 try {
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
                     const result = await res.json();
-                    if (result.status === 'success') Swal.fire({ icon: 'success', title: '<span class="text-[#F8F1E5]">Izin Tercatat</span>', html: `<span class="text-[#e8d5c4] text-xs">Pengajuan izin <b>${currentFace.n}</b> berhasil dikirim ke HRD.</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-emerald-600 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; });
+                    
+                    if (result.status === 'success') {
+                        // 🚀 FITUR WA UNTUK IZIN
+                        const rawText = `*FORMULIR PENGAJUAN IZIN*\n\n👤 *Nama:* ${currentFace.n}\n🏢 *Lokasi:* ${out}\n📝 *Keterangan:* ${alasan}\n📸 *Bukti Foto:* ${result.linkFoto || '-'}\n\nMohon konfirmasi dan kebijaksanaannya.`;
+                        const textWA = encodeURIComponent(rawText);
+                        const waLink = `https://api.whatsapp.com/send?text=${textWA}`; // Kirim ke grup
+
+                        Swal.fire({ 
+                            icon: 'success', 
+                            title: '<span class="text-[#F8F1E5] text-xl font-black">Izin Tercatat</span>', 
+                            html: `<div class="text-[#e8d5c4] text-xs">Pengajuan izin <b>${currentFace.n}</b> berhasil dikirim ke sistem.<br><br>
+                            <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-amber-400 hover:to-orange-500 transition-all shadow-amber-900/50 mt-2">
+                                <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA
+                            </button>
+                            <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan <b>otomatis disalin</b>. Silakan buka aplikasi WA manual dan Tempel (Paste).</p>
+                            </div>`, 
+                            showConfirmButton: false, 
+                            allowOutsideClick: false, // Memaksa staf untuk menekan tombol WA
+                            background: 'rgba(26, 1, 1, 0.95)', 
+                            customClass: { popup: 'swal2-popup' } 
+                        }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); });
+                    }
                 } catch (e) { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gagal</span>', html: '<span class="text-[#e8d5c4] text-xs">Cek koneksi internet Anda.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; }); }
             } else { isPrompting = false; }
         }
+        
 
+        async function ajukanTukarShift() {
+            isPrompting = true;
+            const out = document.getElementById('sel-outlet').value;
+            const shiftTarget = document.getElementById('sel-shift').value || 'Belum Pilih Shift';
+            
+            const rekan = gKaryawan.filter(k => k.outlet === out && k.nama !== currentFace.n);
+            let optHtml = '<option value="" disabled selected>Pilih Rekan yang Digantikan...</option>';
+            rekan.forEach(r => { optHtml += `<option value="${r.nama}">${r.nama}</option>`; });
+
+            const { value: formValues } = await Swal.fire({
+                title: '<span class="text-[#F8F1E5] text-xl font-black">Tukar Jadwal OFF</span>',
+                html: `
+                    <div class="text-left mb-3 text-slate-400 text-xs">Pilih rekan kerja yang jadwalnya Anda gantikan hari ini:</div>
+                    <select id="swal-rekan" class="w-full p-3.5 bg-black/50 border border-white/20 rounded-xl text-[#F8F1E5] text-xs font-bold mb-3 outline-none focus:border-purple-500 cursor-pointer">${optHtml}</select>
+                    <input type="text" id="swal-alasan" class="w-full p-3.5 bg-black/50 border border-white/20 rounded-xl text-[#F8F1E5] text-xs outline-none focus:border-purple-500" placeholder="Alasan Tukar (Cth: Dia Sedang Sakit)">
+                `,
+                focusConfirm: false, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)',
+                confirmButtonText: '<i class="fas fa-paper-plane mr-1"></i> Ajukan', cancelButtonText: 'Batal',
+                customClass: { popup: 'swal2-popup', confirmButton: 'bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black px-6 py-3 text-xs transition-colors', cancelButton: 'bg-transparent text-white border border-white/20 rounded-xl px-6 py-3 text-xs hover:bg-white/10' },
+                preConfirm: () => {
+                    const r = document.getElementById('swal-rekan').value; const a = document.getElementById('swal-alasan').value;
+                    if(!r || !a) { Swal.showValidationMessage('Rekan dan Alasan wajib diisi!'); return false; }
+                    return { rekan: r, alasan: a };
+                }
+            });
+
+            if(formValues) {
+                const fotoData = ambilFotoKamera("TUKAR");
+                const flash = document.getElementById('flash-overlay');
+                if(flash) { flash.style.opacity = '1'; setTimeout(() => { flash.style.opacity = '0'; }, 150); }
+
+                Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Memproses Tukar Shift...</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', didOpen: () => Swal.showLoading() });
+                
+                try {
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Tukar Shift', keterangan: `Menggantikan ${formValues.rekan} (${formValues.alasan})`, foto: fotoData } }) });
+                    const result = await res.json();
+                    
+                    if (result.status === 'success') {
+                        // 🚀 FITUR WA UNTUK TUKAR SHIFT
+                        const ownerWA = "6281234567890"; // Ganti dengan nomor WA Pemilik/HRD
+                        
+                        const rawText = `*PERMINTAAN TUKAR SHIFT (APPROVAL)*\n\n👤 *Masuk Kerja:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Target Shift:* ${shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n📸 *Bukti Foto di Lokasi:* ${result.linkFoto}\n\nMohon konfirmasinya Bos/Admin untuk merubah matriks absen.`;
+                        const textWA = encodeURIComponent(rawText);
+                        const waLink = `https://api.whatsapp.com/send?phone=${ownerWA}&text=${textWA}`;
+
+                        Swal.fire({
+                            icon: 'success', title: '<span class="text-[#F8F1E5] text-xl font-black">Terekam di Sistem</span>', 
+                            html: `<div class="text-[#e8d5c4] text-xs">Bukti kehadiran Tukar Shift Anda sudah disimpan.<br><br>
+                            <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs mt-3 hover:from-purple-400 hover:to-indigo-500 transition-all shadow-purple-900/50">
+                                <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> MINTA ACC OWNER
+                            </button>
+                            <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan <b>otomatis disalin</b>. Silakan buka aplikasi WA manual dan Tempel (Paste).</p>
+                            </div>`, 
+                            showConfirmButton: false, 
+                            allowOutsideClick: false, // Memaksa staf untuk menekan tombol WA
+                            background: 'rgba(26, 1, 1, 0.95)', 
+                            customClass: { popup: 'swal2-popup' }
+                        }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); });
+                    }
+                } catch(e) { Swal.fire('Error', 'Gagal terhubung ke server', 'error'); isPrompting = false; }
+            } else { isPrompting = false; }
+        }
+
+        
         async function daftarkan() {
             isPrompting = true;
             const nama = document.getElementById('reg-nama').value.toUpperCase(), role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
