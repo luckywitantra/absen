@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aimoy-kiosk-v29'; // Ingat untuk menaikkan ini jika ada update HTML
+const CACHE_NAME = 'aimoy-kiosk-v30'; // Ingat untuk menaikkan ini jika ada update HTML
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS_TO_CACHE = [
   'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js'
 ];
 
+// Saat aplikasi diinstall pertama kali, simpan semua aset ke memori HP
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -18,6 +19,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Hapus cache lama jika ada versi baru
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -32,8 +34,9 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Saat aplikasi meminta file (Offline First Strategy)
 self.addEventListener('fetch', (event) => {
-  // Biarkan request API Google Apps Script lolos ke internet langsung
+  // Biarkan request ke server Google Apps Script tetap melalui internet
   if (event.request.url.includes('script.google.com')) return;
 
   // 🚀 STRATEGI BARU: Network First untuk file HTML
@@ -61,6 +64,7 @@ self.addEventListener('fetch', (event) => {
       }
       return fetch(event.request).then((networkResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
+          // Jangan cache request dari API luar yang tidak relevan
           if (event.request.url.startsWith('http')) {
             cache.put(event.request, networkResponse.clone());
           }
@@ -69,4 +73,14 @@ self.addEventListener('fetch', (event) => {
       });
     })
   );
+});
+
+// ==========================================
+// 🚀 KEPINGAN TERAKHIR: PEMICU SKIP WAITING
+// ==========================================
+// Memaksa Service Worker baru langsung aktif saat tombol "Muat Ulang Sekarang" ditekan di HTML
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });
