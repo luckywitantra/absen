@@ -755,7 +755,7 @@
             const out = document.getElementById('sel-outlet').value;
             const shiftTarget = document.getElementById('sel-shift').value || 'Belum Pilih Shift';
             
-            // Ambil daftar rekan kerja
+            // Ambil daftar rekan kerja di outlet yang sama
             const rekan = gKaryawan.filter(k => k.outlet === out && k.nama !== currentFace.n);
             let optHtml = '<option value="" disabled selected>Pilih Staf yang Digantikan...</option>';
             rekan.forEach(r => { optHtml += `<option value="${r.nama}">${r.nama}</option>`; });
@@ -763,9 +763,12 @@
             const { value: formValues } = await Swal.fire({
                 title: '<span class="text-[#F8F1E5] text-xl font-black">Lapor Tukar Shift</span>',
                 html: `
-                    <div class="text-left mb-3 text-amber-400 text-xs font-bold"><i class="fas fa-info-circle"></i> Hari ini adalah jadwal OFF Anda?</div>
-                    <div class="text-left mb-2 text-slate-400 text-xs">Pilih staf yang Anda gantikan hari ini:</div>
+                    <div class="text-left mb-3 text-purple-400 text-xs font-bold"><i class="fas fa-info-circle"></i> Hari ini adalah jadwal OFF Anda.</div>
+                    <div class="text-left mb-2 text-slate-400 text-xs">Siapa staf yang Anda gantikan hari ini?</div>
                     <select id="swal-rekan" class="w-full p-3.5 bg-black/50 border border-white/20 rounded-xl text-[#F8F1E5] text-xs font-bold mb-3 outline-none focus:border-purple-500 cursor-pointer">${optHtml}</select>
+                    
+                    <div class="text-left mb-2 text-emerald-400 text-xs font-bold">Kapan tanggal ganti OFF Anda nanti?</div>
+                    <input type="date" id="swal-tgl-off" class="w-full p-3.5 bg-black/50 border border-white/20 rounded-xl text-[#F8F1E5] text-xs outline-none focus:border-purple-500 mb-3" title="Pada tanggal ini Anda akan OFF libur, dan rekan Anda yang masuk menggantikan">
                     
                     <input type="text" id="swal-alasan" class="w-full p-3.5 bg-black/50 border border-white/20 rounded-xl text-[#F8F1E5] text-xs outline-none focus:border-purple-500" placeholder="Alasan (Cth: Dia sedang sakit)">
                 `,
@@ -774,9 +777,10 @@
                 customClass: { popup: 'swal2-popup', confirmButton: 'bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black px-6 py-3 text-xs transition-colors', cancelButton: 'bg-transparent text-white border border-white/20 rounded-xl px-6 py-3 text-xs hover:bg-white/10' },
                 preConfirm: () => {
                     const r = document.getElementById('swal-rekan').value; 
+                    const t = document.getElementById('swal-tgl-off').value;
                     const a = document.getElementById('swal-alasan').value;
-                    if(!r || !a) { Swal.showValidationMessage('Nama staf dan Alasan wajib diisi!'); return false; }
-                    return { rekan: r, alasan: a };
+                    if(!r || !t || !a) { Swal.showValidationMessage('Semua kolom wajib diisi!'); return false; }
+                    return { rekan: r, tglOff: t, alasan: a };
                 }
             });
 
@@ -788,24 +792,25 @@
                 Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Memproses Laporan...</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', didOpen: () => Swal.showLoading() });
                 
                 try {
-                    const ketGabungan = `Menggantikan ${formValues.rekan} - ${formValues.alasan}`;
+                    // Menyusun teks terstandar agar mudah dibaca otomatis oleh regex halaman admin
+                    const ketGabungan = `Menggantikan ${formValues.rekan} (Ganti OFF: ${formValues.tglOff}) - ${formValues.alasan}`;
+                    
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Tukar Shift', keterangan: ketGabungan, foto: fotoData } }) });
                     const result = await res.json();
                     
                     if (result.status === 'success') {
-                        const ownerWA = "6281234567890"; // Ganti dengan nomor WA Pemilik
+                        const ownerWA = "6281234567890"; // ⚠️ Ganti dengan nomor WA Anda (format 62)
                         
-                        const rawText = `*LAPORAN TUKAR SHIFT*\n\n👤 *Staf Masuk:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Shift:* ${shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n📸 *Bukti Foto di Lokasi:* ${result.linkFoto}\n\nMohon otorisasi dari Admin di dasbor agar matriks absen disesuaikan.`;
+                        const rawText = `*LAPORAN TUKAR SHIFT*\n\n👤 *Staf Masuk Hari Ini:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Shift:* ${shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n🗓️ *RENCANA TUKAR OFF MASA DEPAN:*\n- ${currentFace.n} akan LIBUR (OFF) pada *${formValues.tglOff}*\n- ${formValues.rekan} akan MASUK menggantikan pada *${formValues.tglOff}*\n\n📸 *Bukti Foto:* ${result.linkFoto}\n\nMohon otorisasi dari Owner di dasbor admin.`;
                         const textWA = encodeURIComponent(rawText);
                         const waLink = `https://api.whatsapp.com/send?phone=${ownerWA}&text=${textWA}`;
 
                         Swal.fire({
                             icon: 'success', title: '<span class="text-[#F8F1E5] text-xl font-black">Terekam di Sistem</span>', 
-                            html: `<div class="text-[#e8d5c4] text-xs">Laporan berhasil dikirim ke server.<br><br>
+                            html: `<div class="text-[#e8d5c4] text-xs">Laporan pertukaran berhasil dikirim ke server.<br><br>
                             <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs mt-3 hover:from-purple-400 hover:to-indigo-500 transition-all shadow-purple-900/50">
                                 <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> MINTA OTORISASI OWNER
                             </button>
-                            <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan <b>otomatis disalin</b>.</p>
                             </div>`, 
                             showConfirmButton: false, allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
                         }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); });
