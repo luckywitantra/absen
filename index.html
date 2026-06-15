@@ -191,8 +191,8 @@
             </div>
         </div>
     </div>
-
-    <script>
+<script>
+        // ⚠️ PASTIKAN INI ADALAH URL DEPLOYMENT TERBARU DARI GOOGLE APPS SCRIPT ANDA
         const API_URL = "https://script.google.com/macros/s/AKfycbxkOCboooYMfJM2W-1WKVu_dHJbfKHdd28TMuxUVkgSotvkf9TERgTQcnXHXDBixEC6kA/exec"; 
         
         const video = document.getElementById('video');
@@ -205,6 +205,7 @@
         
         const REQUIRED_SMILE_SCORE = 0.65; 
         let gJadwalHariIni = []; // Menyimpan jadwal matriks hari ini
+        let gKaryawan = []; // Menyimpan data master karyawan
 
         window.addEventListener('load', () => {
             if(navigator.geolocation) {
@@ -235,22 +236,25 @@
             Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg font-black">Inisialisasi Sistem...</span>', html: '<span class="text-[#e8d5c4] text-xs">Memuat modul AI biometrik 3D</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
             
             const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-            await Promise.all([ 
-                faceapi.nets.tinyFaceDetector.loadFromUri(URL), 
-                faceapi.nets.faceLandmark68Net.loadFromUri(URL), 
-                faceapi.nets.faceRecognitionNet.loadFromUri(URL),
-                faceapi.nets.faceExpressionNet.loadFromUri(URL) 
-            ]);
+            try {
+                await Promise.all([ 
+                    faceapi.nets.tinyFaceDetector.loadFromUri(URL), 
+                    faceapi.nets.faceLandmark68Net.loadFromUri(URL), 
+                    faceapi.nets.faceRecognitionNet.loadFromUri(URL),
+                    faceapi.nets.faceExpressionNet.loadFromUri(URL) 
+                ]);
+            } catch (err) {
+                return Swal.fire('Error AI', 'Gagal memuat model wajah. Periksa koneksi internet Anda.', 'error');
+            }
 
             try {
                 let dataGAS;
                 const cachedData = localStorage.getItem('aimoy_master_data');
                 const cacheTime = localStorage.getItem('aimoy_master_time');
                 
-                if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < 12 * 60 * 60 * 1000) {
+                // Set cache ke 1 detik untuk masa testing agar selalu sync dengan Google Sheets
+                if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < 1000) {
                     dataGAS = JSON.parse(cachedData);
-                    
-                    // Pembaruan Siluman (Background Sync)
                     fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) })
                         .then(r => r.json())
                         .then(freshData => {
@@ -259,44 +263,47 @@
                                 localStorage.setItem('aimoy_master_time', Date.now().toString());
                                 dbOutlet = freshData.dataOutlet; 
                                 dbShift = freshData.dataShift;
-                                
-                                // 🚀 PERBAIKAN: Memasukkan data rekan kerja ke memori aplikasi
+                                gJadwalHariIni = freshData.jadwalHariIni || [];
                                 gKaryawan = freshData.dataKaryawan; 
                                 
                                 if (freshData.dataKaryawan.length > 0) {
                                     const labeled = freshData.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
-                                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); // Akurasi tinggi
+                                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38);
                                 }
                             }
                         }).catch(e => console.log("Sync background gagal."));
-                        
                 } else {
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                     dataGAS = await res.json();
+                    
+                    if(dataGAS.status !== 'ready') throw new Error("API Error");
+
                     localStorage.setItem('aimoy_master_data', JSON.stringify(dataGAS));
                     localStorage.setItem('aimoy_master_time', Date.now().toString());
                 }
 
-               dbOutlet = dataGAS.dataOutlet; 
-                dbShift = dataGAS.dataShift;
-                gJadwalHariIni = dataGAS.jadwalHariIni || []; // 🚀 Menyimpan status OFF dari server
-                
-                // 🚀 PERBAIKAN: Memasukkan data rekan kerja ke memori aplikasi
-                gKaryawan = dataGAS.dataKaryawan; 
+                dbOutlet = dataGAS.dataOutlet || []; 
+                dbShift = dataGAS.dataShift || [];
+                gJadwalHariIni = dataGAS.jadwalHariIni || []; 
+                gKaryawan = dataGAS.dataKaryawan || []; 
 
                 let outHtml = '<option value="" disabled selected>Pilih Outlet...</option>';
                 dbOutlet.forEach(o => { outHtml += `<option value="${o.nama}">${o.nama}</option>`; });
-                document.getElementById('sel-outlet').innerHTML = outHtml; document.getElementById('reg-outlet').innerHTML = outHtml;
+                document.getElementById('sel-outlet').innerHTML = outHtml; 
+                document.getElementById('reg-outlet').innerHTML = outHtml;
 
-                if (dataGAS.dataKaryawan.length > 0) {
-                    const labeled = dataGAS.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
-                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); // Akurasi tinggi
+                if (gKaryawan.length > 0) {
+                    const labeled = gKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
+                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); 
                 }
                 
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
                     .then(s => { video.srcObject = s; Swal.close(); })
                     .catch(e => Swal.fire('Akses Ditolak', 'Kamera harus diizinkan untuk verifikasi biometrik.', 'error'));
-            } catch (e) { Swal.fire('Koneksi Gagal', 'Gagal memuat pangkalan data server.', 'error'); }
+            } catch (e) { 
+                console.error("Error Koneksi Database:", e);
+                Swal.fire('Koneksi Gagal', 'Gagal memuat pangkalan data server. Pastikan API URL sudah benar dan di-deploy versi terbaru.', 'error'); 
+            }
         }
         
         function loadShiftDropdown() {
@@ -405,7 +412,6 @@
                                 const outSel = document.getElementById('sel-outlet'); 
                                 if(info.o) { 
                                     outSel.value = info.o; 
-                                    // PERBAIKAN: Mengunci Dropdown Outlet agar tidak bisa diganti jika wajah dikenali
                                     outSel.disabled = true;
                                     document.getElementById('outlet-chevron').classList.add('hidden');
                                     loadShiftDropdown(); 
@@ -485,7 +491,7 @@
                 
                 livenessOverlay.classList.add('hidden'); livenessOverlay.classList.remove('flex');
                 
-                outSel.disabled = false; // Buka kunci dropdown jika wajah hilang
+                outSel.disabled = false; 
                 document.getElementById('outlet-chevron').classList.remove('hidden');
 
                 currentFace = null; btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true; 
@@ -514,10 +520,10 @@
                 return;
             }
             
-            // 🚀 LOGIKA PINTAR: Cek apakah staf ini sedang terjadwal OFF/Izin di matriks HRD hari ini
-            const mySchedule = gJadwalHariIni.filter(r => r.nama === faceInfo.n);
-            const isOff = mySchedule.some(r => r.tipe === 'Libur' || r.status.includes('OFF'));
-            const isIzin = mySchedule.some(r => r.tipe === 'Izin' || r.status.includes('IZIN'));
+            // 🚀 LOGIKA PINTAR: Cek OFF dengan proteksi undefined
+            const mySchedule = (gJadwalHariIni || []).filter(r => r.nama === faceInfo.n);
+            const isOff = mySchedule.some(r => r.tipe === 'Libur' || (r.status && r.status.includes('OFF')));
+            const isIzin = mySchedule.some(r => r.tipe === 'Izin' || (r.status && r.status.includes('IZIN')));
 
             if (isOff || isIzin) {
                 let statusTeks = isOff ? "DAY OFF (Libur)" : "IZIN / SAKIT";
@@ -537,17 +543,17 @@
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        ajukanTukarShift(); // 🚀 Langsung memicu form penggantian staf
+                        ajukanTukarShift(); 
                     } else if (result.isDenied) {
-                        kirimAbsen('Masuk'); // Memaksa absen masuk biasa jika memang disuruh lembur
+                        kirimAbsen('Masuk'); 
                     } else {
                         isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false);
                     }
                 });
-                return; // Hentikan eksekusi pop-up normal
+                return; 
             }
             
-            // JIKA TIDAK OFF (Hari Kerja Normal)
+            // JIKA TIDAK OFF
             Swal.fire({
                 title: `<span class="text-[#F8F1E5] text-xl font-black">Hai, ${faceInfo.n}! 👋</span>`,
                 html: `<div class="text-[#e8d5c4] text-xs">Anda terdeteksi berada di <b class="text-white">${faceInfo.o}</b>.<br><br>Target Shift Hari Ini:<br><div class="bg-black/60 rounded-xl py-3 mt-3 font-black text-xl text-[#D4AF37] border border-[#D4AF37]/30 shadow-inner">${shift.kode} <span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
@@ -566,22 +572,20 @@
             });
         }
         
-       function ambilFotoKamera(tipe_absen = "FOTO") {
+        function ambilFotoKamera(tipe_absen = "FOTO") {
             const tempCanvas = document.createElement('canvas'); 
-            const MAX_WIDTH = 360; // Diperlebar sedikit agar teks muat
+            const MAX_WIDTH = 360; 
             const scale = MAX_WIDTH / video.videoWidth; 
             tempCanvas.width = MAX_WIDTH; 
             tempCanvas.height = video.videoHeight * scale;
             const ctx = tempCanvas.getContext('2d'); 
             
-            // 1. Cetak Foto (Efek Cermin)
             ctx.save();
             ctx.translate(tempCanvas.width, 0); 
             ctx.scale(-1, 1); 
             ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-            ctx.restore(); // Kembalikan ke normal agar teks watermark tidak terbalik
+            ctx.restore();
 
-            // 2. Ambil Data Real-time
             const nama = currentFace ? currentFace.n : "Tidak Dikenal";
             const outlet = document.getElementById('sel-outlet').value || "Lokasi Tidak Diketahui";
             const shift = document.getElementById('sel-shift').value || "-";
@@ -589,24 +593,22 @@
             const tglStr = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
             const jamStr = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
 
-            // 3. Buat Latar Belakang Transparan untuk Teks di bawah foto
             ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
             ctx.fillRect(0, tempCanvas.height - 80, tempCanvas.width, 80);
 
-            // 4. Cetak Teks Watermark
             ctx.textAlign = "left";
             ctx.font = "bold 12px sans-serif";
             
-            ctx.fillStyle = "#F8F1E5"; // Warna Putih Krem
+            ctx.fillStyle = "#F8F1E5";
             ctx.fillText(`[ ${tipe_absen.toUpperCase()} ] • ${tglStr} ${jamStr}`, 12, tempCanvas.height - 58);
             
-            ctx.fillStyle = "#D4AF37"; // Warna Emas
+            ctx.fillStyle = "#D4AF37"; 
             ctx.fillText(`👤 ${nama}`, 12, tempCanvas.height - 38);
             
-            ctx.fillStyle = "#10b981"; // Warna Hijau
+            ctx.fillStyle = "#10b981"; 
             ctx.fillText(`🏢 ${outlet}  |  💼 Shift: ${shift}`, 12, tempCanvas.height - 18);
 
-            return tempCanvas.toDataURL('image/jpeg', 0.5); // Kualitas dinaikkan sedikit agar teks tajam
+            return tempCanvas.toDataURL('image/jpeg', 0.5); 
         }
 
         async function kirimAbsen(tipe) {
@@ -634,13 +636,12 @@
                 const result = await res.json();
                 
                 if (result.status === 'success') {
-                    // 1. Teks Mentah (Untuk disalin / di-copy)
-                    // (Menggunakan \n untuk baris baru agar bisa disalin dengan rapi)
                     let rawSummary = result.summaryWA ? result.summaryWA.replace(/%0A/g, '\n') : '';
                     const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shf.value} (${shfM}-${shfK})\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipe.toUpperCase()}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* ${result.linkFoto}\n\n======================\n${rawSummary}`;
                     
-                    // 2. Teks URL Encode (Untuk Link WA)
                     const textWA = encodeURIComponent(rawText);
+                    const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
+
                     let statusColor = result.statusWaktu.includes('TERLAMBAT') || result.statusWaktu.includes('GAGAL') || result.statusWaktu.includes('PULANG AWAL') ? 'text-rose-400' : 'text-emerald-400';
 
                     Swal.fire({
@@ -654,12 +655,9 @@
                         <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
                             <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA
                         </button>
-                        <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan <b>otomatis disalin</b>. Silakan buka aplikasi WA manual dan Tempel (Paste).</p>
+                        <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan otomatis disalin.</p>
                         </div>`,
-                        showConfirmButton: false, 
-                        allowOutsideClick: false, // Wajib lapor WA sebelum bisa tutup
-                        background: 'rgba(26, 1, 1, 0.95)', 
-                        customClass: { popup: 'swal2-popup' }
+                        showConfirmButton: false, allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
                     }).then(() => { 
                         isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); 
                     });
@@ -671,31 +669,20 @@
             }
         }
 
-        // ==========================================
-        // 🚀 FUNGSI BANTUAN UNTUK AUTO-COPY WA
-        // ==========================================
         function salinDanBukaWA(link, teks) {
-            // Gunakan metode textarea untuk fallback jika navigator.clipboard tidak didukung di in-app browser
             const textArea = document.createElement("textarea");
             textArea.value = teks;
-            textArea.style.position = "fixed";  // Hindari scrolling
+            textArea.style.position = "fixed";  
             textArea.style.left = "-999999px";
             textArea.style.top = "-999999px";
             document.body.appendChild(textArea);
             textArea.focus();
             textArea.select();
 
-            try {
-                document.execCommand('copy');
-            } catch (err) {
-                console.error('Gagal menyalin teks', err);
-            }
+            try { document.execCommand('copy'); } catch (err) { console.error('Gagal menyalin teks', err); }
             document.body.removeChild(textArea);
 
-            // Buka aplikasi WhatsApp
             window.open(link, '_blank');
-            
-            // Tutup pop-up setelah tombol ditekan
             Swal.close();
         }
 
@@ -720,10 +707,9 @@
                     const result = await res.json();
                     
                     if (result.status === 'success') {
-                        // 🚀 FITUR WA UNTUK IZIN
                         const rawText = `*FORMULIR PENGAJUAN IZIN*\n\n👤 *Nama:* ${currentFace.n}\n🏢 *Lokasi:* ${out}\n📝 *Keterangan:* ${alasan}\n📸 *Bukti Foto:* ${result.linkFoto || '-'}\n\nMohon konfirmasi dan kebijaksanaannya.`;
                         const textWA = encodeURIComponent(rawText);
-                        const waLink = `https://api.whatsapp.com/send?text=${textWA}`; // Kirim ke grup
+                        const waLink = `https://api.whatsapp.com/send?text=${textWA}`; 
 
                         Swal.fire({ 
                             icon: 'success', 
@@ -732,50 +718,38 @@
                             <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-amber-400 hover:to-orange-500 transition-all shadow-amber-900/50 mt-2">
                                 <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA
                             </button>
-                            <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan <b>otomatis disalin</b>. Silakan buka aplikasi WA manual dan Tempel (Paste).</p>
                             </div>`, 
-                            showConfirmButton: false, 
-                            allowOutsideClick: false, // Memaksa staf untuk menekan tombol WA
-                            background: 'rgba(26, 1, 1, 0.95)', 
-                            customClass: { popup: 'swal2-popup' } 
+                            showConfirmButton: false, allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' } 
                         }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); });
                     }
                 } catch (e) { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gagal</span>', html: '<span class="text-[#e8d5c4] text-xs">Cek koneksi internet Anda.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; }); }
             } else { isPrompting = false; }
         }
-        
 
-        // Deklarasi global sementara untuk menampung jadwal OFF
         window.tempOffData = [];
 
         async function ajukanTukarShift() {
             isPrompting = true;
             const out = document.getElementById('sel-outlet').value;
             
-            // 1. Tampilkan Loading saat menarik data jadwal dari server
             Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Memuat Jadwal...</span>', html: '<span class="text-[#e8d5c4] text-xs">Mencari jadwal OFF rekan di pangkalan data.</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
 
             try {
-                // 2. Tarik data absensi khusus outlet ini secara Real-Time
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: out } }) });
                 const result = await res.json();
                 const logsOutlet = result.data || [];
 
-                // 3. Filter HANYA jadwal "Libur / OFF" di masa depan
                 const todayStr = new Date().toISOString().split('T')[0];
                 window.tempOffData = logsOutlet.filter(r => (r.tipe === 'Libur' || (r.status && r.status.includes('OFF'))) && r.tanggal > todayStr);
 
-                // 4. Siapkan dropdown rekan kerja
-                const rekan = gKaryawan.filter(k => k.outlet === out && k.nama !== currentFace.n);
+                const rekan = (gKaryawan || []).filter(k => k.outlet === out && k.nama !== currentFace.n);
                 let optHtml = '<option value="" disabled selected>Pilih Staf yang Digantikan...</option>';
                 rekan.forEach(r => { optHtml += `<option value="${r.nama}">${r.nama}</option>`; });
 
-                // 🚀 PERBAIKAN PENTING: Siapkan Dropdown Shift agar Matriks tidak Abu-abu
-                const shiftTersedia = dbShift.filter(s => s.outlet === out);
+                const shiftTersedia = (dbShift || []).filter(s => s.outlet === out);
                 let optShiftHtml = '<option value="" disabled selected>Pilih Shift yang Anda kerjakan...</option>';
                 shiftTersedia.forEach(s => { optShiftHtml += `<option value="${s.kode}">${s.kode} (${s.jamMasuk}-${s.jamKeluar})</option>`; });
 
-                // 5. Tampilkan Modal Formulir
                 const { value: formValues } = await Swal.fire({
                     title: '<span class="text-[#F8F1E5] text-xl font-black">Lapor Tukar Shift</span>',
                     html: `
@@ -816,23 +790,20 @@
                     
                     try {
                         const ketGabungan = `Menggantikan ${formValues.rekan} (Ganti OFF: ${formValues.tglOff}) - ${formValues.alasan}`;
-                        
-                        // 🚀 PERBAIKAN: Mengirimkan formValues.shiftTarget sebagai 'namaShift' ke server!
                         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: formValues.shiftTarget, tipe: 'Tukar Shift', keterangan: ketGabungan, foto: fotoData } }) });
                         const result = await res.json();
                         
                         if (result.status === 'success') {
                             const rawText = `*LAPORAN TUKAR SHIFT*\n\n👤 *Staf Masuk Hari Ini:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Shift Hari Ini:* ${formValues.shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n🗓️ *TUKAR JADWAL OFF MASA DEPAN:*\n- ${currentFace.n} akan LIBUR (OFF) pada *${formValues.tglOff}*\n- ${formValues.rekan} WAJIB MASUK menggantikan pada *${formValues.tglOff}*\n\n📸 *Bukti Foto:* ${result.linkFoto}\n\nMohon otorisasi dari Owner di dasbor admin agar matriks absen disesuaikan otomatis.`;
                             const textWA = encodeURIComponent(rawText);
-                            const waLink = `https://api.whatsapp.com/send?phone=${ownerWA}&text=${textWA}`;
+                            const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
 
                             Swal.fire({
                                 icon: 'success', title: '<span class="text-[#F8F1E5] text-xl font-black">Terekam di Sistem</span>', 
                                 html: `<div class="text-[#e8d5c4] text-xs">Pengajuan Tukar Shift berhasil direkam.<br><br>
                                 <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs mt-3 hover:from-purple-400 hover:to-indigo-500 transition-all shadow-purple-900/50">
-                                    <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> MINTA ACC OWNER
+                                    <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> KIRIM KE GRUP WA
                                 </button>
-                                <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan <b>otomatis disalin</b>.</p>
                                 </div>`, 
                                 showConfirmButton: false, allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
                             }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); });
@@ -845,9 +816,6 @@
             } catch (err) { Swal.fire('Error', 'Gagal memuat jadwal dari server.', 'error'); isPrompting = false; }
         }
 
-        // ==========================================
-        // 🚀 FUNGSI BANTUAN UNTUK DROPDOWN TUKAR OFF
-        // ==========================================
         function updateJadwalOffRekan(namaRekan) {
             const selOff = document.getElementById('swal-tgl-off');
             if(!window.tempOffData) return;
@@ -873,7 +841,7 @@
                 selOff.classList.remove('border-rose-500', 'text-rose-400');
             }
         }
-        
+
         async function daftarkan() {
             isPrompting = true;
             const nama = document.getElementById('reg-nama').value.toUpperCase(), role = document.getElementById('reg-role').value, outlet = document.getElementById('reg-outlet').value;
@@ -937,11 +905,6 @@
             cekDanTampilkanPwaPrompt();
         });
 
-        window.addEventListener('load', () => {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            if(isIOS) setTimeout(cekDanTampilkanPwaPrompt, 2000);
-        });
-
         function cekDanTampilkanPwaPrompt() {
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
             if (isStandalone) return; 
@@ -970,8 +933,6 @@
             }
         }
 
-       
-
         function tampilkanPwaUI(overlay, sheet) {
             setTimeout(() => {
                 overlay.classList.remove('hidden');
@@ -990,5 +951,6 @@
             }, 400);
         }
     </script>
+
 </body>
 </html>
