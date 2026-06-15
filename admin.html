@@ -1507,12 +1507,12 @@
                 title: 'Setujui Otorisasi?',
                 html: `<div class="text-xs text-slate-600 text-left bg-slate-50 p-5 rounded-2xl border border-slate-200 mt-2 shadow-inner leading-relaxed">
                         <b>🔥 EKSEKUSI HARI INI (${tanggal}):</b><br>
-                        - <b class="text-emerald-600">${namaA}</b> diakui MASUK (Shift ${shiftTarget})<br>
-                        - <b class="text-rose-500">${namaB}</b> otomatis dialihkan ke status **Izin / Sakit**<br><br>
+                        - <b class="text-emerald-600">${namaA}</b> diakui <b>MASUK</b> (Shift ${shiftTarget})<br>
+                        - <b class="text-rose-500">${namaB}</b> otomatis dialihkan ke status <b>Libur (OFF)</b><br><br>
                         
                         <b>📅 EKSEKUSI MASA DEPAN (${tglOff}):</b><br>
-                        - <b class="text-rose-500">${namaA}</b> otomatis diset menjadi **OFF (Libur)**<br>
-                        - <b class="text-emerald-600">${namaB}</b> ditagih masuk menggantikan (**Shift ${shiftTarget}**)
+                        - <b class="text-rose-500">${namaA}</b> otomatis diset menjadi <b>Libur (OFF)</b><br>
+                        - <b class="text-emerald-600">${namaB}</b> ditagih masuk menggantikan (<b>Shift ${shiftTarget}</b>)
                        </div>`,
                 icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Otorisasikan!', cancelButtonText: 'Batal',
                 customClass: { popup: 'swal2-popup', confirmButton: 'bg-purple-600 text-white rounded-xl font-black px-6 py-3.5 text-xs shadow-lg hover:bg-purple-700', cancelButton: 'bg-white border border-slate-200 text-slate-500 font-bold px-6 py-3.5 rounded-xl text-xs hover:bg-slate-50 ml-2' }
@@ -1523,7 +1523,7 @@
                     // 🚀 FULL AUTOMATION: Menyuntikkan 4 baris data rekap sekaligus (Masa Lalu & Masa Depan)
                     const dataToImport = [
                         // LOG DATA UNTUK HARI INI
-                        { tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Izin', keterangan: `Digantikan oleh ${namaA} (ACC Owner)` },
+                        { tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Libur', keterangan: `Jadwal OFF Dialihkan ke ${namaA} (ACC Owner)` },
                         { tanggal: tanggal, jam: '00:00', nama: namaA, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Menggantikan ${namaB} (ACC Owner)` },
                         
                         // LOG DATA UNTUK MASA DEPAN (TANGGAL TUKAR OFF)
@@ -1538,33 +1538,6 @@
                             Swal.fire('Otorisasi Berhasil!', 'Matriks kehadiran hari ini dan jadwal ganti OFF masa depan berhasil disesuaikan otomatis.', 'success');
                             muatDataOtorisasi(); 
                             if (!document.getElementById('tabel-mode-rinci').classList.contains('hidden')) generateAnalytics(); 
-                        } else { Swal.fire('Gagal', apiRes.message, 'error'); }
-                    } catch(e) { Swal.fire('Error', 'Gagal memproses ke server.', 'error'); }
-                }
-            });
-        }
-
-        function setujuiOtorisasi(tanggal, namaA, namaB, outlet, shiftTarget) {
-            Swal.fire({
-                title: 'Setujui Tukar Shift?',
-                html: `<div class="text-xs text-slate-600 text-left bg-slate-50 p-5 rounded-2xl border border-slate-200 mt-2 shadow-inner">Dengan menyetujui, sistem akan otomatis merubah matriks absen hari ini:<br><br><b class="text-emerald-600"><i class="fas fa-check-circle w-4"></i> ${namaA}</b> diakui masuk (Shift ${shiftTarget}).<br><b class="text-rose-500"><i class="fas fa-file-medical w-4"></i> ${namaB}</b> otomatis dialihkan ke status Izin/Sakit.</div>`,
-                icon: 'question', showCancelButton: true, confirmButtonText: 'Setujui Sekarang', cancelButtonText: 'Batal',
-                customClass: { popup: 'swal2-popup', confirmButton: 'bg-purple-600 text-white rounded-xl font-black px-6 py-3.5 text-xs shadow-lg hover:bg-purple-700', cancelButton: 'bg-white border border-slate-200 text-slate-500 font-bold px-6 py-3.5 rounded-xl text-xs hover:bg-slate-50 ml-2' }
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({ title: 'Memproses Otorisasi...', didOpen: () => Swal.showLoading() });
-                    // 🚀 PERBAIKAN: Menyuntikkan 2 baris data sekaligus (Untuk B dan A)
-                    const dataToImport = [
-                        { tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Izin', keterangan: `Digantikan oleh ${namaA} (ACC Owner)` },
-                        { tanggal: tanggal, jam: '00:00', nama: namaA, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Menggantikan ${namaB} (ACC Owner)` }
-                    ];
-                    try {
-                        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
-                        const apiRes = await res.json();
-                        if (apiRes.status === 'success') {
-                            Swal.fire('Disetujui!', 'Matriks kehadiran berhasil diotomatisasi.', 'success');
-                            muatDataOtorisasi(); // Segarkan tampilan kartu otorisasi
-                            if (!document.getElementById('tabel-mode-rinci').classList.contains('hidden')) generateAnalytics(); // Segarkan rekap tabel jika terbuka
                         } else { Swal.fire('Gagal', apiRes.message, 'error'); }
                     } catch(e) { Swal.fire('Error', 'Gagal memproses ke server.', 'error'); }
                 }
