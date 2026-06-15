@@ -727,17 +727,23 @@
             const { value: formValues } = await Swal.fire({
                 title: '<span class="text-[#F8F1E5] text-xl font-black">Tukar Jadwal OFF</span>',
                 html: `
-                    <div class="text-left mb-3 text-slate-400 text-xs">Pilih rekan kerja yang jadwalnya Anda gantikan hari ini:</div>
+                    <div class="text-left mb-3 text-slate-400 text-xs">Siapa rekan yang jadwalnya Anda gantikan hari ini?</div>
                     <select id="swal-rekan" class="w-full p-3.5 bg-black/50 border border-white/20 rounded-xl text-[#F8F1E5] text-xs font-bold mb-3 outline-none focus:border-purple-500 cursor-pointer">${optHtml}</select>
+                    
+                    <div class="text-left mb-1 mt-2 text-emerald-400 text-xs font-bold">Pilih Tanggal Pengganti Libur Anda:</div>
+                    <input type="date" id="swal-tgl-ganti" class="w-full p-3.5 bg-black/50 border border-white/20 rounded-xl text-[#F8F1E5] text-xs outline-none focus:border-purple-500 mb-3" title="Tanggal Anda akan libur dan rekan Anda yang masuk">
+                    
                     <input type="text" id="swal-alasan" class="w-full p-3.5 bg-black/50 border border-white/20 rounded-xl text-[#F8F1E5] text-xs outline-none focus:border-purple-500" placeholder="Alasan Tukar (Cth: Dia Sedang Sakit)">
                 `,
                 focusConfirm: false, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)',
                 confirmButtonText: '<i class="fas fa-paper-plane mr-1"></i> Ajukan', cancelButtonText: 'Batal',
                 customClass: { popup: 'swal2-popup', confirmButton: 'bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black px-6 py-3 text-xs transition-colors', cancelButton: 'bg-transparent text-white border border-white/20 rounded-xl px-6 py-3 text-xs hover:bg-white/10' },
                 preConfirm: () => {
-                    const r = document.getElementById('swal-rekan').value; const a = document.getElementById('swal-alasan').value;
-                    if(!r || !a) { Swal.showValidationMessage('Rekan dan Alasan wajib diisi!'); return false; }
-                    return { rekan: r, alasan: a };
+                    const r = document.getElementById('swal-rekan').value; 
+                    const a = document.getElementById('swal-alasan').value;
+                    const tg = document.getElementById('swal-tgl-ganti').value;
+                    if(!r || !a || !tg) { Swal.showValidationMessage('Rekan, Tanggal Ganti, dan Alasan wajib diisi!'); return false; }
+                    return { rekan: r, alasan: a, tglGanti: tg };
                 }
             });
 
@@ -749,35 +755,33 @@
                 Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Memproses Tukar Shift...</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', didOpen: () => Swal.showLoading() });
                 
                 try {
-                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Tukar Shift', keterangan: `Menggantikan ${formValues.rekan} (${formValues.alasan})`, foto: fotoData } }) });
+                    // Menyisipkan Tanggal Ganti ke dalam String Keterangan agar bisa dibaca oleh Admin nanti
+                    const ketGabungan = `Menggantikan ${formValues.rekan} (Ganti Tgl: ${formValues.tglGanti}) - ${formValues.alasan}`;
+                    
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Tukar Shift', keterangan: ketGabungan, foto: fotoData } }) });
                     const result = await res.json();
                     
                     if (result.status === 'success') {
-                        // 🚀 FITUR WA UNTUK TUKAR SHIFT
-                        const ownerWA = "6285250458866"; // Ganti dengan nomor WA Pemilik/HRD
+                        const ownerWA = "6281234567890"; // Ganti dengan nomor WA Pemilik/HRD
                         
-                        const rawText = `*PERMINTAAN TUKAR SHIFT (APPROVAL)*\n\n👤 *Masuk Kerja:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Target Shift:* ${shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n📸 *Bukti Foto di Lokasi:* ${result.linkFoto}\n\nMohon konfirmasinya Bos/Admin untuk merubah matriks absen.`;
+                        const rawText = `*PERMINTAAN TUKAR SHIFT (APPROVAL)*\n\n👤 *Masuk Kerja Hari Ini:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Target Shift:* ${shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n🗓️ *TANGGAL GANTI LIBUR:*\n${currentFace.n} akan libur pada *${formValues.tglGanti}* dan digantikan oleh ${formValues.rekan}.\n\n📸 *Bukti Foto di Lokasi:* ${result.linkFoto}\n\nMohon konfirmasinya Bos/Admin untuk otomatisasi matriks.`;
                         const textWA = encodeURIComponent(rawText);
                         const waLink = `https://api.whatsapp.com/send?phone=${ownerWA}&text=${textWA}`;
 
                         Swal.fire({
                             icon: 'success', title: '<span class="text-[#F8F1E5] text-xl font-black">Terekam di Sistem</span>', 
-                            html: `<div class="text-[#e8d5c4] text-xs">Bukti kehadiran Tukar Shift Anda sudah disimpan.<br><br>
+                            html: `<div class="text-[#e8d5c4] text-xs">Pengajuan Tukar Shift dan Tanggal Ganti Libur berhasil direkam.<br><br>
                             <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs mt-3 hover:from-purple-400 hover:to-indigo-500 transition-all shadow-purple-900/50">
                                 <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> MINTA ACC OWNER
                             </button>
                             <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan <b>otomatis disalin</b>. Silakan buka aplikasi WA manual dan Tempel (Paste).</p>
                             </div>`, 
-                            showConfirmButton: false, 
-                            allowOutsideClick: false, // Memaksa staf untuk menekan tombol WA
-                            background: 'rgba(26, 1, 1, 0.95)', 
-                            customClass: { popup: 'swal2-popup' }
+                            showConfirmButton: false, allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
                         }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); });
                     }
                 } catch(e) { Swal.fire('Error', 'Gagal terhubung ke server', 'error'); isPrompting = false; }
             } else { isPrompting = false; }
         }
-
         
         async function daftarkan() {
             isPrompting = true;
