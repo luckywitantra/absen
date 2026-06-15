@@ -326,31 +326,25 @@
             if (shifts.length === 0) return null;
             
             const now = new Date(); 
-            
-            // 🚀 ANTISIPASI ZONA WAKTU: Paksa browser membaca jam & menit dalam zona WITA (Asia/Makassar)
-            // Langkah ini membuat sistem kebal meskipun jam di tablet toko tersetel ke WIB atau UTC.
             let currentMins = now.getHours() * 60 + now.getMinutes(); 
+            
+            // Konversi paksa ke zona WITA agar kebal terhadap salah setting jam di HP
             try {
                 const opsiWITA = { timeZone: 'Asia/Makassar', hour: 'numeric', minute: 'numeric', hour12: false };
                 const witaString = new Intl.DateTimeFormat('id-ID', opsiWITA).format(now);
                 const witaParts = witaString.split(/[:.]/);
                 currentMins = parseInt(witaParts[0]) * 60 + parseInt(witaParts[1]);
-                console.log(`[Si-Amoy WFM] Jam Aktual Toko (WITA): ${witaParts[0]}:${witaParts[1]} (${currentMins} menit)`);
-            } catch(err) {
-                console.error("Gagal konversi zona waktu internasional, menggunakan waktu lokal perangkat.", err);
-            }
+            } catch(err) {}
 
             let bestShift = null;
             let minDiff = Infinity;
 
-            // Fungsi pembantu mengubah format jam Google Sheets ke Menit
             function formatJamKeMenit(timeStr) {
                 if (!timeStr) return 0;
                 let str = timeStr.toUpperCase().trim();
-                let isPM = str.includes("PM");
-                let isAM = str.includes("AM");
-                
+                let isPM = str.includes("PM"), isAM = str.includes("AM");
                 str = str.replace("AM", "").replace("PM", "").trim();
+                
                 let parts = str.split(/[:.]/);
                 let hours = parseInt(parts[0]) || 0;
                 let minutes = parseInt(parts[1]) || 0;
@@ -366,26 +360,29 @@
                     const mMasuk = formatJamKeMenit(s.jamMasuk);
                     let mKeluar = formatJamKeMenit(s.jamKeluar);
                     
-                    // Pendukung jika shift melewati tengah malam
-                    if (mKeluar < mMasuk) {
-                        mKeluar += 24 * 60;
-                    }
+                    if (mKeluar < mMasuk) mKeluar += 24 * 60; // Logika shift malam
                     
-                    // Hitung selisih terdekat
-                    const diffMasuk = Math.abs(currentMins - mMasuk);
-                    const diffKeluar = Math.abs(currentMins - mKeluar);
-                    const closest = Math.min(diffMasuk, diffKeluar);
+                    let diffMasuk = Math.abs(currentMins - mMasuk);
+                    let diffKeluar = Math.abs(currentMins - mKeluar);
+                    let closest = Math.min(diffMasuk, diffKeluar);
+                    
+                    // 🚀 LOGIKA BARU: Jika jam saat ini BERADA DI DALAM rentang shift
+                    // Beri nilai "minus" super besar agar shift ini menang mutlak
+                    let adjustedCurrent = currentMins;
+                    if (mKeluar > 24*60 && currentMins < mMasuk) adjustedCurrent += 24*60; 
+                    
+                    // Cek dari 1 jam sebelum masuk hingga 1 jam setelah pulang
+                    if (adjustedCurrent >= (mMasuk - 60) && adjustedCurrent <= (mKeluar + 60)) {
+                        closest -= 10000; 
+                    }
                     
                     if (closest < minDiff) { 
                         minDiff = closest; 
                         bestShift = s; 
                     }
-                } catch(e) { 
-                    console.warn("Gagal memproses baris shift:", e);
-                }
+                } catch(e) {}
             });
             
-            // Kembalikan shift terbaik hasil analisa, jika gagal total berikan shift pertama
             return bestShift || shifts[0];
         }
     
