@@ -319,16 +319,34 @@
             }
         }
 
-        function cariShiftOtomatis(outletName) {
+        function cariShiftOtomatis(outletName, namaKaryawan) {
             const cleanOutlet = outletName.trim();
             const shifts = dbShift.filter(s => (s.outlet || "").trim() === cleanOutlet);
             
             if (shifts.length === 0) return null;
+
+            // 🚀 1. LOGIKA SHIFT MENGGANTUNG (PRIORITAS UTAMA)
+            // Mengecek apakah staf ini tadi sudah absen "Masuk" tapi belum absen "Pulang"
+            if (namaKaryawan && window.gJadwalHariIni) {
+                const myLogs = window.gJadwalHariIni.filter(r => r.nama === namaKaryawan);
+                const masukLogs = myLogs.filter(r => r.tipe === 'Masuk' || r.tipe === 'Tukar Shift');
+                const pulangLogs = myLogs.filter(r => r.tipe === 'Pulang');
+                
+                // Jika jumlah log Masuk lebih banyak dari Pulang, berarti dia MASIH BEKERJA!
+                if (masukLogs.length > pulangLogs.length) {
+                    const namaShiftAktif = masukLogs[masukLogs.length - 1].shift;
+                    const shiftGantung = shifts.find(s => s.kode === namaShiftAktif);
+                    
+                    if (shiftGantung) {
+                        return shiftGantung; // Kunci paksa ke shift yang sedang ia kerjakan
+                    }
+                }
+            }
             
+            // 🚀 2. JIKA TIDAK ADA SHIFT GANTUNG, TEBAK BERDASARKAN WAKTU
             const now = new Date(); 
             let currentMins = now.getHours() * 60 + now.getMinutes(); 
             
-            // Konversi paksa ke zona WITA agar kebal terhadap salah setting jam di HP
             try {
                 const opsiWITA = { timeZone: 'Asia/Makassar', hour: 'numeric', minute: 'numeric', hour12: false };
                 const witaString = new Intl.DateTimeFormat('id-ID', opsiWITA).format(now);
@@ -344,14 +362,11 @@
                 let str = timeStr.toUpperCase().trim();
                 let isPM = str.includes("PM"), isAM = str.includes("AM");
                 str = str.replace("AM", "").replace("PM", "").trim();
-                
                 let parts = str.split(/[:.]/);
                 let hours = parseInt(parts[0]) || 0;
                 let minutes = parseInt(parts[1]) || 0;
-                
                 if (isPM && hours < 12) hours += 12;
                 if (isAM && hours === 12) hours = 0;
-                
                 return hours * 60 + minutes;
             }
 
@@ -360,18 +375,15 @@
                     const mMasuk = formatJamKeMenit(s.jamMasuk);
                     let mKeluar = formatJamKeMenit(s.jamKeluar);
                     
-                    if (mKeluar < mMasuk) mKeluar += 24 * 60; // Logika shift malam
+                    if (mKeluar < mMasuk) mKeluar += 24 * 60; 
                     
                     let diffMasuk = Math.abs(currentMins - mMasuk);
                     let diffKeluar = Math.abs(currentMins - mKeluar);
                     let closest = Math.min(diffMasuk, diffKeluar);
                     
-                    // 🚀 LOGIKA BARU: Jika jam saat ini BERADA DI DALAM rentang shift
-                    // Beri nilai "minus" super besar agar shift ini menang mutlak
                     let adjustedCurrent = currentMins;
                     if (mKeluar > 24*60 && currentMins < mMasuk) adjustedCurrent += 24*60; 
                     
-                    // Cek dari 1 jam sebelum masuk hingga 1 jam setelah pulang
                     if (adjustedCurrent >= (mMasuk - 60) && adjustedCurrent <= (mKeluar + 60)) {
                         closest -= 10000; 
                     }
@@ -468,7 +480,7 @@
                                     loadShiftDropdown(); 
                                 } 
                                 
-                                const autoShift = cariShiftOtomatis(info.o);
+                                const autoShift = cariShiftOtomatis(info.o, info.n); 
                                 if(autoShift) {
                                     document.getElementById('sel-shift').value = autoShift.kode;
                                     updateUI(true, "READY");
