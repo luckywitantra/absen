@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aimoy-kiosk-v28';
+const CACHE_NAME = 'aimoy-kiosk-v29'; // Ingat untuk menaikkan ini jika ada update HTML
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -9,7 +9,6 @@ const ASSETS_TO_CACHE = [
   'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js'
 ];
 
-// Saat aplikasi diinstall pertama kali, simpan semua aset ke memori HP
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -19,7 +18,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Hapus cache lama jika ada versi baru
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -34,21 +32,35 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Saat aplikasi meminta file (Offline First Strategy)
 self.addEventListener('fetch', (event) => {
-  // Biarkan request ke server Google Apps Script tetap melalui internet
+  // Biarkan request API Google Apps Script lolos ke internet langsung
   if (event.request.url.includes('script.google.com')) return;
 
+  // 🚀 STRATEGI BARU: Network First untuk file HTML
+  // Sistem akan selalu mencoba mengambil kodingan terbaru dari internet jika HP online
+  if (event.request.mode === 'navigate' || event.request.url.includes('.html')) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        return caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+      }).catch(() => {
+        // Jika HP sedang Offline/Tidak ada sinyal, baru gunakan cache memori HP
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // ⚡ STRATEGI LAMA: Cache First untuk aset berat (Tailwind, Face-API, Gambar) agar load instan
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      // Jika ada di memori HP, langsung berikan tanpa internet (Instant Load)
       if (cachedResponse) {
         return cachedResponse;
       }
-      // Jika tidak ada, ambil dari internet lalu simpan ke memori HP
       return fetch(event.request).then((networkResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
-          // Jangan cache request dari chrome-extension atau API luar
           if (event.request.url.startsWith('http')) {
             cache.put(event.request, networkResponse.clone());
           }
