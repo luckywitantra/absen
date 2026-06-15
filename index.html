@@ -204,6 +204,7 @@
         let isPrompting = false, isLivenessPassed = false;
         
         const REQUIRED_SMILE_SCORE = 0.65; 
+        let gJadwalHariIni = []; // Menyimpan jadwal matriks hari ini
 
         window.addEventListener('load', () => {
             if(navigator.geolocation) {
@@ -276,8 +277,9 @@
                     localStorage.setItem('aimoy_master_time', Date.now().toString());
                 }
 
-                dbOutlet = dataGAS.dataOutlet; 
+               dbOutlet = dataGAS.dataOutlet; 
                 dbShift = dataGAS.dataShift;
+                gJadwalHariIni = dataGAS.jadwalHariIni || []; // 🚀 Menyimpan status OFF dari server
                 
                 // 🚀 PERBAIKAN: Memasukkan data rekan kerja ke memori aplikasi
                 gKaryawan = dataGAS.dataKaryawan; 
@@ -496,7 +498,7 @@
                 Swal.fire({ 
                     icon: 'error', 
                     title: '<span class="text-[#F8F1E5]">Lokasi Tidak Sesuai!</span>', 
-                    html: `<span class="text-[#e8d5c4] text-xs">Sistem mendeteksi Anda terdaftar di outlet <b class="text-white">${faceInfo.o}</b>, namun posisi Anda saat ini berada di luar jangkauan outlet tersebut.<br><br><div class="bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl mt-3 mb-2 text-left leading-relaxed">Jika Anda sedang halangan/sakit, silakan gunakan tombol <b>AJUKAN IZIN</b> di bawah ini.<br><br>Jika Anda telah dipindahtugaskan ke cabang ini, mohon segera <b>Lapor ke Admin/HRD</b>.</div></span>`, 
+                    html: `<span class="text-[#e8d5c4] text-xs">Sistem mendeteksi Anda terdaftar di outlet <b class="text-white">${faceInfo.o}</b>, namun posisi Anda saat ini berada di luar jangkauan outlet tersebut.<br><br><div class="bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl mt-3 mb-2 text-left leading-relaxed">Jika Anda sedang halangan/sakit, silakan gunakan tombol <b>AJUKAN IZIN</b> di bawah ini.</div></span>`, 
                     showCancelButton: true,
                     confirmButtonText: '<i class="fas fa-file-medical mr-1"></i> Ajukan Izin', 
                     cancelButtonText: 'Tutup',
@@ -507,19 +509,49 @@
                         cancelButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-3 text-xs tracking-widest hover:bg-white/20 transition-colors'
                     }
                 }).then((result) => { 
-                    if (result.isConfirmed) {
-                        ajukanIzin(); // 🚀 Memicu popup izin otomatis
-                    } else {
-                        isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; 
-                    }
+                    if (result.isConfirmed) { ajukanIzin(); } else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }
                 }); 
                 return;
             }
             
+            // 🚀 LOGIKA PINTAR: Cek apakah staf ini sedang terjadwal OFF/Izin di matriks HRD hari ini
+            const mySchedule = gJadwalHariIni.filter(r => r.nama === faceInfo.n);
+            const isOff = mySchedule.some(r => r.tipe === 'Libur' || r.status.includes('OFF'));
+            const isIzin = mySchedule.some(r => r.tipe === 'Izin' || r.status.includes('IZIN'));
+
+            if (isOff || isIzin) {
+                let statusTeks = isOff ? "DAY OFF (Libur)" : "IZIN / SAKIT";
+                Swal.fire({
+                    title: `<span class="text-[#F8F1E5] text-xl font-black">Anda Sedang ${statusTeks} 🏖️</span>`,
+                    html: `<div class="text-[#e8d5c4] text-xs mt-2">Matriks HRD mencatat bahwa Anda tidak memiliki kewajiban masuk shift hari ini.<br><br><b class="text-amber-400">Apakah Anda hadir ke toko untuk menggantikan staf lain?</b></div>`,
+                    showDenyButton: true, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)',
+                    confirmButtonText: '<i class="fas fa-people-arrows mr-1"></i> Ya, Ganti Rekan',
+                    denyButtonText: '<i class="fas fa-right-to-bracket mr-1"></i> Masuk (Lembur)',
+                    cancelButtonText: 'Batal',
+                    customClass: { 
+                        popup: 'swal2-popup', 
+                        confirmButton: 'bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-colors', 
+                        denyButton: 'bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-colors', 
+                        cancelButton: 'bg-transparent text-slate-400 hover:text-white rounded-xl w-full text-xs py-2 border border-white/10 transition-colors', 
+                        actions: 'flex-col w-full px-4 mt-2' 
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        ajukanTukarShift(); // 🚀 Langsung memicu form penggantian staf
+                    } else if (result.isDenied) {
+                        kirimAbsen('Masuk'); // Memaksa absen masuk biasa jika memang disuruh lembur
+                    } else {
+                        isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false);
+                    }
+                });
+                return; // Hentikan eksekusi pop-up normal
+            }
+            
+            // JIKA TIDAK OFF (Hari Kerja Normal)
             Swal.fire({
                 title: `<span class="text-[#F8F1E5] text-xl font-black">Hai, ${faceInfo.n}! 👋</span>`,
                 html: `<div class="text-[#e8d5c4] text-xs">Anda terdeteksi berada di <b class="text-white">${faceInfo.o}</b>.<br><br>Target Shift Hari Ini:<br><div class="bg-black/60 rounded-xl py-3 mt-3 font-black text-xl text-[#D4AF37] border border-[#D4AF37]/30 shadow-inner">${shift.kode} <span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
-                showDenyButton: true, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)', confirmButtonText: '<i class="fas fa-right-to-bracket mr-1"></i> MASUK', denyButtonText: '<i class="fas fa-right-from-bracket mr-1"></i> PULANG', cancelButtonText: 'Manual / Izin', allowOutsideClick: false,
+                showDenyButton: true, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)', confirmButtonText: '<i class="fas fa-right-to-bracket mr-1"></i> MASUK', denyButtonText: '<i class="fas fa-right-from-bracket mr-1"></i> PULANG', cancelButtonText: 'Batal', allowOutsideClick: false,
                 customClass: { 
                     popup: 'swal2-popup', 
                     confirmButton: 'bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-colors', 
@@ -530,7 +562,7 @@
             }).then((result) => {
                 if (result.isConfirmed) { kirimAbsen('Masuk'); } 
                 else if (result.isDenied) { kirimAbsen('Pulang'); } 
-                else { isPrompting = false; } 
+                else { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); } 
             });
         }
         
