@@ -249,8 +249,7 @@
                 if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < 12 * 60 * 60 * 1000) {
                     dataGAS = JSON.parse(cachedData);
                     
-                    // 🚀 SOLUSI CELAH: Background Sync (Pembaruan Siluman)
-                    // Menarik data baru diam-diam tanpa loading screen agar selalu update
+                    // Pembaruan Siluman (Background Sync)
                     fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) })
                         .then(r => r.json())
                         .then(freshData => {
@@ -259,9 +258,13 @@
                                 localStorage.setItem('aimoy_master_time', Date.now().toString());
                                 dbOutlet = freshData.dataOutlet; 
                                 dbShift = freshData.dataShift;
+                                
+                                // 🚀 PERBAIKAN: Memasukkan data rekan kerja ke memori aplikasi
+                                gKaryawan = freshData.dataKaryawan; 
+                                
                                 if (freshData.dataKaryawan.length > 0) {
                                     const labeled = freshData.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
-                                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); // Otak AI langsung di-update
+                                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); // Akurasi tinggi
                                 }
                             }
                         }).catch(e => console.log("Sync background gagal."));
@@ -273,7 +276,11 @@
                     localStorage.setItem('aimoy_master_time', Date.now().toString());
                 }
 
-                dbOutlet = dataGAS.dataOutlet; dbShift = dataGAS.dataShift;
+                dbOutlet = dataGAS.dataOutlet; 
+                dbShift = dataGAS.dataShift;
+                
+                // 🚀 PERBAIKAN: Memasukkan data rekan kerja ke memori aplikasi
+                gKaryawan = dataGAS.dataKaryawan; 
 
                 let outHtml = '<option value="" disabled selected>Pilih Outlet...</option>';
                 dbOutlet.forEach(o => { outHtml += `<option value="${o.nama}">${o.nama}</option>`; });
@@ -281,7 +288,7 @@
 
                 if (dataGAS.dataKaryawan.length > 0) {
                     const labeled = dataGAS.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
-                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.45);
+                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); // Akurasi tinggi
                 }
                 
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
@@ -289,7 +296,7 @@
                     .catch(e => Swal.fire('Akses Ditolak', 'Kamera harus diizinkan untuk verifikasi biometrik.', 'error'));
             } catch (e) { Swal.fire('Koneksi Gagal', 'Gagal memuat pangkalan data server.', 'error'); }
         }
-
+        
         function loadShiftDropdown() {
             cekJarak();
             const outletName = document.getElementById('sel-outlet').value;
