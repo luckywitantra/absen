@@ -320,47 +320,65 @@
         }
 
         function cariShiftOtomatis(outletName) {
-            // Pastikan tidak ada spasi tersembunyi yang membuat gagal pencarian
             const cleanOutlet = outletName.trim();
             const shifts = dbShift.filter(s => (s.outlet || "").trim() === cleanOutlet);
             
-            if (shifts.length === 0) return null; // Jika cabang ini belum ada jadwal shift
+            if (shifts.length === 0) return null;
             
             const now = new Date(); 
             const currentMins = now.getHours() * 60 + now.getMinutes();
-            let bestShift = shifts[0], minDiff = Infinity;
+            let bestShift = null;
+            let minDiff = Infinity;
+
+            // 🚀 MESIN PINTAR: Mengubah string jam format apa saja (24j / AM-PM / Titik / Titik Dua) menjadi Menit
+            function formatJamKeMenit(timeStr) {
+                if (!timeStr) return 0;
+                let str = timeStr.toUpperCase().trim();
+                let isPM = str.includes("PM");
+                let isAM = str.includes("AM");
+                
+                // Bersihkan lambang AM/PM dan detik jika ada
+                str = str.replace("AM", "").replace("PM", "").trim();
+                
+                // Pecah berdasarkan titik dua (:) atau titik (.)
+                let parts = str.split(/[:.]/);
+                let hours = parseInt(parts[0]) || 0;
+                let minutes = parseInt(parts[1]) || 0;
+                
+                // Handle konversi format 12 jam (AM/PM) ke 24 jam secara otomatis
+                if (isPM && hours < 12) hours += 12;
+                if (isAM && hours === 12) hours = 0;
+                
+                return hours * 60 + minutes;
+            }
 
             shifts.forEach(s => {
                 try {
-                    // 🚀 REGEX PINTAR: Memisahkan jam baik menggunakan titik dua (:) maupun titik (.)
-                    const masukPart = s.jamMasuk.split(/[:.]/);
-                    const keluarPart = s.jamKeluar.split(/[:.]/);
+                    const mMasuk = formatJamKeMenit(s.jamMasuk);
+                    let mKeluar = formatJamKeMenit(s.jamKeluar);
                     
-                    const mMasuk = parseInt(masukPart[0]) * 60 + parseInt(masukPart[1]);
-                    let mKeluar = parseInt(keluarPart[0]) * 60 + parseInt(keluarPart[1]);
-                    
-                    // 🚀 LOGIKA SHIFT MALAM: Jika jam keluar lebih kecil dari jam masuk (lewat tengah malam)
+                    // Logika pendukung jika shift melintasi tengah malam (Shift Malam)
                     if (mKeluar < mMasuk) {
-                        mKeluar += 24 * 60; // Tambahkan 24 jam agar perbandingannya valid
+                        mKeluar += 24 * 60;
                     }
                     
-                    // Cari jarak waktu (selisih menit) terdekat antara waktu saat ini dengan jam masuk atau jam pulang
+                    // Cari selisih jarak menit terkecil dengan waktu aktual saat ini
                     const diffMasuk = Math.abs(currentMins - mMasuk);
                     const diffKeluar = Math.abs(currentMins - mKeluar);
                     const closest = Math.min(diffMasuk, diffKeluar);
                     
-                    if(closest < minDiff) { 
+                    if (closest < minDiff) { 
                         minDiff = closest; 
                         bestShift = s; 
                     }
                 } catch(e) { 
-                    console.warn(`Format jam salah pada shift ${s.kode}`, e); 
+                    console.warn(`Gagal memproses kalkulasi otomatis pada shift ${s.kode}:`, e); 
                 }
             });
             
-            return bestShift;
+            // Jika semua kalkulasi gagal, berikan fallback aman ke shift urutan pertama
+            return bestShift || shifts[0];
         }
-
         function cekJarak() {
             const outName = document.getElementById('sel-outlet').value, alertBox = document.getElementById('dist-alert'), distText = document.getElementById('dist-text');
             if(!outName || userLat === 0) return;
