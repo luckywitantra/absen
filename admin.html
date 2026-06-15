@@ -1504,39 +1504,43 @@
 
         function setujuiOtorisasi(tanggal, namaA, namaB, outlet, shiftTarget, tglOff) {
             Swal.fire({
-                title: 'Setujui Tukar Shift?',
+                title: 'Setujui Otorisasi?',
                 html: `<div class="text-xs text-slate-600 text-left bg-slate-50 p-5 rounded-2xl border border-slate-200 mt-2 shadow-inner leading-relaxed">
                         <b>🔥 EKSEKUSI HARI INI (${tanggal}):</b><br>
                         - <b class="text-emerald-600">${namaA}</b> diakui <b>MASUK</b> (Shift ${shiftTarget})<br>
                         - <b class="text-rose-500">${namaB}</b> otomatis dialihkan ke status <b>Libur (OFF)</b><br><br>
                         
                         <b>📅 EKSEKUSI MASA DEPAN (${tglOff}):</b><br>
-                        - <b class="text-rose-500">${namaA}</b> otomatis diset menjadi <b>Libur (OFF)</b><br>
-                        - <b class="text-emerald-600">${namaB}</b> <b>status dikosongkan</b> (Bebas absen masuk/pulang di tanggal tersebut).
+                        - <b class="text-rose-500">${namaA}</b> diset menjadi <b>Libur (OFF)</b><br>
+                        - <b class="text-emerald-600">${namaB}</b> diakui <b>MASUK</b> (Shift ${shiftTarget})<br>
+                        - <b class="text-amber-600 font-bold">PENTING:</b> Data libur lama Staf B pada tanggal ${tglOff} akan dihapus otomatis.
                        </div>`,
-                icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Setujui!', cancelButtonText: 'Batal',
+                icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Jalankan!', cancelButtonText: 'Batal',
                 customClass: { popup: 'swal2-popup', confirmButton: 'bg-purple-600 text-white rounded-xl font-black px-6 py-3.5 text-xs shadow-lg hover:bg-purple-700', cancelButton: 'bg-white border border-slate-200 text-slate-500 font-bold px-6 py-3.5 rounded-xl text-xs hover:bg-slate-50 ml-2' }
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({ title: 'Memproses Otorisasi...', didOpen: () => Swal.showLoading() });
+                    Swal.fire({ title: 'Menyusun Ulang Matriks...', didOpen: () => Swal.showLoading() });
                     
-                    // 🚀 DATA INJECTION REVISI:
-                    // Hari Ini: A Masuk, B Libur.
-                    // Masa Depan (tglOff): A Libur, B Dikosongkan (log B dihapus/tidak ditambah).
-                    const dataToImport = [
-                        { tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Libur', keterangan: `Digantikan oleh ${namaA} (ACC Owner)` },
-                        { tanggal: tanggal, jam: '00:00', nama: namaA, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Menggantikan ${namaB} (ACC Owner)` },
-                        { tanggal: tglOff, jam: '00:00', nama: namaA, outlet: outlet, shift: '-', tipe: 'Libur', keterangan: `Tukar OFF dari Tgl ${tanggal} (ACC Owner)` }
-                    ];
-
                     try {
-                        // Hapus jadwal lama jika ada bentrok di tglOff (untuk Staf A)
-                        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'hapus_jadwal_lama', payload: { tanggal: tglOff, namaA: namaA } }) });
+                        // 1. PEMBERSIHAN (Scrubbing): Hapus semua log B di tglOff agar status Libur hilang
+                        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ 
+                            action: 'hapus_jadwal_lama', 
+                            payload: { tanggal: tglOff, nama: namaB } 
+                        }) });
+
+                        // 2. SUNTIK DATA BARU
+                        const dataToImport = [
+                            { tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Libur', keterangan: `Digantikan oleh ${namaA} (ACC Owner)` },
+                            { tanggal: tanggal, jam: '00:00', nama: namaA, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Menggantikan ${namaB} (ACC Owner)` },
+                            { tanggal: tglOff, jam: '00:00', nama: namaA, outlet: outlet, shift: '-', tipe: 'Libur', keterangan: `Tukar OFF dari Tgl ${tanggal} (ACC Owner)` },
+                            { tanggal: tglOff, jam: '00:00', nama: namaB, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Bayar Hutang Shift ke ${namaA} (ACC Owner)` }
+                        ];
 
                         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
                         const apiRes = await res.json();
+                        
                         if (apiRes.status === 'success') {
-                            Swal.fire('Disetujui!', 'Matriks kehadiran berhasil disesuaikan.', 'success');
+                            Swal.fire('Berhasil!', 'Matriks kehadiran masa lalu dan masa depan sudah sinkron.', 'success');
                             muatDataOtorisasi();
                             if (!document.getElementById('tabel-mode-rinci').classList.contains('hidden')) generateAnalytics();
                         } else { Swal.fire('Gagal', apiRes.message, 'error'); }
