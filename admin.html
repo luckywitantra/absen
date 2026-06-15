@@ -1389,6 +1389,9 @@
         // ==========================================
         // 🚀 FUNGSI BARU: KIRIM WA AUTO-GENERATE
         // ==========================================
+        // ==========================================
+        // 🚀 FUNGSI BARU: KIRIM WA AUTO-GENERATE
+        // ==========================================
         function kirimWA(nama) {
             const tglStart = document.getElementById('filter-start').value;
             const tglEnd = document.getElementById('filter-end').value;
@@ -1406,11 +1409,7 @@
             const myOutlet = myKaryawan ? myKaryawan.outlet : '';
             const shiftRules = gShift.filter(s => s.outlet === myOutlet);
 
-            let totalHadir = 0;
-            let offDates = [];
-            let izinDates = [];
-            let alpaDates = [];
-            let lemburDates = [];
+            let totalHadir = 0; let offDates = []; let izinDates = []; let alpaDates = []; let lemburDates = [];
 
             // Loop hari demi hari (Time Machine)
             for (let d = new Date(dStart); d <= dEnd; d.setDate(d.getDate() + 1)) {
@@ -1422,28 +1421,20 @@
 
                 let logsToday = myLogs.filter(r => r.tanggal.startsWith(dStr));
 
-                let isMasuk = false;
-                let isLibur = false;
-                let isIzin = false;
-                let lemburMnt = 0;
+                let isMasuk = false; let isLibur = false; let isIzin = false; let lemburMnt = 0;
 
                 logsToday.forEach(r => {
                     if (r.tipe === 'Masuk' || r.tipe === 'Pulang') {
                         isMasuk = true;
-                        // Cek syarat lembur berdasar Master Shift
                         const rule = shiftRules.find(s => s.kode === r.shift);
                         const batasLembur = rule && rule.ambangLembur ? parseInt(rule.ambangLembur) : 60;
                         if (r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) >= batasLembur) {
                             lemburMnt = Math.max(lemburMnt, parseInt(r.lembur));
                         }
-                    } else if (r.tipe === 'Libur') {
-                        isLibur = true;
-                    } else if (r.tipe === 'Izin') {
-                        isIzin = true;
-                    }
+                    } else if (r.tipe === 'Libur') { isLibur = true;
+                    } else if (r.tipe === 'Izin') { isIzin = true; }
                 });
 
-                // Kalkulasi ke keranjang Array
                 if (isMasuk) {
                     totalHadir++;
                     if (lemburMnt > 0) lemburDates.push(`- ${displayDate} (${lemburMnt} mnt)`);
@@ -1453,15 +1444,13 @@
                 } else if (isIzin) {
                     izinDates.push(`- ${displayDate}`);
                 } else {
-                    // Jika tidak ada data apapun & tanggal sudah lewat = ALPA
                     if (d < today) alpaDates.push(`- ${displayDate}`);
                 }
             }
 
-            // Hitung total hari di bulan tersebut berdasarkan tglStart filter
             const daysInMonth = new Date(dStart.getFullYear(), dStart.getMonth() + 1, 0).getDate();
 
-            // Rangkai Pesan WhatsApp
+            // Rangkai Pesan WhatsApp dengan baris baru tulen (\n)
             let msg = `Halo *${nama}*, berikut adalah rekap kehadiran Anda untuk periode ${tglStart} s/d ${tglEnd}:\n\n`;
             msg += `📊 *Total Bekerja:* ${totalHadir}/${daysInMonth} Hari\n\n`;
             msg += `🏖️ *Jadwal Off (Libur):*\n${offDates.length ? offDates.join('\n') : '-'}\n\n`;
@@ -1470,8 +1459,48 @@
             msg += `🔥 *Lembur (Disetujui):*\n${lemburDates.length ? lemburDates.join('\n') : '-'}\n\n`;
             msg += `Harap pastikan data ini sesuai. Hubungi HRD jika terdapat kendala. Terima kasih! 🙏`;
 
-            // Eksekusi buka tab WA
-            window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+            const linkWA = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(msg);
+
+            // Memicu Modal Konfirmasi Pengiriman dengan Tombol Copas
+            Swal.fire({
+                title: '<span class="text-slate-800 text-xl font-black">Kirim Rekap Gaji</span>',
+                html: `<div class="text-slate-600 text-sm mb-4">Anda akan mengirimkan laporan absensi ke <b>${nama}</b>.</div>
+                       <button onclick="salinDanBukaWA(\`${linkWA}\`, \`${msg.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-emerald-500 text-white px-4 py-3.5 rounded-xl font-black shadow-[0_8px_15px_rgba(16,185,129,0.3)] block text-center uppercase tracking-widest text-xs hover:bg-emerald-600 transition-all active:scale-95">
+                           <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> BUKA WHATSAPP
+                       </button>
+                       <p class="text-[10px] text-slate-400 mt-4 leading-relaxed text-left"><i class="fas fa-info-circle text-blue-500"></i> Jika WA error, teks sudah otomatis <b>disalin</b> ke HP/PC Anda. Silakan buka aplikasi WA manual dan klik Paste.</p>`,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Batal',
+                customClass: { 
+                    popup: 'swal2-popup',
+                    cancelButton: 'bg-white border border-slate-200 text-slate-500 font-bold px-6 py-2.5 rounded-xl text-xs hover:bg-slate-50 mt-2 w-full'
+                }
+            });
+        }
+
+        // ==========================================
+        // 🚀 FUNGSI BANTUAN UNTUK AUTO-COPY WA
+        // ==========================================
+        function salinDanBukaWA(link, teks) {
+            // Gunakan metode textarea untuk fallback jika navigator.clipboard diblokir browser
+            const textArea = document.createElement("textarea");
+            textArea.value = teks;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try { document.execCommand('copy'); } 
+            catch (err) { console.error('Gagal menyalin teks', err); }
+            
+            document.body.removeChild(textArea);
+
+            // Buka tab WhatsApp
+            window.open(link, '_blank');
+            Swal.close();
         }
 
         function exportPDF() {
