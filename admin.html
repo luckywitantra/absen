@@ -1415,7 +1415,6 @@
 
         async function cekApprovalTukar() {
             try {
-                // Tarik diam-diam data mentah untuk dicek
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: 'Semua' } }) });
                 const result = await res.json();
                 const logs = result.data || [];
@@ -1424,19 +1423,20 @@
                 const tukarLogs = logs.filter(r => r.tipe === 'Tukar Shift');
 
                 tukarLogs.forEach(r => {
-                    // 🚀 PERBAIKAN: Menggunakan r.info (karena dari database ditarik dengan nama variabel 'info')
                     const infoText = r.info || '';
-                    const match = infoText.match(/Menggantikan (.*?) \((.*?)\)/);
+                    // REGEX BARU: Menangkap format (Ganti Tgl: YYYY-MM-DD)
+                    const match = infoText.match(/Menggantikan (.*?) \(Ganti Tgl: (.*?)\) - (.*)/);
                     
                     if (match) {
                         const namaB = match[1].trim();
-                        const alasan = match[2].trim();
+                        const tglGanti = match[2].trim();
+                        const alasan = match[3].trim();
                         
-                        // 🚀 PERBAIKAN: Mengecek dari l.info, bukan l.keterangan
+                        // Cek apakah sudah di-ACC dengan melihat apakah ada log Izin (ACC Owner) atas nama B di tanggal r.tanggal
                         const isApproved = logs.some(l => l.tanggal === r.tanggal && l.nama === namaB && (l.info || '').includes('ACC Owner'));
 
                         if (!isApproved) {
-                            pendingApprovals.push({ ts: r.ts, tanggal: r.tanggal, outlet: r.outlet, shiftTarget: r.shift, namaA: r.nama, namaB: namaB, alasan: alasan, foto: r.foto });
+                            pendingApprovals.push({ ts: r.ts, tanggal: r.tanggal, outlet: r.outlet, shiftTarget: r.shift, namaA: r.nama, namaB: namaB, tglGanti: tglGanti, alasan: alasan, foto: r.foto });
                         }
                     }
                 });
@@ -1449,6 +1449,77 @@
                     btnNotif.style.display = 'none';
                 }
             } catch(e) { console.error("Gagal cek persetujuan", e); }
+        }
+
+        function bukaModalApproval() {
+            let html = '';
+            if (pendingApprovals.length === 0) {
+                html = '<div class="text-center text-slate-400 text-sm italic py-5 border border-dashed border-slate-200 rounded-xl">Tidak ada permintaan yang menunggu.</div>';
+            } else {
+                pendingApprovals.forEach(p => {
+                    let btnHtml = `<button onclick="setujuiTukar('${p.tanggal}', '${p.namaA}', '${p.namaB}', '${p.outlet}', '${p.shiftTarget}', '${p.tglGanti}')" class="w-full bg-emerald-500 text-white py-2.5 rounded-lg font-black text-xs hover:bg-emerald-600 active:scale-95 transition-all shadow-[0_4px_10px_rgba(16,185,129,0.3)] mt-3"><i class="fas fa-check-circle mr-1"></i> SETUJUI & TUKAR OTOMATIS</button>`;
+
+                    html += `
+                    <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-2">
+                            <div class="font-black text-slate-800 text-sm">${p.namaA} <i class="fas fa-arrow-right text-slate-300 mx-1"></i> <span class="text-purple-600">${p.namaB}</span></div>
+                            <span class="text-[9px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-bold">${p.tanggal}</span>
+                        </div>
+                        <div class="text-xs text-slate-600 mb-1.5 flex gap-2"><i class="fas fa-quote-left text-slate-300"></i> ${p.alasan}</div>
+                        
+                        <div class="text-[10px] text-emerald-600 font-bold mb-3 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex flex-col gap-1">
+                            <span><i class="fas fa-calendar-day w-4 text-center"></i> Ganti Libur Pada: <b>${p.tglGanti}</b></span>
+                            <span><i class="fas fa-briefcase w-4 text-center"></i> Hutang Shift: <b>${p.shiftTarget}</b> (Si B yang wajib masuk)</span>
+                        </div>
+
+                        <a href="${p.foto}" target="_blank" class="text-[10px] text-blue-500 font-bold hover:underline bg-blue-50 px-3 py-1.5 rounded-md"><i class="fas fa-camera"></i> Lihat Foto Bukti Di Toko</a>
+                        ${btnHtml}
+                    </div>`;
+                });
+            }
+            document.getElementById('list-approval').innerHTML = html;
+            openDrawer('drawer-approval');
+        }
+
+        function setujuiTukar(tanggal, namaA, namaB, outlet, shiftTarget, tglGanti) {
+            Swal.fire({
+                title: 'Setujui Tukar Shift?',
+                html: `<div class="text-xs text-slate-600 text-left bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2">
+                        <b>EKSEKUSI HARI INI (${tanggal}):</b><br>
+                        <b class="text-emerald-600">✅ ${namaA}</b> -> Shift ${shiftTarget}<br>
+                        <b class="text-rose-500">🏖️ ${namaB}</b> -> Izin / Sakit<br><br>
+                        
+                        <b>EKSEKUSI MASA DEPAN (${tglGanti}):</b><br>
+                        <b class="text-rose-500">🏖️ ${namaA}</b> -> Libur (Ganti Off)<br>
+                        <b class="text-emerald-600">✅ ${namaB}</b> -> Masuk (Bayar Hutang Shift ${shiftTarget})
+                       </div>`,
+                icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Setujui', cancelButtonText: 'Batal',
+                customClass: { popup: 'swal2-popup', confirmButton: 'bg-emerald-500 text-white rounded-xl font-black px-6 py-3 text-xs shadow-lg hover:bg-emerald-600', cancelButton: 'bg-white border border-slate-200 text-slate-500 font-bold px-6 py-3 rounded-xl text-xs hover:bg-slate-50 ml-2' }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'Memperbarui Matriks...', html: 'Menyuntikkan jadwal masa depan...', didOpen: () => Swal.showLoading() });
+                    
+                    // 🚀 DATA INJECTION (3 BARIS SEKALIGUS)
+                    const dataToImport = [
+                        // HARI INI
+                        { tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Izin', keterangan: `Digantikan oleh ${namaA} (ACC Owner)` },
+                        // MASA DEPAN (Hari Pengganti)
+                        { tanggal: tglGanti, jam: '00:00', nama: namaA, outlet: outlet, shift: '-', tipe: 'Libur', keterangan: `Tukar Libur dari Tgl ${tanggal} (ACC Owner)` },
+                        { tanggal: tglGanti, jam: '00:00', nama: namaB, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Bayar Shift ke ${namaA} (ACC Owner)` }
+                    ];
+
+                    try {
+                        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
+                        const apiRes = await res.json();
+                        if (apiRes.status === 'success') {
+                            Swal.fire('Otomatisasi Berhasil!', 'Matriks masa lalu dan masa depan berhasil ditukar.', 'success');
+                            closeAllDrawers();
+                            cekApprovalTukar(); // Segarkan notifikasi
+                            if (!document.getElementById('tabel-mode-rinci').classList.contains('hidden')) generateAnalytics();
+                        } else { Swal.fire('Gagal', apiRes.message, 'error'); }
+                    } catch(e) { Swal.fire('Error', 'Gagal memproses ke server.', 'error'); }
+                }
+            });
         }
 
         function bukaModalApproval() {
