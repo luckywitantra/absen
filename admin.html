@@ -411,24 +411,33 @@
         </div>
     </main>
 
-    <!-- MOBILE BOTTOM NAV BAR -->
-    <nav class="fixed bottom-0 left-0 w-full glass-bottom-nav flex overflow-x-auto custom-scroll p-2 pb-safe lg:hidden z-[50] scroll-smooth hide-scroll" id="bottom-nav-bar" style="-ms-overflow-style: none; scrollbar-width: none;">         ```  Dan jangan lupa tambahkan kelas pembantu `min-w-[72px]` pada setiap `<button>` di dalamnya agar mereka tidak tergencet:  ```html         <button id="nav-mob-laporan" onclick="switchView('view-laporan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-blue-600 min-w-[72px] transition-colors relative">             <div class="w-12 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-chart-pie text-lg"></i></div>             <span class="text-[9px] font-extrabold tracking-wide">Analitik</span>         </button>         ```  Dengan dua perbaikan sederhana ini, aplikasi *Admin* Anda sudah 100% matang, bersih dari *bug*, dan tampil sangat memukau baik di PC maupun *smartphone*! Silakan disimpan dan dicoba.
-        <button id="nav-mob-laporan" onclick="switchView('view-laporan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-blue-600 w-full transition-colors relative">
+   <nav class="fixed bottom-0 left-0 w-full glass-bottom-nav flex overflow-x-auto custom-scroll p-2 pb-safe lg:hidden z-[50] scroll-smooth" id="bottom-nav-bar" style="-ms-overflow-style: none; scrollbar-width: none;">
+        
+        <button id="nav-mob-laporan" onclick="switchView('view-laporan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-blue-600 min-w-[72px] transition-colors relative">
             <div class="w-12 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-chart-pie text-lg"></i></div>
             <span class="text-[9px] font-extrabold tracking-wide">Analitik</span>
         </button>
-        <button id="nav-mob-karyawan" onclick="switchView('view-karyawan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 w-full hover:text-blue-600 transition-colors relative">
+
+        <button id="nav-mob-otorisasi" onclick="switchView('view-otorisasi', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 min-w-[72px] hover:text-blue-600 transition-colors relative">
+            <div class="w-12 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-check-double text-lg"></i></div>
+            <span class="text-[9px] font-extrabold tracking-wide">Otorisasi</span>
+        </button>
+
+        <button id="nav-mob-karyawan" onclick="switchView('view-karyawan', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 min-w-[72px] hover:text-blue-600 transition-colors relative">
             <div class="w-12 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-users text-lg"></i></div>
             <span class="text-[9px] font-extrabold tracking-wide">Staf</span>
         </button>
-        <button id="nav-mob-outlet" onclick="switchView('view-outlet', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 w-full hover:text-blue-600 transition-colors relative">
+
+        <button id="nav-mob-outlet" onclick="switchView('view-outlet', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 min-w-[72px] hover:text-blue-600 transition-colors relative">
             <div class="w-12 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-map-location-dot text-lg"></i></div>
             <span class="text-[9px] font-extrabold tracking-wide">Outlet</span>
         </button>
-        <button id="nav-mob-shift" onclick="switchView('view-shift', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 w-full hover:text-blue-600 transition-colors relative">
+
+        <button id="nav-mob-shift" onclick="switchView('view-shift', null, this)" class="nav-mob-btn flex flex-col items-center justify-center p-2 text-slate-400 min-w-[72px] hover:text-blue-600 transition-colors relative">
             <div class="w-12 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 nav-mob-pill transition-colors"><i class="fas fa-clock-rotate-left text-lg"></i></div>
             <span class="text-[9px] font-extrabold tracking-wide">Shift</span>
         </button>
+        
     </nav>
 
     <!-- ========================================== -->
