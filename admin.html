@@ -1546,7 +1546,10 @@
                         </div>
                         <div class="flex flex-col gap-2 mt-auto">
                             <a href="${p.foto}" target="_blank" class="text-xs text-blue-600 font-bold hover:bg-blue-100 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 text-center transition-colors"><i class="fas fa-camera mr-1"></i> Cek Foto Kehadiran</a>
-                            <button onclick="setujuiOtorisasi('${p.tanggal}', '${p.namaA}', '${p.namaB}', '${p.outlet}', '${p.shiftTarget}', '${p.tglOff}')" class="bg-purple-600 text-white px-4 py-3.5 rounded-xl font-black text-xs hover:bg-purple-700 active:scale-95 transition-all shadow-[0_8px_15px_rgba(147,51,234,0.25)] flex justify-center items-center gap-2"><i class="fas fa-check-circle text-purple-200"></i> SETUJUI OTORISASI</button>
+<button onclick="setujuiOtorisasi('${p.tanggal}', '${p.namaA}', '${p.namaB}', '${p.outlet}', '${p.shiftTarget}', '${p.tglOff}', '${p.ts}')" 
+        class="bg-purple-600 text-white px-4 py-3.5 rounded-xl font-black text-xs hover:bg-purple-700 active:scale-95 transition-all shadow-[0_8px_15px_rgba(147,51,234,0.25)] flex justify-center items-center gap-2">
+    <i class="fas fa-check-circle text-purple-200"></i> SETUJUI OTORISASI
+</button>
                         </div>
                     </div>`;
                 });
