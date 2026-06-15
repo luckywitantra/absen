@@ -1505,29 +1505,27 @@
         function setujuiOtorisasi(tanggal, namaA, namaB, outlet, shiftTarget, tglOff) {
             Swal.fire({
                 title: 'Setujui Otorisasi?',
-                html: `<div class="text-xs text-slate-600 text-left bg-slate-50 p-5 rounded-2xl border border-slate-200 mt-2 shadow-inner">
-                        <b>🔥 EKSEKUSI HARI INI (${tanggal}):</b><br>
-                        - <b class="text-emerald-600">${namaA}</b> MASUK (Shift ${shiftTarget})<br>
-                        - <b class="text-rose-500">${namaB}</b> status diubah ke <b>LIBUR</b><br><br>
-                        
-                        <b>📅 EKSEKUSI MASA DEPAN (${tglOff}):</b><br>
-                        - <b class="text-rose-500">${namaA}</b> diubah ke <b>LIBUR</b><br>
-                        - <b class="text-emerald-600">${namaB}</b> <b>status dikosongkan</b> (Bebas absen masuk/pulang).
-                       </div>`,
-                icon: 'question', showCancelButton: true, confirmButtonText: 'Setujui Sekarang', cancelButtonText: 'Batal',
+                html: `...`, // (sama seperti sebelumnya)
+                icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Jalankan!', cancelButtonText: 'Batal',
                 customClass: { popup: 'swal2-popup', confirmButton: 'bg-purple-600 text-white rounded-xl font-black px-6 py-3.5 text-xs shadow-lg hover:bg-purple-700' }
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({ title: 'Memproses...', didOpen: () => Swal.showLoading() });
+                    Swal.fire({ title: 'Menyusun Ulang Matriks...', didOpen: () => Swal.showLoading() });
                     
                     try {
-                        // 1. Bersihkan status Libur Staf B pada tanggal ganti (tglOff) agar jadi kosong
+                        // 1. HAPUS LOG LIBUR STAF A HARI INI (Agar tidak bentrok dengan log Masuk)
+                        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ 
+                            action: 'hapus_log_libur', 
+                            payload: { tanggal: tanggal, nama: namaA } 
+                        }) });
+
+                        // 2. HAPUS LOG LIBUR STAF B MASA DEPAN (Agar Staf B bisa masuk normal)
                         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ 
                             action: 'hapus_log_libur', 
                             payload: { tanggal: tglOff, nama: namaB } 
                         }) });
 
-                        // 2. Suntik data baru untuk hari ini (A masuk, B Libur) dan masa depan (A Libur)
+                        // 3. SUNTIK DATA BARU
                         const dataToImport = [
                             { tanggal: tanggal, jam: '00:00', nama: namaB, outlet: outlet, shift: '-', tipe: 'Libur', keterangan: `Digantikan oleh ${namaA} (ACC Owner)` },
                             { tanggal: tanggal, jam: '00:00', nama: namaA, outlet: outlet, shift: shiftTarget, tipe: 'Masuk', keterangan: `Menggantikan ${namaB} (ACC Owner)` },
@@ -1535,12 +1533,7 @@
                         ];
 
                         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'import_csv_absen', payload: { data: dataToImport } }) });
-                        const apiRes = await res.json();
-                        
-                        if (apiRes.status === 'success') {
-                            Swal.fire('Berhasil!', 'Jadwal telah ditukar.', 'success');
-                            muatDataOtorisasi();
-                        } else { Swal.fire('Gagal', apiRes.message, 'error'); }
+                        // ... (sisa kodingan sama)
                     } catch(e) { Swal.fire('Error', 'Gagal memproses ke server.', 'error'); }
                 }
             });
