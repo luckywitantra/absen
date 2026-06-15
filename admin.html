@@ -1179,6 +1179,10 @@
             });
 
             logsRange.forEach(r => {
+                // 🚀 PERBAIKAN: Abaikan log tipe 'Tukar Shift' agar tidak dihitung ganda
+                // Log ini hanya berfungsi sebagai bukti historis pengajuan
+                if (r.tipe === 'Tukar Shift') return;
+
                 const isIzin = r.tipe === 'Izin';
                 const isLibur = r.tipe === 'Libur';
                 const isMasuk = r.tipe === 'Masuk'; 
@@ -1187,12 +1191,24 @@
                 
                 if(!rekapAkumulasi[r.nama]) rekapAkumulasi[r.nama] = { outlet: r.outlet, rajin: 0, telat: 0, izin: 0, libur: 0, lembur: 0, alpa: 0, total_masuk: 0 };
 
-                // 🚀 PERBAIKAN: Menambahkan TANGGAL dan SHIFT ke dalam array Timeline
-                if(isIzin) { izinList.push({nama: r.nama, info: r.keterangan || r.info, jam: r.jam, tanggal: r.tanggal, shift: r.shift}); rekapAkumulasi[r.nama].izin++; }
-                else if(isLibur) { liburList.push({nama: r.nama, info: r.info, jam: r.jam, tanggal: r.tanggal, shift: r.shift}); rekapAkumulasi[r.nama].libur++; }
+                if(isIzin) { 
+                    izinList.push({nama: r.nama, info: r.keterangan || r.info, jam: r.jam, tanggal: r.tanggal, shift: r.shift}); 
+                    rekapAkumulasi[r.nama].izin++; 
+                }
+                else if(isLibur) { 
+                    liburList.push({nama: r.nama, info: r.info, jam: r.jam, tanggal: r.tanggal, shift: r.shift}); 
+                    rekapAkumulasi[r.nama].libur++; 
+                }
                 else if(isMasuk) { 
-                    if(isTelat && !isManual) { telatList.push({nama: r.nama, jam: r.jam, status: r.status, tanggal: r.tanggal, shift: r.shift}); rekapAkumulasi[r.nama].telat++; }
-                    else { rajinList.push({nama: r.nama, jam: r.jam, status: r.status, tanggal: r.tanggal, shift: r.shift}); rekapAkumulasi[r.nama].rajin++; }
+                    if(isTelat && !isManual) { 
+                        telatList.push({nama: r.nama, jam: r.jam, status: r.status, tanggal: r.tanggal, shift: r.shift}); 
+                        rekapAkumulasi[r.nama].telat++; 
+                    }
+                    else { 
+                        rajinList.push({nama: r.nama, jam: r.jam, status: r.status, tanggal: r.tanggal, shift: r.shift}); 
+                        rekapAkumulasi[r.nama].rajin++; 
+                    }
+                    rekapAkumulasi[r.nama].total_masuk++;
                 }
                 
                 const shiftRule = gShift.find(s => s.kode === r.shift && s.outlet === r.outlet);
@@ -1200,7 +1216,8 @@
 
                 if(r.lembur && !isNaN(r.lembur) && parseInt(r.lembur) >= batasLembur) {
                     const l = parseInt(r.lembur);
-                    totalLemburMnt += l; lemburList.push({nama: r.nama, jam: r.jam, menit: l, tanggal: r.tanggal, shift: r.shift});
+                    totalLemburMnt += l; 
+                    lemburList.push({nama: r.nama, jam: r.jam, menit: l, tanggal: r.tanggal, shift: r.shift});
                     rekapAkumulasi[r.nama].lembur += l;
                 }
             });
