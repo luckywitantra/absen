@@ -697,10 +697,6 @@
 
         function tutupModal(id) { closeAllDrawers(); }
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); });
-        }
-
         window.addEventListener('load', () => {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -1853,17 +1849,66 @@
 
     <script>
         // ==========================================
-        // 🚀 SISTEM DETEKSI & INSTALASI PWA ADMIN
+        // 🚀 SISTEM DETEKSI UPDATE & INSTALASI PWA ADMIN
         // ==========================================
         let deferredPromptAdmin;
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); deferredPromptAdmin = e; cekDanTampilkanPwaPromptAdmin();
-        });
+        // 1. REGISTRASI SERVICE WORKER & DETEKSI UPDATE
+        if ('serviceWorker' in navigator) {
+            let refreshing = false;
 
-        window.addEventListener('load', () => {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            if(isIOS) setTimeout(cekDanTampilkanPwaPromptAdmin, 2500);
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    
+                    // Deteksi jika ada file sw.js versi baru di server
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            // Jika update sudah selesai diunduh di latar belakang
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                
+                                // Tampilkan Pop-Up Update Wajib (Tema Terang/Biru)
+                                Swal.fire({
+                                    title: '<span class="text-slate-800 text-xl font-black">Pembaruan Dasbor 🚀</span>',
+                                    html: '<span class="text-slate-500 text-xs">Versi terbaru Admin AiMoy telah siap. Klik tombol di bawah untuk memuat fitur terbaru.</span>',
+                                    icon: 'info',
+                                    iconColor: '#3b82f6', // Warna biru
+                                    background: '#ffffff',
+                                    showCancelButton: false,
+                                    confirmButtonText: '<i class="fas fa-sync-alt mr-1"></i> Muat Ulang Sekarang',
+                                    allowOutsideClick: false,
+                                    customClass: {
+                                        popup: 'swal2-popup',
+                                        confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black px-6 py-3.5 text-xs tracking-widest transition-all w-full shadow-[0_8px_15px_rgba(37,99,235,0.3)]'
+                                    }
+                                }).then(() => {
+                                    // Pemicu untuk menggunakan SW baru
+                                    newWorker.postMessage({ action: 'skipWaiting' });
+                                });
+
+                            }
+                        });
+                    });
+                }).catch(err => console.log('SW Registration failed: ', err));
+
+                // Logika Install PWA iOS (Apple)
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if(isIOS) setTimeout(cekDanTampilkanPwaPromptAdmin, 2500);
+            });
+
+            // Reload halaman saat Service Worker baru mengambil alih
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
+            });
+        }
+
+        // 2. LOGIKA PROMPT INSTALASI PWA (NATIVE ANDROID)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); 
+            deferredPromptAdmin = e; 
+            cekDanTampilkanPwaPromptAdmin();
         });
 
         function cekDanTampilkanPwaPromptAdmin() {
