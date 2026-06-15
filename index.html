@@ -822,8 +822,6 @@
                         const result = await res.json();
                         
                         if (result.status === 'success') {
-                            const ownerWA = "6281234567890"; // ⚠️ JANGAN LUPA GANTI NOMOR WA ANDA
-                            
                             const rawText = `*LAPORAN TUKAR SHIFT*\n\n👤 *Staf Masuk Hari Ini:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Shift Hari Ini:* ${formValues.shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n🗓️ *TUKAR JADWAL OFF MASA DEPAN:*\n- ${currentFace.n} akan LIBUR (OFF) pada *${formValues.tglOff}*\n- ${formValues.rekan} WAJIB MASUK menggantikan pada *${formValues.tglOff}*\n\n📸 *Bukti Foto:* ${result.linkFoto}\n\nMohon otorisasi dari Owner di dasbor admin agar matriks absen disesuaikan otomatis.`;
                             const textWA = encodeURIComponent(rawText);
                             const waLink = `https://api.whatsapp.com/send?phone=${ownerWA}&text=${textWA}`;
