@@ -1424,13 +1424,16 @@
                 const tukarLogs = logs.filter(r => r.tipe === 'Tukar Shift');
 
                 tukarLogs.forEach(r => {
-                    // Ekstrak nama rekan kerja yang digantikan dari keterangan
-                    const match = r.keterangan.match(/Menggantikan (.*?) \((.*?)\)/);
+                    // 🚀 PERBAIKAN: Menggunakan r.info (karena dari database ditarik dengan nama variabel 'info')
+                    const infoText = r.info || '';
+                    const match = infoText.match(/Menggantikan (.*?) \((.*?)\)/);
+                    
                     if (match) {
                         const namaB = match[1].trim();
                         const alasan = match[2].trim();
-                        // Jika nama rekan yang digantikan (Staf B) belum punya log Izin/ACC di hari itu, berarti masih Pending
-                        const isApproved = logs.some(l => l.tanggal === r.tanggal && l.nama === namaB && l.keterangan.includes('ACC Owner'));
+                        
+                        // 🚀 PERBAIKAN: Mengecek dari l.info, bukan l.keterangan
+                        const isApproved = logs.some(l => l.tanggal === r.tanggal && l.nama === namaB && (l.info || '').includes('ACC Owner'));
 
                         if (!isApproved) {
                             pendingApprovals.push({ ts: r.ts, tanggal: r.tanggal, outlet: r.outlet, shiftTarget: r.shift, namaA: r.nama, namaB: namaB, alasan: alasan, foto: r.foto });
@@ -1445,7 +1448,7 @@
                 } else {
                     btnNotif.style.display = 'none';
                 }
-            } catch(e) { console.error("Gagal cek persetujuan"); }
+            } catch(e) { console.error("Gagal cek persetujuan", e); }
         }
 
         function bukaModalApproval() {
