@@ -672,10 +672,15 @@
                 return;
             }
             
-            // LOGIKA PINTAR: Cek OFF dengan proteksi undefined
+            // LOGIKA PINTAR: Analisis Jadwal Staf Hari Ini
             const mySchedule = (gJadwalHariIni || []).filter(r => r.nama === faceInfo.n);
             const isOff = mySchedule.some(r => r.tipe === 'Libur' || (r.status && r.status.includes('OFF')));
             const isIzin = mySchedule.some(r => r.tipe === 'Izin' || (r.status && r.status.includes('IZIN')));
+
+            // 🚀 FITUR BARU: Deteksi Shift Menggantung (Sudah Masuk, Belum Pulang)
+            const masukLogs = mySchedule.filter(r => r.tipe === 'Masuk' || r.tipe === 'Tukar Shift');
+            const pulangLogs = mySchedule.filter(r => r.tipe === 'Pulang');
+            const isGantung = masukLogs.length > pulangLogs.length;
 
             if (isOff || isIzin) {
                 let statusTeks = isOff ? "DAY OFF (Libur)" : "IZIN / SAKIT";
@@ -705,9 +710,18 @@
                 return; 
             }
             
-            // 🚀 JIKA TIDAK OFF: BUAT KARTU GESER DI DALAM POPUP
-            const shiftTersedia = dbShift.filter(s => s.outlet === faceInfo.o);
-            let shiftCardsHtml = `<div class="flex flex-nowrap gap-3 overflow-x-auto pb-4 snap-x mt-4 w-full hide-scroll touch-pan-x" style="-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch;">`;
+            // 🚀 PERSIAPAN KARTU SHIFT
+            let shiftTersedia = dbShift.filter(s => s.outlet === faceInfo.o);
+            
+            // JIKA SEDANG BEKERJA (GANTUNG), KUNCI HANYA DI SHIFT AKTIF TERSEBUT
+            if (isGantung) {
+                shiftTersedia = shiftTersedia.filter(s => s.kode === shift.kode);
+            }
+
+            // Jika sedang dikunci, posisikan kartu tepat di tengah layar (justify-center)
+            const alignmentClass = isGantung ? "justify-center" : "";
+            
+            let shiftCardsHtml = `<div class="flex flex-nowrap gap-3 overflow-x-auto pb-4 snap-x mt-4 w-full hide-scroll touch-pan-x ${alignmentClass}" style="-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch;">`;
             
             shiftTersedia.forEach(s => {
                 const isSelected = s.kode === shift.kode;
@@ -717,10 +731,13 @@
                 const textMainClass = isSelected ? "text-emerald-400" : "text-slate-400";
                 const textSubClass = isSelected ? "text-emerald-500/70" : "text-slate-500";
                 
-                // Merangkai tombol kartu
+                // Jika sedang gantung (terkunci), matikan efek klik agar tidak bisa digeser/dipilih ulang
+                const clickEvent = isGantung ? "" : `onclick="window.pilihShiftDiPopup('${s.kode}', '${s.jamMasuk}', '${s.jamKeluar}', '${s.toleransi}', '${s.ambangLembur || 60}')"`;
+                const pointerClass = isGantung ? "pointer-events-none" : "cursor-pointer";
+                
                 shiftCardsHtml += `
-                    <button onclick="window.pilihShiftDiPopup('${s.kode}', '${s.jamMasuk}', '${s.jamKeluar}', '${s.toleransi}', '${s.ambangLembur || 60}')" 
-                        class="swal-shift-card shrink-0 w-[140px] rounded-xl p-4 text-center transition-all snap-center border select-none cursor-pointer outline-none focus:outline-none ${colorClass}" 
+                    <button ${clickEvent} 
+                        class="swal-shift-card shrink-0 w-[140px] rounded-xl p-4 text-center transition-all snap-center border select-none outline-none focus:outline-none ${colorClass} ${pointerClass}" 
                         data-kode="${s.kode}">
                         <div class="text-[15px] font-black uppercase tracking-widest mb-1 pointer-events-none transition-colors ${textMainClass}">${s.kode}</div>
                         <div class="text-[10px] font-bold pointer-events-none transition-colors ${textSubClass}"><i class="far fa-clock mr-1"></i>${s.jamMasuk} - ${s.jamKeluar}</div>
@@ -728,7 +745,13 @@
                 `;
             });
             shiftCardsHtml += `</div>`;
-            shiftCardsHtml += `<div class="text-[10px] text-amber-500 font-bold mt-2 animate-pulse"><i class="fas fa-arrows-alt-h mr-1 text-sm"></i>Geser kartu ke samping jika shift salah</div>`;
+            
+            // 🚀 INSTRUKSI BERBEDA TERGANTUNG STATUS KUNCIAN
+            if (!isGantung && shiftTersedia.length > 1) {
+                shiftCardsHtml += `<div class="text-[10px] text-amber-500 font-bold mt-2 animate-pulse"><i class="fas fa-arrows-alt-h mr-1 text-sm"></i>Geser kartu ke samping jika shift salah</div>`;
+            } else if (isGantung) {
+                shiftCardsHtml += `<div class="text-[10px] text-emerald-500 font-bold mt-2"><i class="fas fa-lock mr-1 text-sm"></i>Shift terkunci untuk absensi pulang</div>`;
+            }
 
             // MUNCULKAN POPUP
             Swal.fire({
