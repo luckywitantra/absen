@@ -696,7 +696,7 @@
             });
         }
         
-       function ambilFotoKamera(tipe_absen = "FOTO") {
+      function ambilFotoKamera(tipe_absen = "FOTO") {
             const tempCanvas = document.createElement('canvas'); 
             const MAX_WIDTH = 360; 
             const scale = MAX_WIDTH / video.videoWidth; 
@@ -704,7 +704,6 @@
             tempCanvas.height = video.videoHeight * scale;
             const ctx = tempCanvas.getContext('2d'); 
             
-            // Membalikkan gambar agar tidak terlihat seperti cermin (mirror)
             ctx.save();
             ctx.translate(tempCanvas.width, 0); 
             ctx.scale(-1, 1); 
@@ -713,51 +712,38 @@
 
             const nama = currentFace ? currentFace.n : "Tidak Dikenal";
             const outlet = document.getElementById('sel-outlet').value || "Lokasi Tidak Diketahui";
-            
-            // Membaca nilai dari kartu shift yang sedang aktif (input hidden)
             const shift = document.getElementById('sel-shift').value || "-";
-            
             const now = new Date();
             
-            // 🚀 ANTI-CHEAT: Paksa tulisan jam di foto menjadi waktu WITA (Asia/Makassar)
-            // Staf tidak akan bisa memalsukan jam di foto walaupun jam HP mereka diubah
             let tglStr = "";
             let jamStr = "";
             try {
                 tglStr = now.toLocaleDateString('id-ID', { timeZone: 'Asia/Makassar', day:'2-digit', month:'short', year:'numeric' });
                 jamStr = now.toLocaleTimeString('id-ID', { timeZone: 'Asia/Makassar', hour:'2-digit', minute:'2-digit', hour12: false }) + ' WITA';
             } catch(e) {
-                // Fallback jika browser sangat lama
                 tglStr = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
                 jamStr = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
             }
 
-            // Membuat kotak hitam transparan di bagian bawah foto
             ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
             ctx.fillRect(0, tempCanvas.height - 80, tempCanvas.width, 80);
 
-            // Mencetak teks Watermark
             ctx.textAlign = "left";
             ctx.font = "bold 12px sans-serif";
-            
             ctx.fillStyle = "#F8F1E5";
             ctx.fillText(`[ ${tipe_absen.toUpperCase()} ] • ${tglStr} ${jamStr}`, 12, tempCanvas.height - 58);
-            
             ctx.fillStyle = "#D4AF37"; 
             ctx.fillText(`👤 ${nama}`, 12, tempCanvas.height - 38);
-            
             ctx.fillStyle = "#10b981"; 
             ctx.fillText(`🏢 ${outlet}  |  💼 Shift: ${shift}`, 12, tempCanvas.height - 18);
 
-            // Mengompres foto menjadi JPEG (50% kualitas) agar hemat kuota dan memori server
             return tempCanvas.toDataURL('image/jpeg', 0.5); 
         }
 
-async function kirimAbsen(tipe) {
+        async function kirimAbsen(tipe) {
             isPrompting = true; 
             const out = document.getElementById('sel-outlet').value;
             
-            // 🚀 BACA DARI MEMORI TERSEMBUNYI KARTU SHIFT
             const shfVal = document.getElementById('sel-shift').value;
             const shfM = document.getElementById('sel-shift-jamM').value;
             const shfK = document.getElementById('sel-shift-jamK').value;
@@ -774,7 +760,6 @@ async function kirimAbsen(tipe) {
                 const res = await fetch(API_URL, { 
                     method: 'POST', body: JSON.stringify({ 
                         action: 'absen', 
-                        // PERBAIKAN 1: shf.value diubah menjadi shfVal
                         payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shfVal, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, ambangLembur: shfLembur, tipe: tipe, jarak: distance, foto: fotoData } 
                     }) 
                 });
@@ -782,7 +767,6 @@ async function kirimAbsen(tipe) {
                 
                 if (result.status === 'success') {
                     let rawSummary = result.summaryWA ? result.summaryWA.replace(/%0A/g, '\n') : '';
-                    // PERBAIKAN 2: ${shf.value} diubah menjadi ${shfVal}
                     const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shfVal} (${shfM}-${shfK})\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipe.toUpperCase()}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* ${result.linkFoto}\n\n======================\n${rawSummary}`;
                     
                     const textWA = encodeURIComponent(rawText);
@@ -798,7 +782,7 @@ async function kirimAbsen(tipe) {
                             <span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span>
                             <b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b>
                         </div>
-                        <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
+                        <button onclick="salinDanBukaWA('${waLink}', decodeURIComponent('${textWA}'))" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
                             <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA
                         </button>
                         <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan otomatis disalin.</p>
