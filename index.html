@@ -127,26 +127,18 @@
                     <i class="fas fa-location-crosshairs animate-pulse"></i> <span id="dist-text">Mencari lokasi...</span>
                 </div>
 
-                <div class="relative mb-3">
-                    <i class="fas fa-store absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                    <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer disabled:bg-white/5 disabled:text-slate-500"><option value="" disabled selected>Outlet...</option></select>
-                    <i id="outlet-chevron" class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
-                </div>
-                
-                <!-- 🚀 FITUR BARU: KARTU SHIFT GESER -->
-                <div class="w-full mb-1 max-w-full overflow-hidden">
-                    <div id="shift-container" class="flex flex-nowrap gap-3 overflow-x-auto pb-4 snap-x hide-scroll touch-pan-x" style="-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                        <!-- Kartu shift akan muncul otomatis di sini -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="relative">
+                        <i class="fas fa-store absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer disabled:bg-white/5 disabled:text-slate-500"><option value="" disabled selected>Outlet...</option></select>
+                        <i id="outlet-chevron" class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
                     </div>
-                    
-                    <!-- Memori tersembunyi agar fungsi kirimAbsen tidak rusak -->
-                    <input type="hidden" id="sel-shift" value="">
-                    <input type="hidden" id="sel-shift-jamM" value="">
-                    <input type="hidden" id="sel-shift-jamK" value="">
-                    <input type="hidden" id="sel-shift-tol" value="">
-                    <input type="hidden" id="sel-shift-lembur" value="">
+                    <div class="relative">
+                        <i class="fas fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <select id="sel-shift" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer"><option value="" disabled selected>Shift...</option></select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
+                    </div>
                 </div>
-    
                 
                 <div class="grid grid-cols-2 gap-2.5 pt-1">
                     <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-to-bracket text-blue-300"></i> MASUK</button>
@@ -317,26 +309,14 @@
         function loadShiftDropdown() {
             cekJarak();
             const outletName = document.getElementById('sel-outlet').value;
-            const shiftContainer = document.getElementById('shift-container');
+            const shiftSelect = document.getElementById('sel-shift');
             const shiftTersedia = dbShift.filter(s => s.outlet === outletName);
             
-            document.getElementById('sel-shift').value = ""; // Reset pilihan
-            
-            if(shiftTersedia.length === 0) { 
-                shiftContainer.innerHTML = '<div class="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-[10px] text-slate-500 italic text-center">Belum ada jadwal shift</div>'; 
-            } else {
-                shiftContainer.innerHTML = '';
-                shiftTersedia.forEach((s) => {
-                    const btn = document.createElement('button');
-                    // 🚀 PERBAIKAN: Tambah shrink-0, select-none, dan ukuran pasti w-[140px]
-                    btn.className = "shift-pill shrink-0 w-[140px] bg-black/40 border border-white/10 text-slate-400 rounded-xl p-4 text-left transition-all snap-center select-none cursor-pointer outline-none focus:outline-none";
-                    btn.innerHTML = `<div class="text-[15px] font-black uppercase tracking-widest mb-1 pointer-events-none transition-colors text-slate-400">${s.kode}</div><div class="text-[10px] font-bold pointer-events-none transition-colors text-slate-500"><i class="far fa-clock mr-1"></i>${s.jamMasuk} - ${s.jamKeluar}</div>`;
-                    
-                    btn.onclick = () => pilihShiftManual(s, btn);
-                    shiftContainer.appendChild(btn);
-                });
+            if(shiftTersedia.length === 0) { shiftSelect.innerHTML = '<option value="" disabled selected>Belum ada jadwal</option>'; } 
+            else {
+                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift Target...</option>';
+                shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}" data-jamm="${s.jamMasuk}" data-jamk="${s.jamKeluar}" data-tol="${s.toleransi}" data-lembur="${s.ambangLembur}">${s.kode} (${s.jamMasuk}-${s.jamKeluar})</option>`; });
             }
-            updateUI(currentFace !== null, isLivenessPassed ? "READY" : "SEARCH");
         }
 
         function cariShiftOtomatis(outletName, namaKaryawan) {
@@ -581,40 +561,6 @@
             }
         }
 
-        // 🚀 FUNGSI BARU: Untuk menangkap klik kartu di dalam pop-up
-        window.pilihShiftDiPopup = function(kode, jamM, jamK, tol, lembur) {
-            // Update memori sistem di belakang layar
-            document.getElementById('sel-shift').value = kode;
-            document.getElementById('sel-shift-jamM').value = jamM;
-            document.getElementById('sel-shift-jamK').value = jamK;
-            document.getElementById('sel-shift-tol').value = tol;
-            document.getElementById('sel-shift-lembur').value = lembur;
-            
-            // Update animasi warna kartu di dalam pop-up
-            document.querySelectorAll('.swal-shift-card').forEach(el => {
-                // Matikan lampu hijau di semua kartu
-                el.classList.remove('bg-emerald-500/20', 'border-emerald-500', 'shadow-[inset_0_0_15px_rgba(16,185,129,0.2)]');
-                el.classList.add('bg-black/40', 'border-white/10');
-                el.querySelector('div:nth-child(1)').classList.remove('text-emerald-400');
-                el.querySelector('div:nth-child(1)').classList.add('text-slate-400');
-                el.querySelector('div:nth-child(2)').classList.remove('text-emerald-500/70');
-                el.querySelector('div:nth-child(2)').classList.add('text-slate-500');
-                
-                // Nyalakan lampu hijau pada kartu yang disentuh
-                if(el.getAttribute('data-kode') === kode) {
-                    el.classList.remove('bg-black/40', 'border-white/10');
-                    el.classList.add('bg-emerald-500/20', 'border-emerald-500', 'shadow-[inset_0_0_15px_rgba(16,185,129,0.2)]');
-                    el.querySelector('div:nth-child(1)').classList.remove('text-slate-400');
-                    el.querySelector('div:nth-child(1)').classList.add('text-emerald-400');
-                    el.querySelector('div:nth-child(2)').classList.remove('text-slate-500');
-                    el.querySelector('div:nth-child(2)').classList.add('text-emerald-500/70');
-                    
-                    // Efek auto-scroll ke tengah
-                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }
-            });
-        };
-
         function munculkanPopupAutoAbsen(faceInfo, shift) {
             isPrompting = true; cekJarak();
             if(!isLocValid) {
@@ -637,7 +583,7 @@
                 return;
             }
             
-            // LOGIKA PINTAR: Cek OFF dengan proteksi undefined
+            // 🚀 LOGIKA PINTAR: Cek OFF dengan proteksi undefined
             const mySchedule = (gJadwalHariIni || []).filter(r => r.nama === faceInfo.n);
             const isOff = mySchedule.some(r => r.tipe === 'Libur' || (r.status && r.status.includes('OFF')));
             const isIzin = mySchedule.some(r => r.tipe === 'Izin' || (r.status && r.status.includes('IZIN')));
@@ -670,46 +616,17 @@
                 return; 
             }
             
-            // 🚀 JIKA TIDAK OFF: BUAT KARTU GESER DI DALAM POPUP
-            // 🚀 JIKA TIDAK OFF: BUAT KARTU GESER DI DALAM POPUP
-            const shiftTersedia = dbShift.filter(s => s.outlet === faceInfo.o);
-            
-            // 🚀 PERBAIKAN KOTAK GESER POPUP
-            let shiftCardsHtml = `<div class="flex flex-nowrap gap-3 overflow-x-auto pb-4 snap-x mt-4 w-full hide-scroll touch-pan-x" style="-ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch;">`;
-            
-            shiftTersedia.forEach(s => {
-                const isSelected = s.kode === shift.kode;
-                const colorClass = isSelected 
-                    ? "bg-emerald-500/20 border-emerald-500 shadow-[inset_0_0_15px_rgba(16,185,129,0.2)]" 
-                    : "bg-black/40 border-white/10";
-                const textMainClass = isSelected ? "text-emerald-400" : "text-slate-400";
-                const textSubClass = isSelected ? "text-emerald-500/70" : "text-slate-500";
-                
-                // Merangkai tombol kartu (Tambah select-none agar lancar di-swipe)
-                shiftCardsHtml += `
-                    <button onclick="window.pilihShiftDiPopup('${s.kode}', '${s.jamMasuk}', '${s.jamKeluar}', '${s.toleransi}', '${s.ambangLembur || 60}')" 
-                        class="swal-shift-card shrink-0 w-[140px] rounded-xl p-4 text-center transition-all snap-center border select-none cursor-pointer outline-none focus:outline-none ${colorClass}" 
-                        data-kode="${s.kode}">
-                        <div class="text-[15px] font-black uppercase tracking-widest mb-1 pointer-events-none transition-colors ${textMainClass}">${s.kode}</div>
-                        <div class="text-[10px] font-bold pointer-events-none transition-colors ${textSubClass}"><i class="far fa-clock mr-1"></i>${s.jamMasuk} - ${s.jamKeluar}</div>
-                    </button>
-                `;
-            });
-            shiftCardsHtml += `</div>`;
-            shiftCardsHtml += `<div class="text-[10px] text-amber-500 font-bold mt-2 animate-pulse"><i class="fas fa-arrows-alt-h mr-1 text-sm"></i>Geser kartu ke samping jika shift salah</div>`;
-
-            // MUNCULKAN POPUP
+            // JIKA TIDAK OFF
             Swal.fire({
                 title: `<span class="text-[#F8F1E5] text-xl font-black">Hai, ${faceInfo.n}! 👋</span>`,
-                // 🚀 PERBAIKAN: Bungkus html dengan "w-full overflow-hidden" agar tidak menjebol sisi kanan layar
-                html: `<div class="text-[#e8d5c4] text-xs w-full overflow-hidden">Anda terdeteksi berada di <b class="text-white">${faceInfo.o}</b>.<br><br>Target Shift Hari Ini:${shiftCardsHtml}</div>`,
+                html: `<div class="text-[#e8d5c4] text-xs">Anda terdeteksi berada di <b class="text-white">${faceInfo.o}</b>.<br><br>Target Shift Hari Ini:<br><div class="bg-black/60 rounded-xl py-3 mt-3 font-black text-xl text-[#D4AF37] border border-[#D4AF37]/30 shadow-inner">${shift.kode} <span class="text-[9px] uppercase font-bold text-[#F8F1E5]/50 block mt-1 tracking-widest">${shift.jamMasuk} - ${shift.jamKeluar}</span></div></div>`,
                 showDenyButton: true, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)', confirmButtonText: '<i class="fas fa-right-to-bracket mr-1"></i> MASUK', denyButtonText: '<i class="fas fa-right-from-bracket mr-1"></i> PULANG', cancelButtonText: 'Batal', allowOutsideClick: false,
                 customClass: { 
                     popup: 'swal2-popup', 
                     confirmButton: 'bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-colors', 
                     denyButton: 'bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(225,29,72,0.4)] transition-colors', 
                     cancelButton: 'bg-transparent text-slate-400 hover:text-white rounded-xl w-full text-xs py-2 border border-white/10 transition-colors', 
-                    actions: 'flex-col w-full px-4 mt-3' 
+                    actions: 'flex-col w-full px-4 mt-2' 
                 }
             }).then((result) => {
                 if (result.isConfirmed) { kirimAbsen('Masuk'); } 
