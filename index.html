@@ -845,7 +845,7 @@
                             icon: 'success', 
                             title: '<span class="text-[#F8F1E5] text-xl font-black">Izin Tercatat</span>', 
                             html: `<div class="text-[#e8d5c4] text-xs">Pengajuan izin <b>${currentFace.n}</b> berhasil dikirim ke sistem.<br><br>
-                            <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-amber-400 hover:to-orange-500 transition-all shadow-amber-900/50 mt-2">
+                            <button onclick="salinDanBukaWA('${waLink}', decodeURIComponent('${textWA}'))" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-amber-400 hover:to-orange-500 transition-all shadow-amber-900/50 mt-2">
                                 <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA
                             </button>
                             </div>`, 
@@ -931,7 +931,7 @@
                             Swal.fire({
                                 icon: 'success', title: '<span class="text-[#F8F1E5] text-xl font-black">Terekam di Sistem</span>', 
                                 html: `<div class="text-[#e8d5c4] text-xs">Pengajuan Tukar Shift berhasil direkam.<br><br>
-                                <button onclick="salinDanBukaWA(\`${waLink}\`, \`${rawText.replace(/"/g, '&quot;').replace(/\n/g, '\\n')}\`)" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs mt-3 hover:from-purple-400 hover:to-indigo-500 transition-all shadow-purple-900/50">
+                                <button onclick="salinDanBukaWA('${waLink}', decodeURIComponent('${textWA}'))" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs mt-3 hover:from-purple-400 hover:to-indigo-500 transition-all shadow-purple-900/50">
                                     <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> KIRIM KE GRUP WA
                                 </button>
                                 </div>`, 
@@ -1133,6 +1133,5 @@
             }, 400);
         }
     </script>
-
 </body>
 </html>
