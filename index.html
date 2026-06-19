@@ -41,9 +41,6 @@
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
-        /* Menyembunyikan scrollbar khusus untuk arena kartu shift (Cross-browser) */
-        .hide-scroll::-webkit-scrollbar { display: none; }
-
         /* SweetAlert2 Premium Dark Mode */
         div:where(.swal2-container) .swal2-popup { border-radius: 2rem !important; border: 1px solid rgba(248, 241, 229, 0.1) !important; background: rgba(26, 1, 1, 0.95) !important; backdrop-filter: blur(20px) !important; color: #F8F1E5 !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8) !important; }
         div:where(.swal2-container) .swal2-title, div:where(.swal2-container) .swal2-html-container { color: #F8F1E5 !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
@@ -130,24 +127,17 @@
                     <i class="fas fa-location-crosshairs animate-pulse"></i> <span id="dist-text">Mencari lokasi...</span>
                 </div>
 
-               <div class="relative mb-3">
-                    <i class="fas fa-store absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                    <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer disabled:bg-white/5 disabled:text-slate-500"><option value="" disabled selected>Outlet...</option></select>
-                    <i id="outlet-chevron" class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
-                </div>
-                
-                <!-- 🚀 FITUR BARU: KARTU SHIFT GESER -->
-                <div class="w-full mb-1">
-                    <div id="shift-container" class="flex gap-2 overflow-x-auto custom-scroll pb-2 snap-x hide-scroll" style="-ms-overflow-style: none; scrollbar-width: none;">
-                        <!-- Kartu shift akan muncul otomatis di sini -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="relative">
+                        <i class="fas fa-store absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <select id="sel-outlet" onchange="loadShiftDropdown()" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer disabled:bg-white/5 disabled:text-slate-500"><option value="" disabled selected>Outlet...</option></select>
+                        <i id="outlet-chevron" class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
                     </div>
-                    
-                    <!-- Memori tersembunyi agar fungsi kirimAbsen tidak rusak -->
-                    <input type="hidden" id="sel-shift" value="">
-                    <input type="hidden" id="sel-shift-jamM" value="">
-                    <input type="hidden" id="sel-shift-jamK" value="">
-                    <input type="hidden" id="sel-shift-tol" value="">
-                    <input type="hidden" id="sel-shift-lembur" value="">
+                    <div class="relative">
+                        <i class="fas fa-clock absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <select id="sel-shift" class="w-full p-3.5 pl-8 glass-input rounded-xl text-[11px] font-bold appearance-none cursor-pointer"><option value="" disabled selected>Shift...</option></select>
+                        <i class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] pointer-events-none"></i>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-2.5 pt-1">
@@ -319,58 +309,14 @@
         function loadShiftDropdown() {
             cekJarak();
             const outletName = document.getElementById('sel-outlet').value;
-            const shiftContainer = document.getElementById('shift-container');
+            const shiftSelect = document.getElementById('sel-shift');
             const shiftTersedia = dbShift.filter(s => s.outlet === outletName);
             
-            document.getElementById('sel-shift').value = ""; // Reset pilihan
-            
-            if(shiftTersedia.length === 0) { 
-                shiftContainer.innerHTML = '<div class="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-[10px] text-slate-500 italic text-center">Belum ada jadwal shift</div>'; 
-            } else {
-                shiftContainer.innerHTML = '';
-                shiftTersedia.forEach((s) => {
-                    const btn = document.createElement('button');
-                    // Desain kartu standar (Belum dipilih)
-                    btn.className = "shift-pill shrink-0 w-[45%] bg-black/40 border border-white/10 text-slate-400 rounded-xl p-3 text-left transition-all snap-center";
-                    btn.innerHTML = `<div class="text-[11px] font-black uppercase tracking-widest mb-0.5">${s.kode}</div><div class="text-[9px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${s.jamMasuk} - ${s.jamKeluar}</div>`;
-                    
-                    // Jika kartu disentuh, panggil fungsi ini
-                    btn.onclick = () => pilihShiftManual(s, btn);
-                    shiftContainer.appendChild(btn);
-                });
+            if(shiftTersedia.length === 0) { shiftSelect.innerHTML = '<option value="" disabled selected>Belum ada jadwal</option>'; } 
+            else {
+                shiftSelect.innerHTML = '<option value="" disabled selected>Pilih Shift Target...</option>';
+                shiftTersedia.forEach(s => { shiftSelect.innerHTML += `<option value="${s.kode}" data-jamm="${s.jamMasuk}" data-jamk="${s.jamKeluar}" data-tol="${s.toleransi}" data-lembur="${s.ambangLembur}">${s.kode} (${s.jamMasuk}-${s.jamKeluar})</option>`; });
             }
-            updateUI(currentFace !== null, isLivenessPassed ? "READY" : "SEARCH");
-        }
-
-        // 🚀 FUNGSI BARU: Mengubah warna kartu saat dipilih
-        function pilihShiftManual(s, btnElement) {
-            // Simpan data shift ke memori tersembunyi
-            document.getElementById('sel-shift').value = s.kode;
-            document.getElementById('sel-shift-jamM').value = s.jamMasuk;
-            document.getElementById('sel-shift-jamK').value = s.jamKeluar;
-            document.getElementById('sel-shift-tol').value = s.toleransi;
-            document.getElementById('sel-shift-lembur').value = s.ambangLembur;
-            
-            // Matikan warna hijau di semua kartu
-            document.querySelectorAll('.shift-pill').forEach(el => {
-                el.classList.remove('bg-emerald-500/20', 'border-emerald-500', 'text-emerald-400', 'shadow-[inset_0_0_15px_rgba(16,185,129,0.2)]');
-                el.classList.add('bg-black/40', 'border-white/10', 'text-slate-400');
-                el.querySelector('div:nth-child(2)').classList.remove('text-emerald-500/70');
-                el.querySelector('div:nth-child(2)').classList.add('text-slate-500');
-            });
-            
-            // Nyalakan warna hijau pada kartu yang dipilih
-            if (btnElement) {
-                btnElement.classList.remove('bg-black/40', 'border-white/10', 'text-slate-400');
-                btnElement.classList.add('bg-emerald-500/20', 'border-emerald-500', 'text-emerald-400', 'shadow-[inset_0_0_15px_rgba(16,185,129,0.2)]');
-                btnElement.querySelector('div:nth-child(2)').classList.remove('text-slate-500');
-                btnElement.querySelector('div:nth-child(2)').classList.add('text-emerald-500/70');
-                // Otomatis geser/scroll kartu ke tengah layar
-                btnElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
-            
-            // Beritahu sistem bahwa shift sudah dipilih agar tombol Masuk menyala
-            updateUI(currentFace !== null, isLivenessPassed ? "READY" : "SEARCH");
         }
 
         function cariShiftOtomatis(outletName, namaKaryawan) {
@@ -536,18 +482,11 @@
                                 
                                 const autoShift = cariShiftOtomatis(info.o, info.n); 
                                 if(autoShift) {
-                                    // 🚀 Cari kartu mana yang sesuai dengan tebakan AI, lalu otomatis klik
-                                    const btns = document.querySelectorAll('.shift-pill');
-                                    let targetBtn = null;
-                                    btns.forEach(b => { if(b.innerHTML.includes(autoShift.kode)) targetBtn = b; });
-                                    
-                                    if (targetBtn) {
-                                        pilihShiftManual(autoShift, targetBtn);
-                                    }
-                                    
+                                    document.getElementById('sel-shift').value = autoShift.kode;
                                     updateUI(true, "READY");
                                     munculkanPopupAutoAbsen(info, autoShift);
                                 } else { updateUI(true, "READY"); }
+                            } else { currentFace = info; updateUI(true, "READY"); }
                             
                         } else { 
                             hudScanner.className = "absolute border-4 border-solid border-rose-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-100 ease-out shadow-[inset_0_0_30px_rgba(225,29,72,0.3)] bg-rose-500/5 box-border";
@@ -568,7 +507,7 @@
                         faceapi.draw.drawFaceLandmarks(canvas, resized, drawBox); 
                     }
                 }
-            }, 300) 
+            }, 300); 
         });
 
         function updateUI(found, state = "SEARCH") {
@@ -696,7 +635,7 @@
             });
         }
         
-      function ambilFotoKamera(tipe_absen = "FOTO") {
+        function ambilFotoKamera(tipe_absen = "FOTO") {
             const tempCanvas = document.createElement('canvas'); 
             const MAX_WIDTH = 360; 
             const scale = MAX_WIDTH / video.videoWidth; 
@@ -714,26 +653,21 @@
             const outlet = document.getElementById('sel-outlet').value || "Lokasi Tidak Diketahui";
             const shift = document.getElementById('sel-shift').value || "-";
             const now = new Date();
-            
-            let tglStr = "";
-            let jamStr = "";
-            try {
-                tglStr = now.toLocaleDateString('id-ID', { timeZone: 'Asia/Makassar', day:'2-digit', month:'short', year:'numeric' });
-                jamStr = now.toLocaleTimeString('id-ID', { timeZone: 'Asia/Makassar', hour:'2-digit', minute:'2-digit', hour12: false }) + ' WITA';
-            } catch(e) {
-                tglStr = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
-                jamStr = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
-            }
+            const tglStr = now.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+            const jamStr = now.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
 
             ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
             ctx.fillRect(0, tempCanvas.height - 80, tempCanvas.width, 80);
 
             ctx.textAlign = "left";
             ctx.font = "bold 12px sans-serif";
+            
             ctx.fillStyle = "#F8F1E5";
             ctx.fillText(`[ ${tipe_absen.toUpperCase()} ] • ${tglStr} ${jamStr}`, 12, tempCanvas.height - 58);
+            
             ctx.fillStyle = "#D4AF37"; 
             ctx.fillText(`👤 ${nama}`, 12, tempCanvas.height - 38);
+            
             ctx.fillStyle = "#10b981"; 
             ctx.fillText(`🏢 ${outlet}  |  💼 Shift: ${shift}`, 12, tempCanvas.height - 18);
 
@@ -743,13 +677,11 @@
         async function kirimAbsen(tipe) {
             isPrompting = true; 
             const out = document.getElementById('sel-outlet').value;
-            
-            // BACA DARI MEMORI TERSEMBUNYI KARTU SHIFT
-            const shfVal = document.getElementById('sel-shift').value;
-            const shfM = document.getElementById('sel-shift-jamM').value;
-            const shfK = document.getElementById('sel-shift-jamK').value;
-            const shfTol = document.getElementById('sel-shift-tol').value;
-            const shfLembur = document.getElementById('sel-shift-lembur').value || 60;
+            const shf = document.getElementById('sel-shift');
+            const shfM = shf.options[shf.selectedIndex].getAttribute('data-jamm');
+            const shfK = shf.options[shf.selectedIndex].getAttribute('data-jamk');
+            const shfTol = shf.options[shf.selectedIndex].getAttribute('data-tol');
+            const shfLembur = shf.options[shf.selectedIndex].getAttribute('data-lembur') || 60;
             const fotoData = ambilFotoKamera(tipe);
 
             const flash = document.getElementById('flash-overlay');
@@ -761,14 +693,14 @@
                 const res = await fetch(API_URL, { 
                     method: 'POST', body: JSON.stringify({ 
                         action: 'absen', 
-                        payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shfVal, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, ambangLembur: shfLembur, tipe: tipe, jarak: distance, foto: fotoData } 
+                        payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shf.value, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, ambangLembur: shfLembur, tipe: tipe, jarak: distance, foto: fotoData } 
                     }) 
                 });
                 const result = await res.json();
                 
                 if (result.status === 'success') {
                     let rawSummary = result.summaryWA ? result.summaryWA.replace(/%0A/g, '\n') : '';
-                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shfVal} (${shfM}-${shfK})\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipe.toUpperCase()}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* ${result.linkFoto}\n\n======================\n${rawSummary}`;
+                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shf.value} (${shfM}-${shfK})\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipe.toUpperCase()}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* ${result.linkFoto}\n\n======================\n${rawSummary}`;
                     
                     const textWA = encodeURIComponent(rawText);
                     const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
@@ -1134,5 +1066,6 @@
             }, 400);
         }
     </script>
+
 </body>
 </html>
