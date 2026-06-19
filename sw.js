@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aimoy-kiosk-v37'; // Ingat untuk menaikkan ini jika ada update HTML
+const CACHE_NAME = 'aimoy-kiosk-v38'; // Ingat untuk menaikkan ini jika ada update HTML
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
