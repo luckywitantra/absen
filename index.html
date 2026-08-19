@@ -841,25 +841,40 @@
                 });
                 const result = await res.json();
                 
-                if (result.status === 'success') {
-                    let rawSummary = result.summaryWA ? result.summaryWA.replace(/%0A/g, '\n') : '';
-                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shfVal} (${shfM}-${shfK})\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipe.toUpperCase()}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* ${result.linkFoto}\n\n======================\n${rawSummary}`;
+                // 🚀 FITUR KIRIM ULANG WA: Tangkap status 'success' atau 'duplicate_masuk'
+                if (result.status === 'success' || result.status === 'duplicate_masuk') {
                     
-                    const textWA = encodeURIComponent(rawText).replace(/'/g, "%27");
-                    const waLink = `https://api.whatsapp.com/send?text=${textWA}`;
+                    const isDuplicate = result.status === 'duplicate_masuk';
+                    const titleText = isDuplicate ? 'Sudah Absen! 🔂' : 'Absen Sukses!';
+                    const iconType = isDuplicate ? 'info' : 'success';
+                    const infoMsg = isDuplicate 
+                        ? `Anda sudah tercatat <b>MASUK</b> sebelumnya pada jam <b>${result.jam}</b>.<br>Klik tombol di bawah jika Anda belum mengirim laporan WA.`
+                        : `Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.`;
+
+                    let rawSummary = result.summaryWA ? result.summaryWA.replace(/%0A/g, '\n') : '';
+                    
+                    // Gunakan shift gantung jika duplicate, atau shift yang dipilih jika normal
+                    const shiftDipakai = result.shiftTarget || shfVal; 
+                    
+                    // Karena duplicate selalu berstatus MASUK (gantung), kita hardcode tipe-nya
+                    const tipeDipakai = isDuplicate ? 'MASUK' : tipe.toUpperCase();
+
+                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shiftDipakai}\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipeDipakai}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* ${result.linkFoto}\n\n======================\n${rawSummary}`;
+                    
+                    const encodedTextWA = encodeURIComponent(rawText).replace(/'/g, "%27");
 
                     let statusColor = result.statusWaktu.includes('TERLAMBAT') || result.statusWaktu.includes('GAGAL') || result.statusWaktu.includes('PULANG AWAL') ? 'text-rose-400' : 'text-emerald-400';
 
                     Swal.fire({
-                        icon: 'success', 
-                        title: '<span class="text-[#F8F1E5] text-xl font-black">Absen Sukses!</span>',
-                        html: `<div class="text-[#e8d5c4] text-xs">Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.<br><br>
+                        icon: iconType, 
+                        title: `<span class="text-[#F8F1E5] text-xl font-black">${titleText}</span>`,
+                        html: `<div class="text-[#e8d5c4] text-xs">${infoMsg}<br><br>
                         <div class="bg-black/50 p-4 rounded-xl border border-white/5 mb-3">
                             <span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span>
                             <b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b>
                         </div>
-                        <button onclick="salinDanBukaWA('${textWA}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
-                            <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA
+                        <button onclick="salinDanBukaWA('${encodedTextWA}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
+                            <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> ${isDuplicate ? 'KIRIM ULANG KE WA' : 'LAPORKAN KE GRUP WA'}
                         </button>
                         <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan otomatis disalin.</p>
                         </div>`,
