@@ -1,86 +1,34 @@
-const CACHE_NAME = 'aimoy-kiosk-v46'; // Ingat untuk menaikkan ini jika ada update HTML
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './admin.html',
-  './manifest.json',
+/* AiMoy PWA Service Worker v48 — bounded cache, safe updates, graceful offline shell */
+const CACHE_VERSION = 'aimoy-hc-v48';
+const APP_SHELL = ['./','./index.html','./admin.html','./manifest.json','./manifest-admin.json','./logoaimoy.png'];
+const OPTIONAL_ASSETS = [
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/sweetalert2@11',
-  'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js'
+  'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
-
-// Saat aplikasi diinstall pertama kali, simpan semua aset ke memori HP
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
+self.addEventListener('install', event => {
+  event.waitUntil((async()=>{
+    const cache=await caches.open(CACHE_VERSION);
+    await Promise.all(APP_SHELL.map(async url=>{try{const r=await fetch(url,{cache:'reload'});if(r.ok)await cache.put(url,r);}catch(_){}}));
+    await Promise.all(OPTIONAL_ASSETS.map(async url=>{try{const r=await fetch(url,{mode:'cors'});if(r.ok)await cache.put(url,r);}catch(_){}}));
+    // Do not skip waiting automatically; allow an active session to finish before update activation.
+  })());
 });
-
-// Hapus cache lama jika ada versi baru
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
-  );
-});
-
-// Saat aplikasi meminta file (Offline First Strategy)
-self.addEventListener('fetch', (event) => {
-  // Biarkan request ke server Google Apps Script tetap melalui internet
-  if (event.request.url.includes('script.google.com')) return;
-
-  // 🚀 STRATEGI BARU: Network First untuk file HTML
-  // Sistem akan selalu mencoba mengambil kodingan terbaru dari internet jika HP online
-  if (event.request.mode === 'navigate' || event.request.url.includes('.html')) {
-    event.respondWith(
-      fetch(event.request).then((networkResponse) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
-      }).catch(() => {
-        // Jika HP sedang Offline/Tidak ada sinyal, baru gunakan cache memori HP
-        return caches.match(event.request);
-      })
-    );
-    return;
+self.addEventListener(activate,event=>event.waitUntil((async()=>{
+  const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('aimoy-hc-')&&k!==CACHE_VERSION).map(k=>caches.delete(k)));
+  await self.clients.claim();
+})()));
+self.addEventListener(fetch,event=>{
+  const req=event.request;if(req.method!=='GET')return;
+  const url=new URL(req.url);
+  // API requests are never cached; attendance transactions must reach the server or show a clear failure.
+  if(url.hostname==='script.google.com'||url.pathname.includes('/macros/s/'))return;
+  if(req.mode==='navigate'){
+    event.respondWith((async()=>{try{const fresh=await fetch(req);if(fresh&&fresh.ok){const c=await caches.open(CACHE_VERSION);c.put(req,fresh.clone());}return fresh;}catch(_){return (await caches.match(req))||(await caches.match('./index.html'))||Response.error();}})());return;
   }
-
-  // ⚡ STRATEGI LAMA: Cache First untuk aset berat (Tailwind, Face-API, Gambar) agar load instan
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          // Jangan cache request dari API luar yang tidak relevan
-          if (event.request.url.startsWith('http')) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        });
-      });
-    })
-  );
-});
-
-// ==========================================
-// 🚀 KEPINGAN TERAKHIR: PEMICU SKIP WAITING
-// ==========================================
-// Memaksa Service Worker baru langsung aktif saat tombol "Muat Ulang Sekarang" ditekan di HTML
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.action === 'skipWaiting') {
-    self.skipWaiting();
+  if(url.origin===self.location.origin||OPTIONAL_ASSETS.some(a=>req.url.startsWith(a))){
+    event.respondWith((async()=>{const cache=await caches.open(CACHE_VERSION);const cached=await cache.match(req);if(cached)return cached;try{const fresh=await fetch(req);if(fresh&&fresh.ok&&req.url.startsWith('http'))cache.put(req,fresh.clone());return fresh;}catch(_){return cached||Response.error();}})());
   }
 });
+self.addEventListener(message,event=>{if(event.data&&event.data.action==='skipWaiting')self.skipWaiting();});
