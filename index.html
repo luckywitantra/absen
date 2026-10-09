@@ -52,9 +52,16 @@
         
         /* Flash Camera Effect */
         #flash-overlay { position: absolute; inset: 0; background: white; opacity: 0; z-index: 100; pointer-events: none; transition: opacity 0.15s ease-out; }
-    </style>
+    
+        #aimoy-employee-gate{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,0,0,.96);backdrop-filter:blur(14px)}
+        #aimoy-employee-gate .gate-card{width:min(100%,420px);background:#fffaf0;color:#1f2937;border-radius:24px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+        #aimoy-employee-gate input{width:100%;box-sizing:border-box;padding:13px;border:1px solid #d6d3d1;border-radius:12px;font-size:16px;color:#111827;background:#fff;margin-top:5px}
+        #aimoy-employee-gate button{width:100%;padding:13px;border-radius:12px;background:#991b1b;color:white;font-weight:900;margin-top:14px}
+        #aimoy-employee-gate button:disabled{opacity:.55}
+        @media(prefers-reduced-motion:reduce){#aimoy-employee-gate *{transition:none!important;animation:none!important}}
+</style>
 <style>
-/* AiMoy Employee UX patch v48 */
+/* AiMoy Employee UX patch v47 */
 html{scroll-behavior:smooth}button,input,select,textarea{font-size:16px}button{min-height:44px;touch-action:manipulation}
 :focus-visible{outline:3px solid #fbbf24!important;outline-offset:2px}
 body{padding-bottom:env(safe-area-inset-bottom)}
@@ -63,6 +70,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 </style>
 </head>
 <body class="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-[#4a0404] to-[#0a0000] selection:bg-amber-900 selection:text-amber-100">
+<div id="aimoy-employee-gate" role="dialog" aria-modal="true" aria-labelledby="aimoy-gate-title"><div class="gate-card"><div style="display:flex;align-items:center;gap:12px"><img src="./logoaimoy.png" alt="AiMoy" style="width:54px;height:54px;object-fit:contain;border-radius:14px"><div><h2 id="aimoy-gate-title" style="font-size:22px;font-weight:900;margin:0">Login Karyawan</h2><p style="font-size:12px;color:#78716c;margin:4px 0 0">Verifikasi akun sebelum membuka kamera absensi</p></div></div><form id="aimoy-kiosk-login-form"><label for="aimoy-kiosk-username" style="display:block;font-size:12px;font-weight:800;margin-top:18px">USERNAME</label><input id="aimoy-kiosk-username" autocomplete="username" required><label for="aimoy-kiosk-password" style="display:block;font-size:12px;font-weight:800;margin-top:12px">PASSWORD</label><input id="aimoy-kiosk-password" type="password" autocomplete="current-password" required><button id="aimoy-kiosk-login-btn" type="submit">Masuk dan lanjutkan absensi</button></form><p id="aimoy-kiosk-login-status" role="status" style="font-size:12px;color:#991b1b;min-height:18px"></p><p style="font-size:11px;color:#78716c;line-height:1.5">Jika belum memiliki akun, hubungi admin HC. Login ini tidak menggantikan verifikasi wajah dan GPS.</p></div></div>
 
     <div class="w-full h-full max-w-md mx-auto flex flex-col relative sm:h-[95vh] sm:my-[2.5vh] sm:rounded-[2.5rem] overflow-hidden shadow-2xl sm:border border-white/10">
         
@@ -81,7 +89,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                 </div>
             </div>
             <div class="text-right">
-                <p class="text-[9px] text-[#e8d5c4] font-bold uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">Absensi AI</p>
+                <div class="flex flex-col items-end gap-1"><p class="text-[9px] text-[#e8d5c4] font-bold uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">Absensi AI</p><button type="button" onclick="aimoyKioskLogout()" class="text-[9px] font-black uppercase tracking-widest text-amber-300 border border-amber-300/30 rounded-lg px-2.5 py-1">Keluar</button></div>
             </div>
         </header>
 
@@ -119,7 +127,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             
             <div class="flex mb-4 border-b border-white/10">
                 <button onclick="switchTab('absen')" id="tab-absen" class="flex-1 py-3 text-[10px] font-black text-[#D4AF37] border-b-2 border-[#D4AF37] transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-clipboard-user text-sm"></i> ABSENSI</button>
-                <button onclick="switchTab('reg')" id="tab-reg" class="flex-1 py-3 text-[10px] font-black text-slate-500 border-b-2 border-transparent hover:text-slate-300 transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-user-plus text-sm"></i> REGISTRASI</button>
+                <button onclick="switchTab('reg')" id="tab-reg" style="display:none" class="flex-1 py-3 text-[10px] font-black text-slate-500 border-b-2 border-transparent hover:text-slate-300 transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-user-plus text-sm"></i> REGISTRASI</button>
             </div>
 
             <div id="panel-absen" class="space-y-3">
@@ -215,7 +223,9 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         const hudScanner = document.getElementById('hud-scanner');
         
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
-        let userLat = 0, userLng = 0, distance = 0, isLocValid = false, lastRecognizedName = null;
+        window.aimoyEmployeeToken = sessionStorage.getItem('aimoy_kiosk_employee_token_v1') || '';
+        window.aimoyEmployeeProfile = null;
+        let userLat = 0, userLng = 0, userAccuracy = null, distance = 0, isLocValid = false, lastRecognizedName = null;
         let isPrompting = false, isLivenessPassed = false;
         
         const REQUIRED_SMILE_SCORE = 0.65; 
@@ -227,7 +237,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                 navigator.geolocation.watchPosition(
                     pos => { 
                         userLat = pos.coords.latitude; 
-                        userLng = pos.coords.longitude; 
+                        userLng = pos.coords.longitude;
+                        userAccuracy = pos.coords.accuracy; 
                         document.getElementById('geo-status').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> GPS TERKUNCI'; 
                         document.getElementById('geo-status').className = "text-emerald-400 text-[9px] tracking-widest font-bold mt-1 uppercase flex items-center gap-1.5"; 
                         cekJarak(); 
@@ -236,7 +247,20 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                     { enableHighAccuracy: true }
                 );
             }
-            setTimeout(initApp, 500);
+            setTimeout(startKioskAfterAuth, 500);
+        });
+
+        function aimoyKioskLogout(){sessionStorage.removeItem('aimoy_kiosk_employee_token_v1');window.aimoyEmployeeToken='';localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');try{const v=document.getElementById('video');if(v&&v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());}catch(e){}location.reload();}
+        async function startKioskAfterAuth() {
+            const gate=document.getElementById('aimoy-employee-gate');
+            if(!window.aimoyEmployeeToken){gate.style.display='flex';return;}
+            try{const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_self_service',employeeToken:window.aimoyEmployeeToken})});const d=await r.json();if(d.status!=='success')throw new Error(d.message||'Sesi berakhir');window.aimoyEmployeeProfile=d.employee;localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');gate.style.display='none';initApp();}
+            catch(e){sessionStorage.removeItem('aimoy_kiosk_employee_token_v1');window.aimoyEmployeeToken='';gate.style.display='flex';document.getElementById('aimoy-kiosk-login-status').textContent='Sesi berakhir. Silakan login kembali.';}
+        }
+        document.getElementById('aimoy-kiosk-login-form').addEventListener('submit',async function(e){
+            e.preventDefault();const btn=document.getElementById('aimoy-kiosk-login-btn'),status=document.getElementById('aimoy-kiosk-login-status');btn.disabled=true;status.textContent='Memverifikasi akun…';
+            try{const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_login',payload:{username:document.getElementById('aimoy-kiosk-username').value.trim(),password:document.getElementById('aimoy-kiosk-password').value}})});const d=await r.json();if(d.status!=='success'||!d.token)throw new Error(d.message||'Login gagal');window.aimoyEmployeeToken=d.token;window.aimoyEmployeeProfile=d.employee;sessionStorage.setItem('aimoy_kiosk_employee_token_v1',d.token);document.getElementById('aimoy-kiosk-password').value='';localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');document.getElementById('aimoy-employee-gate').style.display='none';status.textContent='';initApp();}
+            catch(err){status.textContent=err.message||'Login gagal.';}finally{btn.disabled=false;}
         });
 
         function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
@@ -270,7 +294,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                 // Set cache ke 1 detik untuk masa testing agar selalu sync dengan Google Sheets
                 if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < 1000) {
                     dataGAS = JSON.parse(cachedData);
-                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) })
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init', employeeToken: window.aimoyEmployeeToken }) })
                         .then(r => r.json())
                         .then(freshData => {
                             if(freshData.status === 'ready') {
@@ -282,16 +306,16 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                                 gKaryawan = freshData.dataKaryawan; 
                                 
                                 if (freshData.dataKaryawan.length > 0) {
-                                    const labeled = freshData.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
+                                    const labeled = freshData.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet, id: k.id}), [new Float32Array(k.descriptor)]));
                                     faceMatcher = new faceapi.FaceMatcher(labeled, 0.38);
                                 }
                             }
                         }).catch(e => console.log("Sync background gagal."));
                 } else {
-                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init', employeeToken: window.aimoyEmployeeToken }) });
                     dataGAS = await res.json();
                     
-                    if(dataGAS.status !== 'ready') throw new Error("API Error");
+                    if(dataGAS.status !== 'ready') throw new Error(dataGAS.message || "API Error");
 
                     localStorage.setItem('aimoy_master_data', JSON.stringify(dataGAS));
                     localStorage.setItem('aimoy_master_time', Date.now().toString());
@@ -308,7 +332,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                 document.getElementById('reg-outlet').innerHTML = outHtml;
 
                 if (gKaryawan.length > 0) {
-                    const labeled = gKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet}), [new Float32Array(k.descriptor)]));
+                    const labeled = gKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet, id: k.id}), [new Float32Array(k.descriptor)]));
                     faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); 
                 }
                 
@@ -821,10 +845,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             ctx.fillStyle = "#10b981"; 
             ctx.fillText(`🏢 ${outlet}  |  💼 Shift: ${shift}`, 12, tempCanvas.height - 18);
 
-            // Simpan sementara hanya di memori halaman untuk dibagikan sebagai lampiran WhatsApp.
-            // Foto tidak perlu dibuka untuk publik di Google Drive.
-            window.aimoyLastAttendancePhoto = tempCanvas.toDataURL('image/jpeg', 0.72);
-            return window.aimoyLastAttendancePhoto; 
+            return tempCanvas.toDataURL('image/jpeg', 0.5); 
         }
 
         async function kirimAbsen(tipe) {
@@ -837,6 +858,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             const shfTol = document.getElementById('sel-shift-tol').value;
             const shfLembur = document.getElementById('sel-shift-lembur').value || 60;
             const fotoData = ambilFotoKamera(tipe);
+            const requestId = window.aimoyPendingRequestId || (window.aimoyPendingRequestId = (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ('req-'+Date.now()+'-'+Math.random().toString(36).slice(2))));
 
             const flash = document.getElementById('flash-overlay');
             if(flash) { flash.style.opacity = '1'; setTimeout(() => { flash.style.opacity = '0'; }, 150); }
@@ -846,8 +868,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             try {
                 const res = await fetch(API_URL, { 
                     method: 'POST', body: JSON.stringify({ 
-                        action: 'absen', 
-                        payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shfVal, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, ambangLembur: shfLembur, tipe: tipe, jarak: distance, foto: fotoData } 
+                        action: 'absen', employeeToken: window.aimoyEmployeeToken,
+                        payload: { requestId: requestId, employeeId: currentFace.id, lat: userLat, lng: userLng, accuracy: userAccuracy, nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shfVal, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, ambangLembur: shfLembur, tipe: tipe, jarak: distance, foto: fotoData } 
                     }) 
                 });
                 const result = await res.json();
@@ -856,11 +878,12 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                 if (result.status === 'success' || result.status === 'duplicate_masuk') {
                     
                     const isDuplicate = result.status === 'duplicate_masuk';
-                    const titleText = isDuplicate ? 'Sudah Absen! 🔂' : 'Absen Sukses!';
+                    if (result.status === 'success' || result.status === 'duplicate_masuk') window.aimoyPendingRequestId = null;
+                    const titleText = result.idempotentReplay ? 'Transaksi Sudah Tersimpan' : (isDuplicate ? 'Sudah Absen! 🔂' : 'Absen Sukses!');
                     const iconType = isDuplicate ? 'info' : 'success';
-                    const infoMsg = isDuplicate 
+                    const infoMsg = result.idempotentReplay ? `Permintaan yang sama sudah tersimpan pada jam <b>${result.jam}</b>. Sistem tidak membuat transaksi baru.` : (isDuplicate 
                         ? `Anda sudah tercatat <b>MASUK</b> sebelumnya pada jam <b>${result.jam}</b>.<br>Klik tombol di bawah jika Anda belum mengirim laporan WA.`
-                        : `Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.`;
+                        : `Anda tercatat <b>${tipe.toUpperCase()}</b> pada jam ${result.jam}.`);
 
                     let rawSummary = result.summaryWA ? result.summaryWA.replace(/%0A/g, '\n') : '';
                     
@@ -870,7 +893,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                     // Karena duplicate selalu berstatus MASUK (gantung), kita hardcode tipe-nya
                     const tipeDipakai = isDuplicate ? 'MASUK' : tipe.toUpperCase();
 
-                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shiftDipakai}\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipeDipakai}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* Foto absensi dilampirkan pada pesan ini\n\n======================\n${rawSummary}`;
+                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shiftDipakai}\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipeDipakai}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* dilampirkan bersama laporan (jika fitur berbagi file tersedia).\n\n======================\n${rawSummary}`;
+                    window.aimoyPendingAttendanceShare = { text: rawText, fotoData: fotoData, nama: currentFace.n, tipe: tipeDipakai, waktu: result.jam };
                     
                     const encodedTextWA = encodeURIComponent(rawText).replace(/'/g, "%27");
 
@@ -884,7 +908,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                             <span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span>
                             <b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b>
                         </div>
-                        <button onclick="salinDanBukaWA('${encodedTextWA}')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
+                        <button onclick="bagikanLaporanWhatsApp()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
                             <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> ${isDuplicate ? 'KIRIM ULANG KE WA' : 'LAPORKAN KE GRUP WA'}
                         </button>
                         <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan otomatis disalin.</p>
@@ -894,6 +918,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                         isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); 
                     });
                 } else { 
+                    window.aimoyPendingRequestId = null;
                     Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Ditolak Sistem</span>', html: `<span class="text-[#e8d5c4] text-xs">${result.message}</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); 
                 }
             } catch (e) { 
@@ -901,51 +926,33 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             }
         }
 
-        async function salinDanBukaWA(encodedText) {
-            const teks = decodeURIComponent(encodedText);
-            const link = `https://api.whatsapp.com/send?text=${encodedText}`;
-            const dataUrl = window.aimoyLastAttendancePhoto || '';
-            let sharedWithPhoto = false;
+        async function bagikanLaporanWhatsApp() {
+            const pending = window.aimoyPendingAttendanceShare;
+            if (!pending) { Swal.fire('Laporan tidak tersedia','Silakan muat ulang laporan absensi.','warning'); return; }
+            let file = null;
             try {
-                // Pada HP/browser yang mendukung Web Share API untuk file, foto + caption
-                // dibuka ke lembar berbagi native; pengguna memilih grup WhatsApp tujuan.
-                if (dataUrl && navigator.share && navigator.canShare) {
-                    const response = await fetch(dataUrl);
-                    const blob = await response.blob();
-                    const file = new File([blob], `AiMoy-Absen-${Date.now()}.jpg`, {type:'image/jpeg'});
-                    const shareData = {files:[file], text:teks, title:'Laporan Absensi AiMoy'};
-                    if (navigator.canShare({files:[file]})) {
-                        await navigator.share(shareData);
-                        sharedWithPhoto = true;
-                    }
+                const dataUrl = pending.fotoData || '';
+                const parts = dataUrl.split(',');
+                if (parts.length > 1) {
+                    const mime = (parts[0].match(/data:([^;]+)/)||[])[1] || 'image/jpeg';
+                    const bytes = atob(parts[1]); const array = new Uint8Array(bytes.length);
+                    for (let i=0;i<bytes.length;i++) array[i]=bytes.charCodeAt(i);
+                    file = new File([array], `AiMoy_Absensi_${String(pending.nama).replace(/[^a-z0-9_-]/gi,'_')}.jpg`, {type:mime});
                 }
-            } catch (err) {
-                // Pengguna dapat membatalkan lembar berbagi; jangan menganggap pesan terkirim.
-                if (err && err.name === 'AbortError') { Swal.close(); return; }
-                console.warn('Berbagi foto native tidak tersedia, gunakan fallback unduh.', err);
+                if (file && navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+                    await navigator.share({title:'Laporan Absensi AiMoy',text:pending.text,files:[file]});
+                    Swal.close(); return;
+                }
+            } catch (e) {
+                if (e && e.name === 'AbortError') return;
+                console.warn('Share file tidak tersedia:',e);
             }
-            if (!sharedWithPhoto) {
-                // Fallback desktop/browser: unduh foto secara lokal, lalu buka WhatsApp dengan caption.
-                // Pengguna harus memilih grup dan melampirkan file unduhan secara manual.
-                if (dataUrl) {
-                    const a = document.createElement('a');
-                    a.href = dataUrl; a.download = `AiMoy-Absen-${Date.now()}.jpg`;
-                    document.body.appendChild(a); a.click(); a.remove();
-                }
-                try {
-                    await navigator.clipboard.writeText(teks);
-                } catch (err) {
-                    const textArea = document.createElement('textarea'); textArea.value = teks;
-                    textArea.style.position = 'fixed'; textArea.style.left = '-999999px';
-                    document.body.appendChild(textArea); textArea.select();
-                    try { document.execCommand('copy'); } catch (_) {}
-                    textArea.remove();
-                }
-                window.open(link, '_blank');
-                Swal.fire({icon:'info',title:'Lanjutkan di WhatsApp',text:'Pilih grup tujuan. Jika foto belum terlampir otomatis, lampirkan file AiMoy-Absen yang baru diunduh sebelum mengirim.',background:'rgba(26, 1, 1, 0.95)',customClass:{popup:'swal2-popup'}});
-                return;
-            }
-            Swal.fire({icon:'success',title:'Siap dibagikan',text:'Pilih grup WhatsApp tujuan dan tekan Kirim. Aplikasi tidak dapat memastikan pesan terkirim sampai Anda mengirimnya di WhatsApp.',background:'rgba(26, 1, 1, 0.95)',customClass:{popup:'swal2-popup'}});
+            // Fallback: unduh foto privat sebagai file lokal dan buka WhatsApp dengan teks.
+            if (file) { const url=URL.createObjectURL(file); const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000); }
+            const encoded = encodeURIComponent(pending.text);
+            try { await navigator.clipboard.writeText(pending.text); } catch(e) {}
+            window.open(`https://api.whatsapp.com/send?text=${encoded}`,'_blank','noopener');
+            Swal.fire({icon:'info',title:'Laporan disiapkan',html:'WhatsApp dibuka dengan teks laporan. Jika foto belum ikut terlampir, lampirkan file foto yang baru diunduh sebelum menekan Kirim.',background:'rgba(26, 1, 1, 0.95)',confirmButtonText:'Mengerti'});
         }
 
         async function ajukanIzin() {
@@ -965,18 +972,19 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 
                 Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Merekam Data...</span>', html: '<span class="text-[#e8d5c4] text-xs">Menyimpan surat izin & foto bukti ke server.</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
                 try {
-                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', employeeToken: window.aimoyEmployeeToken, payload: { requestId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ('req-'+Date.now()+'-'+Math.random().toString(36).slice(2))), employeeId: currentFace.id, lat: userLat, lng: userLng, accuracy: userAccuracy, nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
                     const result = await res.json();
                     
                     if (result.status === 'success') {
-                        const rawText = `*FORMULIR PENGAJUAN IZIN*\n\n👤 *Nama:* ${currentFace.n}\n🏢 *Lokasi:* ${out}\n📝 *Keterangan:* ${alasan}\n📸 *Bukti Foto:* Lampirkan foto bukti yang dibagikan bersama pesan ini\n\nMohon konfirmasi dan kebijaksanaannya.`;
+                        const rawText = `*FORMULIR PENGAJUAN IZIN*\n\n👤 *Nama:* ${currentFace.n}\n🏢 *Lokasi:* ${out}\n📝 *Keterangan:* ${alasan}\n📸 *Bukti Foto:* dilampirkan bersama laporan jika berbagi file didukung.\n\nMohon konfirmasi dan kebijaksanaannya.`;
+                        window.aimoyPendingAttendanceShare = { text: rawText, fotoData: fotoData, nama: currentFace.n, tipe: 'IZIN' };
                         const textWA = encodeURIComponent(rawText).replace(/'/g, "%27");
 
                         Swal.fire({ 
                             icon: 'success', 
                             title: '<span class="text-[#F8F1E5] text-xl font-black">Izin Tercatat</span>', 
                             html: `<div class="text-[#e8d5c4] text-xs">Pengajuan izin <b>${currentFace.n}</b> berhasil dikirim ke sistem.<br><br>
-                            <button onclick="salinDanBukaWA('${textWA}')" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-amber-400 hover:to-orange-500 transition-all shadow-amber-900/50 mt-2">
+                            <button onclick="bagikanLaporanWhatsApp()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-amber-400 hover:to-orange-500 transition-all shadow-amber-900/50 mt-2">
                                 <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> LAPORKAN KE GRUP WA
                             </button>
                             </div>`, 
@@ -1051,11 +1059,12 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                     
                     try {
                         const ketGabungan = `Menggantikan ${formValues.rekan} (Ganti OFF: ${formValues.tglOff}) - ${formValues.alasan}`;
-                        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: formValues.shiftTarget, tipe: 'Tukar Shift', keterangan: ketGabungan, foto: fotoData } }) });
+                        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', employeeToken: window.aimoyEmployeeToken, payload: { requestId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ('req-'+Date.now()+'-'+Math.random().toString(36).slice(2))), employeeId: currentFace.id, lat: userLat, lng: userLng, accuracy: userAccuracy, nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: formValues.shiftTarget, tipe: 'Tukar Shift', keterangan: ketGabungan, foto: fotoData } }) });
                         const result = await res.json();
                         
                         if (result.status === 'success') {
-                            const rawText = `*LAPORAN TUKAR SHIFT*\n\n👤 *Staf Masuk Hari Ini:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Shift Hari Ini:* ${formValues.shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n🗓️ *TUKAR JADWAL OFF MASA DEPAN:*\n- ${currentFace.n} akan LIBUR (OFF) pada *${formValues.tglOff}*\n- ${formValues.rekan} WAJIB MASUK menggantikan pada *${formValues.tglOff}*\n\n📸 *Bukti Foto:* Foto absensi dilampirkan pada pesan ini\n\nMohon otorisasi dari Owner di dasbor admin agar matriks absen disesuaikan otomatis.`;
+                            const rawText = `*LAPORAN TUKAR SHIFT*\n\n👤 *Staf Masuk Hari Ini:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Shift Hari Ini:* ${formValues.shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n🗓️ *TUKAR JADWAL OFF MASA DEPAN:*\n- ${currentFace.n} akan LIBUR (OFF) pada *${formValues.tglOff}*\n- ${formValues.rekan} WAJIB MASUK menggantikan pada *${formValues.tglOff}*\n\n📸 *Bukti Foto:* dilampirkan bersama laporan jika berbagi file didukung.\n\nMohon otorisasi dari Owner di dasbor admin agar matriks absen disesuaikan otomatis.`;
+                            window.aimoyPendingAttendanceShare = { text: rawText, fotoData: fotoData, nama: currentFace.n, tipe: 'TUKAR SHIFT' };
                             
                             // 🚀 SOLUSI MUTLAK Tukar Shift
                             const encodedTextWA = encodeURIComponent(rawText).replace(/'/g, "%27");
@@ -1063,7 +1072,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                             Swal.fire({
                                 icon: 'success', title: '<span class="text-[#F8F1E5] text-xl font-black">Terekam di Sistem</span>', 
                                 html: `<div class="text-[#e8d5c4] text-xs">Pengajuan Tukar Shift berhasil direkam.<br><br>
-                                <button onclick="salinDanBukaWA('${encodedTextWA}')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs mt-3 hover:from-purple-400 hover:to-indigo-500 transition-all shadow-purple-900/50">
+                                <button onclick="bagikanLaporanWhatsApp()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs mt-3 hover:from-purple-400 hover:to-indigo-500 transition-all shadow-purple-900/50">
                                     <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> KIRIM KE GRUP WA
                                 </button>
                                 </div>`, 
