@@ -53,6 +53,14 @@
         /* Flash Camera Effect */
         #flash-overlay { position: absolute; inset: 0; background: white; opacity: 0; z-index: 100; pointer-events: none; transition: opacity 0.15s ease-out; }
     </style>
+<style>
+/* AiMoy Employee UX patch v48 */
+html{scroll-behavior:smooth}button,input,select,textarea{font-size:16px}button{min-height:44px;touch-action:manipulation}
+:focus-visible{outline:3px solid #fbbf24!important;outline-offset:2px}
+body{padding-bottom:env(safe-area-inset-bottom)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+@media(max-width:480px){.glass-input{min-height:46px}.scan-line{animation-duration:2.8s}}
+</style>
 </head>
 <body class="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-[#4a0404] to-[#0a0000] selection:bg-amber-900 selection:text-amber-100">
 
@@ -200,7 +208,7 @@
     </div>
 <script>
         // ⚠️ PASTIKAN INI ADALAH URL DEPLOYMENT TERBARU DARI GOOGLE APPS SCRIPT ANDA
-        const API_URL = "https://script.google.com/macros/s/AKfycby1bFf9dO88Ouah2MGtnNjW6Tjx9jx2fXGNBzBVe6LyuBhrbDJiTYaqSJIZehvv_DrtFQ/exec/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycby1bFf9dO88Ouah2MGtnNjW6Tjx9jx2fXGNBzBVe6LyuBhrbDJiTYaqSJIZehvv_DrtFQ/exec"; 
         
         const video = document.getElementById('video');
         const canvas = document.getElementById('overlay');
@@ -813,7 +821,10 @@
             ctx.fillStyle = "#10b981"; 
             ctx.fillText(`🏢 ${outlet}  |  💼 Shift: ${shift}`, 12, tempCanvas.height - 18);
 
-            return tempCanvas.toDataURL('image/jpeg', 0.5); 
+            // Simpan sementara hanya di memori halaman untuk dibagikan sebagai lampiran WhatsApp.
+            // Foto tidak perlu dibuka untuk publik di Google Drive.
+            window.aimoyLastAttendancePhoto = tempCanvas.toDataURL('image/jpeg', 0.72);
+            return window.aimoyLastAttendancePhoto; 
         }
 
         async function kirimAbsen(tipe) {
@@ -859,7 +870,7 @@
                     // Karena duplicate selalu berstatus MASUK (gantung), kita hardcode tipe-nya
                     const tipeDipakai = isDuplicate ? 'MASUK' : tipe.toUpperCase();
 
-                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shiftDipakai}\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipeDipakai}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* ${result.linkFoto}\n\n======================\n${rawSummary}`;
+                    const rawText = `*NOTIFIKASI ABSENSI AIMOY*\n\n👤 *Nama:* ${currentFace.n}\n💼 *Shift:* ${shiftDipakai}\n🏢 *Lokasi:* ${out}\n📍 *Tipe:* ${tipeDipakai}\n⏰ *Waktu:* ${result.jam}\n✅ *Status:* ${result.statusWaktu}\n📸 *Bukti Foto:* Foto absensi dilampirkan pada pesan ini\n\n======================\n${rawSummary}`;
                     
                     const encodedTextWA = encodeURIComponent(rawText).replace(/'/g, "%27");
 
@@ -890,24 +901,51 @@
             }
         }
 
-        function salinDanBukaWA(encodedText) {
+        async function salinDanBukaWA(encodedText) {
             const teks = decodeURIComponent(encodedText);
             const link = `https://api.whatsapp.com/send?text=${encodedText}`;
-            
-            const textArea = document.createElement("textarea");
-            textArea.value = teks;
-            textArea.style.position = "fixed";  
-            textArea.style.left = "-999999px";
-            textArea.style.top = "-999999px";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-
-            try { document.execCommand('copy'); } catch (err) { console.error('Gagal menyalin teks', err); }
-            document.body.removeChild(textArea);
-
-            window.open(link, '_blank');
-            Swal.close();
+            const dataUrl = window.aimoyLastAttendancePhoto || '';
+            let sharedWithPhoto = false;
+            try {
+                // Pada HP/browser yang mendukung Web Share API untuk file, foto + caption
+                // dibuka ke lembar berbagi native; pengguna memilih grup WhatsApp tujuan.
+                if (dataUrl && navigator.share && navigator.canShare) {
+                    const response = await fetch(dataUrl);
+                    const blob = await response.blob();
+                    const file = new File([blob], `AiMoy-Absen-${Date.now()}.jpg`, {type:'image/jpeg'});
+                    const shareData = {files:[file], text:teks, title:'Laporan Absensi AiMoy'};
+                    if (navigator.canShare({files:[file]})) {
+                        await navigator.share(shareData);
+                        sharedWithPhoto = true;
+                    }
+                }
+            } catch (err) {
+                // Pengguna dapat membatalkan lembar berbagi; jangan menganggap pesan terkirim.
+                if (err && err.name === 'AbortError') { Swal.close(); return; }
+                console.warn('Berbagi foto native tidak tersedia, gunakan fallback unduh.', err);
+            }
+            if (!sharedWithPhoto) {
+                // Fallback desktop/browser: unduh foto secara lokal, lalu buka WhatsApp dengan caption.
+                // Pengguna harus memilih grup dan melampirkan file unduhan secara manual.
+                if (dataUrl) {
+                    const a = document.createElement('a');
+                    a.href = dataUrl; a.download = `AiMoy-Absen-${Date.now()}.jpg`;
+                    document.body.appendChild(a); a.click(); a.remove();
+                }
+                try {
+                    await navigator.clipboard.writeText(teks);
+                } catch (err) {
+                    const textArea = document.createElement('textarea'); textArea.value = teks;
+                    textArea.style.position = 'fixed'; textArea.style.left = '-999999px';
+                    document.body.appendChild(textArea); textArea.select();
+                    try { document.execCommand('copy'); } catch (_) {}
+                    textArea.remove();
+                }
+                window.open(link, '_blank');
+                Swal.fire({icon:'info',title:'Lanjutkan di WhatsApp',text:'Pilih grup tujuan. Jika foto belum terlampir otomatis, lampirkan file AiMoy-Absen yang baru diunduh sebelum mengirim.',background:'rgba(26, 1, 1, 0.95)',customClass:{popup:'swal2-popup'}});
+                return;
+            }
+            Swal.fire({icon:'success',title:'Siap dibagikan',text:'Pilih grup WhatsApp tujuan dan tekan Kirim. Aplikasi tidak dapat memastikan pesan terkirim sampai Anda mengirimnya di WhatsApp.',background:'rgba(26, 1, 1, 0.95)',customClass:{popup:'swal2-popup'}});
         }
 
         async function ajukanIzin() {
@@ -931,7 +969,7 @@
                     const result = await res.json();
                     
                     if (result.status === 'success') {
-                        const rawText = `*FORMULIR PENGAJUAN IZIN*\n\n👤 *Nama:* ${currentFace.n}\n🏢 *Lokasi:* ${out}\n📝 *Keterangan:* ${alasan}\n📸 *Bukti Foto:* ${result.linkFoto || '-'}\n\nMohon konfirmasi dan kebijaksanaannya.`;
+                        const rawText = `*FORMULIR PENGAJUAN IZIN*\n\n👤 *Nama:* ${currentFace.n}\n🏢 *Lokasi:* ${out}\n📝 *Keterangan:* ${alasan}\n📸 *Bukti Foto:* Lampirkan foto bukti yang dibagikan bersama pesan ini\n\nMohon konfirmasi dan kebijaksanaannya.`;
                         const textWA = encodeURIComponent(rawText).replace(/'/g, "%27");
 
                         Swal.fire({ 
@@ -1017,7 +1055,7 @@
                         const result = await res.json();
                         
                         if (result.status === 'success') {
-                            const rawText = `*LAPORAN TUKAR SHIFT*\n\n👤 *Staf Masuk Hari Ini:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Shift Hari Ini:* ${formValues.shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n🗓️ *TUKAR JADWAL OFF MASA DEPAN:*\n- ${currentFace.n} akan LIBUR (OFF) pada *${formValues.tglOff}*\n- ${formValues.rekan} WAJIB MASUK menggantikan pada *${formValues.tglOff}*\n\n📸 *Bukti Foto:* ${result.linkFoto}\n\nMohon otorisasi dari Owner di dasbor admin agar matriks absen disesuaikan otomatis.`;
+                            const rawText = `*LAPORAN TUKAR SHIFT*\n\n👤 *Staf Masuk Hari Ini:* ${currentFace.n}\n🔄 *Menggantikan:* ${formValues.rekan}\n🏢 *Lokasi:* ${out}\n💼 *Shift Hari Ini:* ${formValues.shiftTarget}\n📝 *Alasan:* ${formValues.alasan}\n\n🗓️ *TUKAR JADWAL OFF MASA DEPAN:*\n- ${currentFace.n} akan LIBUR (OFF) pada *${formValues.tglOff}*\n- ${formValues.rekan} WAJIB MASUK menggantikan pada *${formValues.tglOff}*\n\n📸 *Bukti Foto:* Foto absensi dilampirkan pada pesan ini\n\nMohon otorisasi dari Owner di dasbor admin agar matriks absen disesuaikan otomatis.`;
                             
                             // 🚀 SOLUSI MUTLAK Tukar Shift
                             const encodedTextWA = encodeURIComponent(rawText).replace(/'/g, "%27");
