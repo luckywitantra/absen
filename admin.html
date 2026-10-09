@@ -84,6 +84,21 @@
 
         .drawer-panel.show { transform: translate(0, 0) !important; }
     </style>
+<style>
+/* AiMoy Enterprise UX patch v48 */
+:root{color-scheme:light;--aimoy-primary:#1d4ed8;--aimoy-ink:#0f172a;--aimoy-muted:#64748b}
+html{scroll-behavior:smooth} body{background-color:#f8fafc;background-image:none;overflow:hidden}
+button,input,select,textarea{font:inherit} button{min-height:40px} input,select,textarea{max-width:100%;font-size:16px}
+:focus-visible{outline:3px solid #60a5fa!important;outline-offset:2px}
+.view-content{animation-duration:.18s}.custom-scroll{overscroll-behavior:contain}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+@media(max-width:639px){body{font-size:14px}.view-content{padding-bottom:calc(88px + env(safe-area-inset-bottom))}.drawer-panel{max-height:92dvh}.drawer-panel input,.drawer-panel select,.drawer-panel textarea{font-size:16px}}
+#aimoy-admin-auth{position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.72);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px}
+#aimoy-admin-auth .auth-card{width:min(100%,420px);background:#fff;border:1px solid #e2e8f0;border-radius:24px;padding:28px;box-shadow:0 25px 80px rgba(15,23,42,.28)}
+#aimoy-admin-auth input{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:13px 14px;margin:12px 0 8px;color:#0f172a;background:#fff}
+#aimoy-admin-auth button{width:100%;border:0;border-radius:12px;background:#1d4ed8;color:#fff;padding:13px;font-weight:800;margin-top:10px}
+#aimoy-admin-auth .auth-error{color:#b91c1c;font-size:12px;min-height:18px;margin-top:6px}
+</style>
 </head>
 <body class="flex h-[100dvh] text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
 
@@ -1952,5 +1967,48 @@
             setTimeout(() => { overlay.classList.remove('flex'); overlay.classList.add('hidden'); }, 400);
         }
     </script>
+
+<div id="aimoy-admin-auth" role="dialog" aria-modal="true" aria-labelledby="aimoy-auth-title">
+  <div class="auth-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px"><img src="./logoaimoy.png" alt="AiMoy" style="width:54px;height:54px;object-fit:contain;border-radius:14px"><div><h2 id="aimoy-auth-title" style="font-size:22px;font-weight:900;color:#0f172a">AiMoy Admin</h2><p style="font-size:12px;color:#64748b">Sesi admin · berlaku maksimal 8 jam</p></div></div>
+    <p style="font-size:13px;color:#475569">Masuk dengan akun admin untuk mengelola data, persetujuan, dan laporan.</p>
+    <form id="aimoy-admin-login-form"><label for="aimoy-admin-username" style="display:block;font-size:12px;font-weight:800;color:#334155;margin-top:12px">USERNAME</label><input id="aimoy-admin-username" type="text" autocomplete="username" required placeholder="Username admin" aria-describedby="aimoy-auth-error"><label for="aimoy-admin-password" style="display:block;font-size:12px;font-weight:800;color:#334155;margin-top:12px">PASSWORD</label><input id="aimoy-admin-password" type="password" autocomplete="current-password" minlength="10" required placeholder="Password admin" aria-describedby="aimoy-auth-error"><div id="aimoy-auth-error" class="auth-error" role="alert"></div><button type="submit" id="aimoy-admin-login-btn">Masuk ke Dashboard</button></form>
+    <p style="font-size:11px;color:#64748b;margin-top:14px;line-height:1.5">Konfigurasi pertama kali: jalankan <b>configureAimoyAdminSecurity()</b> di editor Apps Script. Masukkan username <b>admin</b> dan password yang Anda tetapkan, lalu deploy versi baru.</p>
+  </div>
+</div>
+<script>
+(function(){
+ const KEY='aimoy_admin_session_v1';
+ const originalFetch=window.fetch.bind(window);
+ window.fetch=async function(input,init){
+   const url=typeof input==='string'?input:(input&&input.url)||'';
+   if(url.includes('script.google.com/macros/s/') && init && typeof init.body==='string'){
+     try{const req=JSON.parse(init.body);const token=sessionStorage.getItem(KEY);if(token && req.action!=='admin_login'){req.adminToken=token;init={...init,body:JSON.stringify(req)};}}
+     catch(e){}
+   }
+   return originalFetch(input,init);
+ };
+ const overlay=document.getElementById('aimoy-admin-auth');
+ const form=document.getElementById('aimoy-admin-login-form');
+ const username=document.getElementById('aimoy-admin-username');
+ const password=document.getElementById('aimoy-admin-password');
+ const err=document.getElementById('aimoy-auth-error');
+ function unlock(){overlay.style.display='none';document.body.dataset.adminAuthenticated='true';}
+ // Session is tab-scoped; backend verifies signature and expiry on every privileged action.
+ const saved=sessionStorage.getItem(KEY);
+ if(saved){unlock();}
+ form.addEventListener('submit',async function(ev){
+   ev.preventDefault();err.textContent='';const btn=document.getElementById('aimoy-admin-login-btn');btn.disabled=true;btn.textContent='Memverifikasi…';
+   try{const res=await originalFetch('https://script.google.com/macros/s/AKfycby1bFf9dO88Ouah2MGtnNjW6Tjx9jx2fXGNBzBVe6LyuBhrbDJiTYaqSJIZehvv_DrtFQ/exec',{method:'POST',body:JSON.stringify({action:'admin_login',payload:{username:username.value,password:password.value}})});
+     const data=await res.json();if(data.status!=='success'||!data.token)throw new Error(data.message||'Username atau password tidak valid.');sessionStorage.setItem(KEY,data.token);password.value='';unlock();
+   }catch(e){err.textContent=e.message||'Login gagal. Periksa koneksi dan konfigurasi server.';}
+   finally{btn.disabled=false;btn.textContent='Masuk ke Dashboard';}
+ });
+ window.addEventListener('storage',function(e){if(e.key===KEY&&!e.newValue){sessionStorage.removeItem(KEY);overlay.style.display='flex';}});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(typeof toggleSidebar==='function'){const s=document.getElementById('sidebar');if(s&&!s.classList.contains('-translate-x-full'))toggleSidebar();}if(typeof closeAllDrawers==='function')closeAllDrawers();}});
+ window.aimoyAdminLogout=function(){sessionStorage.removeItem(KEY);overlay.style.display='flex';password.value='';username.focus();};
+})();
+</script>
+
 </body>
 </html>
