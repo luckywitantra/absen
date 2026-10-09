@@ -1,5 +1,5 @@
-const CACHE_NAME='aimoy-hc-v50';
-const SHELL=['./','./index.html','./admin.html','./employee.html','./enroll.html','./manifest.json','./manifest-admin.json','./manifest-employee.json','./logoaimoy.png'];
+const CACHE_NAME='aimoy-hc-v51';
+const SHELL=['./','./index.html','./admin.html','./employee.html','./enroll.html','./register.html','./manifest.json','./manifest-admin.json','./manifest-employee.json','./logoaimoy.png'];
 self.addEventListener('install',event=>{event.waitUntil((async()=>{const cache=await caches.open(CACHE_NAME);await Promise.all(SHELL.map(async url=>{try{const r=await fetch(url,{cache:'reload'});if(r.ok)await cache.put(url,r);}catch(e){/* Best-effort shell cache; don't fail install for one asset. */}}));await self.skipWaiting();})());});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('aimoy-hc-')&&k!==CACHE_NAME).map(k=>caches.delete(k)));await self.clients.claim();})());});
 self.addEventListener('fetch',event=>{const req=event.request;const url=new URL(req.url);if(req.method!=='GET'||url.hostname==='script.google.com'||url.pathname.includes('/macros/s/'))return;if(url.origin!==self.location.origin)return;
