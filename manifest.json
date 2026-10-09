@@ -1,8 +1,8 @@
 {
-  "name": "AiMoy Absensi",
-  "short_name": "AiMoy HC",
+  "name": "AiMoy HC",
+  "short_name": "AiMoy",
   "description": "Super App Human Capital & Absensi AiMoy",
-  "start_url": "./",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0f172a",
@@ -19,5 +19,6 @@
       "type": "image/png"
     }
   ],
-  "version": "47"
+  "version": "47",
+  "scope": "./"
 }
