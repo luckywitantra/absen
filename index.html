@@ -53,12 +53,6 @@
         /* Flash Camera Effect */
         #flash-overlay { position: absolute; inset: 0; background: white; opacity: 0; z-index: 100; pointer-events: none; transition: opacity 0.15s ease-out; }
     
-        #aimoy-employee-gate{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,0,0,.96);backdrop-filter:blur(14px)}
-        #aimoy-employee-gate .gate-card{width:min(100%,420px);background:#fffaf0;color:#1f2937;border-radius:24px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.45)}
-        #aimoy-employee-gate input{width:100%;box-sizing:border-box;padding:13px;border:1px solid #d6d3d1;border-radius:12px;font-size:16px;color:#111827;background:#fff;margin-top:5px}
-        #aimoy-employee-gate button{width:100%;padding:13px;border-radius:12px;background:#991b1b;color:white;font-weight:900;margin-top:14px}
-        #aimoy-employee-gate button:disabled{opacity:.55}
-        @media(prefers-reduced-motion:reduce){#aimoy-employee-gate *{transition:none!important;animation:none!important}}
 </style>
 <style>
 /* AiMoy Employee UX patch v47 */
@@ -70,8 +64,6 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 </style>
 </head>
 <body class="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-[#4a0404] to-[#0a0000] selection:bg-amber-900 selection:text-amber-100">
-<div id="aimoy-employee-gate" role="dialog" aria-modal="true" aria-labelledby="aimoy-gate-title"><div class="gate-card"><div style="display:flex;align-items:center;gap:12px"><img src="./logoaimoy.png" alt="AiMoy" style="width:54px;height:54px;object-fit:contain;border-radius:14px"><div><h2 id="aimoy-gate-title" style="font-size:22px;font-weight:900;margin:0">Login Karyawan</h2><p style="font-size:12px;color:#78716c;margin:4px 0 0">Verifikasi akun sebelum membuka kamera absensi</p></div></div><form id="aimoy-kiosk-login-form"><label for="aimoy-kiosk-username" style="display:block;font-size:12px;font-weight:800;margin-top:18px">USERNAME</label><input id="aimoy-kiosk-username" autocomplete="username" required><label for="aimoy-kiosk-password" style="display:block;font-size:12px;font-weight:800;margin-top:12px">PASSWORD</label><input id="aimoy-kiosk-password" type="password" autocomplete="current-password" required><button id="aimoy-kiosk-login-btn" type="submit">Masuk dan lanjutkan absensi</button></form><p id="aimoy-kiosk-login-status" role="status" style="font-size:12px;color:#991b1b;min-height:18px"></p><p style="font-size:11px;color:#78716c;line-height:1.5">Jika belum memiliki akun, hubungi admin HC. Login ini tidak menggantikan verifikasi wajah dan GPS.</p></div></div>
-
     <div class="w-full h-full max-w-md mx-auto flex flex-col relative sm:h-[95vh] sm:my-[2.5vh] sm:rounded-[2.5rem] overflow-hidden shadow-2xl sm:border border-white/10">
         
         <div id="flash-overlay"></div>
@@ -83,6 +75,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                 </div>
                 <div>
                     <h1 class="text-xl font-black tracking-tight text-[#F8F1E5] leading-none">Si-Amoy</h1>
+                    <p class="text-[9px] text-amber-200/75 tracking-[0.18em] font-extrabold mt-1 uppercase">ABSENSI WAJAH · TANPA LOGIN</p>
                     <p id="geo-status" class="text-rose-400 text-[9px] tracking-widest font-bold mt-1 uppercase flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> Mencari Satelit
                     </p>
@@ -127,7 +120,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             
             <div class="flex mb-4 border-b border-white/10">
                 <button onclick="switchTab('absen')" id="tab-absen" class="flex-1 py-3 text-[10px] font-black text-[#D4AF37] border-b-2 border-[#D4AF37] transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-clipboard-user text-sm"></i> ABSENSI</button>
-                <button onclick="switchTab('reg')" id="tab-reg" style="display:none" class="flex-1 py-3 text-[10px] font-black text-slate-500 border-b-2 border-transparent hover:text-slate-300 transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-user-plus text-sm"></i> REGISTRASI</button>
+                <button onclick="switchTab('reg')" id="tab-reg" style="display:none" aria-hidden="true" class="flex-1 py-3 text-[10px] font-black text-slate-500 border-b-2 border-transparent hover:text-slate-300 transition-all tracking-widest flex items-center justify-center gap-2"><i class="fas fa-user-plus text-sm"></i> REGISTRASI</button>
             </div>
 
             <div id="panel-absen" class="space-y-3">
@@ -223,45 +216,25 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         const hudScanner = document.getElementById('hud-scanner');
         
         let faceMatcher = null, currentFace = null, dbOutlet = [], dbShift = [];
-        window.aimoyEmployeeToken = sessionStorage.getItem('aimoy_kiosk_employee_token_v1') || '';
+        // Kiosk absensi tanpa login per karyawan: identitas dipilih melalui pencocokan wajah.
+        // Mode ini harus diaktifkan eksplisit oleh admin melalui configureAimoyKioskNoLogin().
+        window.aimoyEmployeeToken = '';
         window.aimoyEmployeeProfile = null;
         let userLat = 0, userLng = 0, userAccuracy = null, distance = 0, isLocValid = false, lastRecognizedName = null;
         let isPrompting = false, isLivenessPassed = false;
-        
-        const REQUIRED_SMILE_SCORE = 0.65; 
-        let gJadwalHariIni = []; // Menyimpan jadwal matriks hari ini
-        let gKaryawan = []; // Menyimpan data master karyawan
-
+        const REQUIRED_SMILE_SCORE = 0.65;
+        let gJadwalHariIni = [];
+        let gKaryawan = [];
         window.addEventListener('load', () => {
-            if(navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    pos => { 
-                        userLat = pos.coords.latitude; 
-                        userLng = pos.coords.longitude;
-                        userAccuracy = pos.coords.accuracy; 
-                        document.getElementById('geo-status').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> GPS TERKUNCI'; 
-                        document.getElementById('geo-status').className = "text-emerald-400 text-[9px] tracking-widest font-bold mt-1 uppercase flex items-center gap-1.5"; 
-                        cekJarak(); 
-                    },
-                    err => { Swal.fire('Info Akses', 'GPS tidak diizinkan. Hanya fitur pengajuan IZIN yang akan aktif.', 'info'); }, 
-                    { enableHighAccuracy: true }
-                );
-            }
-            setTimeout(startKioskAfterAuth, 500);
+            if(navigator.geolocation) navigator.geolocation.watchPosition(pos => {
+                userLat=pos.coords.latitude; userLng=pos.coords.longitude; userAccuracy=pos.coords.accuracy;
+                const status=document.getElementById('geo-status');
+                if(status){status.innerHTML='<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> GPS TERKUNCI';status.className='text-emerald-400 text-[9px] tracking-widest font-bold mt-1 uppercase flex items-center gap-1.5';}
+                cekJarak();
+            }, () => {const status=document.getElementById('geo-status');if(status)status.innerHTML='<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> IZINKAN LOKASI';},{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
+            initApp();
         });
-
-        function aimoyKioskLogout(){sessionStorage.removeItem('aimoy_kiosk_employee_token_v1');window.aimoyEmployeeToken='';localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');try{const v=document.getElementById('video');if(v&&v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());}catch(e){}location.reload();}
-        async function startKioskAfterAuth() {
-            const gate=document.getElementById('aimoy-employee-gate');
-            if(!window.aimoyEmployeeToken){gate.style.display='flex';return;}
-            try{const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_self_service',employeeToken:window.aimoyEmployeeToken})});const d=await r.json();if(d.status!=='success')throw new Error(d.message||'Sesi berakhir');window.aimoyEmployeeProfile=d.employee;localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');gate.style.display='none';initApp();}
-            catch(e){sessionStorage.removeItem('aimoy_kiosk_employee_token_v1');window.aimoyEmployeeToken='';gate.style.display='flex';document.getElementById('aimoy-kiosk-login-status').textContent='Sesi berakhir. Silakan login kembali.';}
-        }
-        document.getElementById('aimoy-kiosk-login-form').addEventListener('submit',async function(e){
-            e.preventDefault();const btn=document.getElementById('aimoy-kiosk-login-btn'),status=document.getElementById('aimoy-kiosk-login-status');btn.disabled=true;status.textContent='Memverifikasi akun…';
-            try{const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_login',payload:{username:document.getElementById('aimoy-kiosk-username').value.trim(),password:document.getElementById('aimoy-kiosk-password').value}})});const d=await r.json();if(d.status!=='success'||!d.token)throw new Error(d.message||'Login gagal');window.aimoyEmployeeToken=d.token;window.aimoyEmployeeProfile=d.employee;sessionStorage.setItem('aimoy_kiosk_employee_token_v1',d.token);document.getElementById('aimoy-kiosk-password').value='';localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');document.getElementById('aimoy-employee-gate').style.display='none';status.textContent='';initApp();}
-            catch(err){status.textContent=err.message||'Login gagal.';}finally{btn.disabled=false;}
-        });
+        function aimoyKioskLogout(){window.aimoyEmployeeToken='';window.aimoyEmployeeProfile=null;localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');try{const v=document.getElementById('video');if(v&&v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());}catch(e){}location.reload();}
 
         function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
             const lat2 = parseFloat(lat2Str), lon2 = parseFloat(lon2Str);
@@ -294,7 +267,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                 // Set cache ke 1 detik untuk masa testing agar selalu sync dengan Google Sheets
                 if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < 1000) {
                     dataGAS = JSON.parse(cachedData);
-                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init', employeeToken: window.aimoyEmployeeToken }) })
+                    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) })
                         .then(r => r.json())
                         .then(freshData => {
                             if(freshData.status === 'ready') {
@@ -312,7 +285,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                             }
                         }).catch(e => console.log("Sync background gagal."));
                 } else {
-                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init', employeeToken: window.aimoyEmployeeToken }) });
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'init' }) });
                     dataGAS = await res.json();
                     
                     if(dataGAS.status !== 'ready') throw new Error(dataGAS.message || "API Error");
@@ -868,7 +841,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             try {
                 const res = await fetch(API_URL, { 
                     method: 'POST', body: JSON.stringify({ 
-                        action: 'absen', employeeToken: window.aimoyEmployeeToken,
+                        action: 'absen',
                         payload: { requestId: requestId, employeeId: currentFace.id, lat: userLat, lng: userLng, accuracy: userAccuracy, nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: shfVal, shiftTarget: shfM, shiftKeluar: shfK, toleransi: shfTol, ambangLembur: shfLembur, tipe: tipe, jarak: distance, foto: fotoData } 
                     }) 
                 });
@@ -972,7 +945,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 
                 Swal.fire({ title: '<span class="text-[#F8F1E5] text-lg">Merekam Data...</span>', html: '<span class="text-[#e8d5c4] text-xs">Menyimpan surat izin & foto bukti ke server.</span>', allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }, didOpen: () => Swal.showLoading() });
                 try {
-                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', employeeToken: window.aimoyEmployeeToken, payload: { requestId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ('req-'+Date.now()+'-'+Math.random().toString(36).slice(2))), employeeId: currentFace.id, lat: userLat, lng: userLng, accuracy: userAccuracy, nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
+                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { requestId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ('req-'+Date.now()+'-'+Math.random().toString(36).slice(2))), employeeId: currentFace.id, lat: userLat, lng: userLng, accuracy: userAccuracy, nama: currentFace.n, role: currentFace.r, outlet: out, tipe: 'Izin', keterangan: alasan, foto: fotoData } }) });
                     const result = await res.json();
                     
                     if (result.status === 'success') {
@@ -1059,7 +1032,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                     
                     try {
                         const ketGabungan = `Menggantikan ${formValues.rekan} (Ganti OFF: ${formValues.tglOff}) - ${formValues.alasan}`;
-                        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', employeeToken: window.aimoyEmployeeToken, payload: { requestId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ('req-'+Date.now()+'-'+Math.random().toString(36).slice(2))), employeeId: currentFace.id, lat: userLat, lng: userLng, accuracy: userAccuracy, nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: formValues.shiftTarget, tipe: 'Tukar Shift', keterangan: ketGabungan, foto: fotoData } }) });
+                        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'absen', payload: { requestId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ('req-'+Date.now()+'-'+Math.random().toString(36).slice(2))), employeeId: currentFace.id, lat: userLat, lng: userLng, accuracy: userAccuracy, nama: currentFace.n, role: currentFace.r, outlet: out, namaShift: formValues.shiftTarget, tipe: 'Tukar Shift', keterangan: ketGabungan, foto: fotoData } }) });
                         const result = await res.json();
                         
                         if (result.status === 'success') {
