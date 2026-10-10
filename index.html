@@ -227,10 +227,22 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         // Pertahankan kandidat yang sudah cocok beberapa detik agar tidak berkedip menjadi "Tidak Dikenal".
         let candidateFace = null, candidateLastMatchedAt = 0, unknownSince = 0, smileFrames = 0, scanInProgress = false;
         let pendingLookupAt=0, pendingLookupKey="", miniDashboardShownFor="";
-        const REQUIRED_SMILE_SCORE = 0.52;
-        const CANDIDATE_GRACE_MS = 4500;
-        const UNKNOWN_CONFIRM_MS = 1800;
+        // Performa: satu loop pemindaian saja, interval adaptif, dan toleransi frame senyum.
+        let scanLoopStarted = false, smileWindow = [], lastScanDurationMs = 0, adaptiveScanDelay = 220;
+        const REQUIRED_SMILE_SCORE = 0.48;
+        const CANDIDATE_GRACE_MS = 6000;
+        const UNKNOWN_CONFIRM_MS = 2400;
         const REQUIRED_SMILE_FRAMES = 2;
+        const SMILE_WINDOW_SIZE = 3;
+        const MOBILE_SCAN_INPUT = 320;
+        const DESKTOP_SCAN_INPUT = 384;
+        function aimoyResetSmileWindow(){ smileWindow=[]; smileFrames=0; }
+        function aimoyAddSmileSample(score){
+          smileWindow.push(Number(score)||0);
+          if(smileWindow.length>SMILE_WINDOW_SIZE)smileWindow.shift();
+          smileFrames=smileWindow.filter(v=>v>=REQUIRED_SMILE_SCORE).length;
+          return smileFrames>=REQUIRED_SMILE_FRAMES;
+        }
         let gJadwalHariIni = [];
         let gKaryawan = [];
         window.addEventListener('load', () => {
@@ -367,7 +379,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                     faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); 
                 }
                 
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640, max: 960 }, height: { ideal: 480, max: 720 }, frameRate: { ideal: 24, max: 30 } }, audio: false })
                     .then(s => { video.srcObject = s; Swal.close(); })
                     .catch(e => Swal.fire('Akses Ditolak', 'Kamera harus diizinkan untuk verifikasi biometrik.', 'error'));
             } catch (e) { 
@@ -527,14 +539,21 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         video.addEventListener('loadedmetadata', () => { canvas.width = video.videoWidth; canvas.height = video.videoHeight; });
 
         video.addEventListener('play', () => {
+            // Event 'play' dapat terpanggil lebih dari sekali; jangan pernah membuat loop kamera ganda.
+            if(scanLoopStarted) return;
+            scanLoopStarted = true;
             const size = { width: video.videoWidth, height: video.videoHeight };
             faceapi.matchDimensions(canvas, size);
-            
-            setInterval(async () => {
-                if(isPrompting || scanInProgress || video.readyState < 2) return;
+            const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+            const detectorInputSize = isMobileDevice ? MOBILE_SCAN_INPUT : DESKTOP_SCAN_INPUT;
+            const scheduleNextScan = (delay=adaptiveScanDelay) => { if(scanLoopStarted) setTimeout(runFaceScan, delay); };
+            const runFaceScan = async () => {
+                if(!scanLoopStarted) return;
+                if(isPrompting || scanInProgress || video.readyState < 2 || !video.videoWidth) { scheduleNextScan(350); return; }
                 scanInProgress = true;
+                const scanStartedAt = performance.now();
                 try {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 })).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: detectorInputSize, scoreThreshold: 0.45 })).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
 
                 const resized = faceapi.resizeResults(detections, size); 
                 canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
@@ -574,8 +593,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                             candidateLastMatchedAt = Date.now();
                             unknownSince = 0;
                             const expressions = resized[0].expressions;
-                            if (expressions.happy > REQUIRED_SMILE_SCORE) { smileFrames++; } else { smileFrames = 0; }
-                            if (smileFrames >= REQUIRED_SMILE_FRAMES) { isLivenessPassed = true; }
+                            const smilePassedNow = aimoyAddSmileSample(expressions.happy);
+                            if (smilePassedNow) { isLivenessPassed = true; }
 
                             if (!isLivenessPassed) {
                                 currentFace = info;
@@ -630,7 +649,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                                     hudScanner.className = "absolute border-4 border-solid border-rose-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-rose-500/5 box-border";
                                     percentEl.classList.remove('hidden'); percentEl.innerText = "WAJAH BELUM DIKENALI";
                                     percentEl.className = "text-[10px] font-black text-white bg-rose-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
-                                    lastRecognizedName = null; candidateFace = null; isLivenessPassed = false; smileFrames = 0; updateUI(false);
+                                    lastRecognizedName = null; candidateFace = null; isLivenessPassed = false; aimoyResetSmileWindow(); updateUI(false);
                                 } else {
                                     percentEl.classList.remove('hidden'); percentEl.innerText = "MEMERIKSA WAJAH…";
                                     percentEl.className = "text-[10px] font-black text-white bg-slate-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
@@ -642,7 +661,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                         hudScanner.style.left = "20%"; hudScanner.style.top = "20%"; hudScanner.style.width = "60%"; hudScanner.style.height = "60%";
                         document.getElementById('hud-percent').classList.add('hidden');
                         if (!candidateFace || (Date.now() - candidateLastMatchedAt) >= CANDIDATE_GRACE_MS) {
-                            lastRecognizedName = null; candidateFace = null; unknownSince = 0; isLivenessPassed = false; smileFrames = 0; updateUI(false);
+                            lastRecognizedName = null; candidateFace = null; unknownSince = 0; isLivenessPassed = false; aimoyResetSmileWindow(); updateUI(false);
                         } else {
                             currentFace = candidateFace;
                             updateUI(true, "LIVENESS_WAIT");
@@ -656,8 +675,15 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                     }
                 }
                 } catch (scanError) { console.warn('Pemindaian wajah sementara gagal:', scanError); }
-                finally { scanInProgress = false; }
-            }, 300); 
+                finally {
+                  lastScanDurationMs = performance.now() - scanStartedAt;
+                  // Bila perangkat lambat, beri waktu lebih panjang agar UI tetap responsif; tidak ada loop yang overlap.
+                  adaptiveScanDelay = lastScanDurationMs > 500 ? 320 : (lastScanDurationMs > 280 ? 260 : 200);
+                  scanInProgress = false;
+                  scheduleNextScan(adaptiveScanDelay);
+                }
+            };
+            runFaceScan();
         });
 
         function updateUI(found, state = "SEARCH") {
