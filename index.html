@@ -229,11 +229,11 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         let pendingLookupAt=0, pendingLookupKey="", miniDashboardShownFor="";
         // Performa: satu loop pemindaian saja, interval adaptif, dan toleransi frame senyum.
         let scanLoopStarted = false, smileWindow = [], lastScanDurationMs = 0, adaptiveScanDelay = 220;
-        const REQUIRED_SMILE_SCORE = 0.48;
-        const CANDIDATE_GRACE_MS = 6000;
-        const UNKNOWN_CONFIRM_MS = 2400;
+        const REQUIRED_SMILE_SCORE = 0.42;
+        const CANDIDATE_GRACE_MS = 8000;
+        const UNKNOWN_CONFIRM_MS = 3000;
         const REQUIRED_SMILE_FRAMES = 2;
-        const SMILE_WINDOW_SIZE = 3;
+        const SMILE_WINDOW_SIZE = 4;
         const MOBILE_SCAN_INPUT = 320;
         const DESKTOP_SCAN_INPUT = 384;
         function aimoyResetSmileWindow(){ smileWindow=[]; smileFrames=0; }
@@ -637,11 +637,41 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                             // Jika wajah sudah cocok dan sedang tersenyum, pertahankan kandidat selama grace period.
                             const now = Date.now();
                             if (candidateFace && (now - candidateLastMatchedAt) < CANDIDATE_GRACE_MS) {
+                                // PENTING: ekspresi senyum tetap dievaluasi walau descriptor pada frame ini
+                                // sesaat tidak cocok. Perubahan bentuk mulut sering mengubah descriptor wajah.
                                 currentFace = candidateFace;
+                                const smileScoreDuringGrace = Number(resized[0]?.expressions?.happy || 0);
+                                const smilePassedDuringGrace = aimoyAddSmileSample(smileScoreDuringGrace);
                                 hudScanner.className = "absolute border-4 border-solid border-amber-400 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-amber-400/5 box-border";
-                                percentEl.classList.remove('hidden'); percentEl.innerText = "WAJAH TERDETEKSI · SILAKAN SENYUM";
+                                percentEl.classList.remove('hidden');
                                 percentEl.className = "text-[10px] font-black text-white bg-amber-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
-                                updateUI(true, "LIVENESS_WAIT");
+                                if (smilePassedDuringGrace && !isLivenessPassed) {
+                                    // Liveness selesai berdasarkan beberapa sampel; identitas memakai kandidat
+                                    // yang sebelumnya telah cocok, bukan identitas frame yang gagal.
+                                    isLivenessPassed = true;
+                                    lastRecognizedName = candidateFace.n;
+                                    const verifiedInfo = candidateFace;
+                                    currentFace = verifiedInfo;
+                                    percentEl.innerText = "SENYUM TERVERIFIKASI";
+                                    hudScanner.className = "absolute border-4 border-solid border-emerald-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-emerald-500/5 box-border";
+                                    if (miniDashboardShownFor !== String(verifiedInfo.id || verifiedInfo.n)) {
+                                        miniDashboardShownFor = String(verifiedInfo.id || verifiedInfo.n);
+                                        setTimeout(() => aimoyTryMiniDashboard(verifiedInfo), 500);
+                                    }
+                                    const outSel = document.getElementById('sel-outlet');
+                                    if (verifiedInfo.o) {
+                                        outSel.value = verifiedInfo.o;
+                                        outSel.disabled = true;
+                                        document.getElementById('outlet-chevron').classList.add('hidden');
+                                        loadShiftDropdown();
+                                    }
+                                    updateUI(true, "READY");
+                                } else {
+                                    percentEl.innerText = smileScoreDuringGrace >= REQUIRED_SMILE_SCORE
+                                        ? "SENYUM TERDETEKSI · MEMASTIKAN…"
+                                        : "WAJAH DIKENALI · TERSENYUMLAH";
+                                    updateUI(true, "LIVENESS_WAIT");
+                                }
                             } else {
                                 if (!unknownSince) unknownSince = now;
                                 if ((now - unknownSince) >= UNKNOWN_CONFIRM_MS) {
@@ -696,7 +726,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             if (found && currentFace) {
                 if (state === "LIVENESS_WAIT") {
                     nameEl.innerText = currentFace.n; nameEl.className = "text-[13px] font-black text-amber-400 truncate";
-                    roleEl.innerText = "VERIFIKASI ANTI-SPOOFING..."; roleEl.className = "text-[9px] font-black text-amber-500 uppercase tracking-widest truncate animate-pulse";
+                    roleEl.innerText = "WAJAH DIKENALI · VERIFIKASI SENYUM"; roleEl.className = "text-[9px] font-black text-amber-500 uppercase tracking-widest truncate animate-pulse";
                     iconBg.className = "w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/50 shrink-0 transition-colors";
                     icon.innerText = "😊";
                     
