@@ -366,14 +366,14 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
         let candidateFace = null, candidateLastMatchedAt = 0, unknownSince = 0, smileFrames = 0, scanInProgress = false;
         let pendingLookupAt=0, pendingLookupKey="", miniDashboardShownFor="";
         // Performa: satu loop pemindaian saja, interval adaptif, dan toleransi frame senyum.
-        let scanLoopStarted = false, smileWindow = [], lastScanDurationMs = 0, adaptiveScanDelay = 220;
+        let scanLoopStarted = false, smileWindow = [], lastScanDurationMs = 0, adaptiveScanDelay = 220, aimoyNoFaceFrames = 0, aimoyLastScanErrorAt = 0;
         const REQUIRED_SMILE_SCORE = 0.42;
         const CANDIDATE_GRACE_MS = 8000;
         const UNKNOWN_CONFIRM_MS = 3000;
         const REQUIRED_SMILE_FRAMES = 2;
         const SMILE_WINDOW_SIZE = 4;
-        const MOBILE_SCAN_INPUT = 320;
-        const DESKTOP_SCAN_INPUT = 384;
+        const MOBILE_SCAN_INPUT = 416;
+        const DESKTOP_SCAN_INPUT = 416;
         const FACE_MATCH_THRESHOLD = 0.48; // 0.38 terlalu ketat untuk variasi kamera/WebView.
         function aimoyBuildFaceMatcher(rows){
           const valid=(Array.isArray(rows)?rows:[]).filter(k=>{
@@ -692,12 +692,13 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                 scanInProgress = true;
                 const scanStartedAt = performance.now();
                 try {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: detectorInputSize, scoreThreshold: 0.45 })).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: detectorInputSize, scoreThreshold: 0.30 })).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
 
                 const resized = faceapi.resizeResults(detections, size); 
                 canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
 
                 if (!document.getElementById('panel-absen').classList.contains('hidden')) {
+                    if (detections.length > 0) aimoyNoFaceFrames = 0;
                     if (detections.length > 0 && faceMatcher) {
                         
                         const box = resized[0].detection.box;
@@ -838,9 +839,10 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                         hudScanner.style.top = `${(box.y*scaleCover)+(containerH-renderedH)/2}px`;
                         hudScanner.style.width = `${box.width*scaleCover}px`; hudScanner.style.height = `${box.height*scaleCover}px`;
                     } else { 
+                        aimoyNoFaceFrames++;
                         hudScanner.className = "absolute border-2 border-dashed border-white/40 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 status-search box-border";
                         hudScanner.style.left = "20%"; hudScanner.style.top = "20%"; hudScanner.style.width = "60%"; hudScanner.style.height = "60%";
-                        document.getElementById('hud-percent').classList.add('hidden');
+                        if (aimoyNoFaceFrames >= 8) { aimoyShowRecognitionStatus('WAJAH BELUM TERDETEKSI · DEKATKAN WAJAH'); } else { document.getElementById('hud-percent').classList.add('hidden'); }
                         if (!candidateFace || (Date.now() - candidateLastMatchedAt) >= CANDIDATE_GRACE_MS) {
                             lastRecognizedName = null; candidateFace = null; unknownSince = 0; isLivenessPassed = false; aimoyResetSmileWindow(); updateUI(false);
                         } else {
@@ -855,7 +857,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                         faceapi.draw.drawFaceLandmarks(canvas, resized, drawBox); 
                     }
                 }
-                } catch (scanError) { console.warn('Pemindaian wajah sementara gagal:', scanError); }
+                } catch (scanError) { console.warn('Pemindaian wajah sementara gagal:', scanError); if(Date.now()-aimoyLastScanErrorAt>5000){aimoyLastScanErrorAt=Date.now();aimoyShowRecognitionStatus('PEMINDAIAN TERGANGGU · COBA MUAT ULANG');} }
                 finally {
                   lastScanDurationMs = performance.now() - scanStartedAt;
                   // Bila perangkat lambat, beri waktu lebih panjang agar UI tetap responsif; tidak ada loop yang overlap.
