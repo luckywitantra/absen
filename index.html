@@ -169,8 +169,12 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                         <div class="rounded-xl bg-white/5 p-2.5"><p class="text-[9px] text-slate-400">Sakit</p><p class="text-xl font-black text-rose-300" id="aimoy-recap-sakit">—</p></div>
                     </div>
                     <p id="aimoy-recap-status" class="text-[10px] text-slate-400 mt-2">Memuat rekap bulan ini…</p>
-                    <button id="aimoy-recap-wa" type="button" class="mt-3 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-[10px] font-black tracking-widest text-white shadow-lg active:scale-[.99] transition-transform"><i class="fab fa-whatsapp text-base mr-2"></i>KIRIM REKAP ABSEN VIA GRUP WA</button>
-                    <p class="text-center text-[9px] text-slate-500 mt-1.5">WhatsApp terbuka dengan pesan siap kirim.</p>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-left" id="aimoy-recap-details">
+                        <div class="rounded-xl border border-[#D4AF37]/15 bg-black/20 p-2.5"><p class="text-[9px] font-black uppercase tracking-wider text-[#D4AF37]">Tanggal OFF</p><p id="aimoy-recap-off-dates" class="mt-1 text-[10px] leading-relaxed text-slate-300">—</p></div>
+                        <div class="rounded-xl border border-sky-400/15 bg-black/20 p-2.5"><p class="text-[9px] font-black uppercase tracking-wider text-sky-300">Tanggal Izin</p><p id="aimoy-recap-izin-dates" class="mt-1 text-[10px] leading-relaxed text-slate-300">—</p></div>
+                        <div class="rounded-xl border border-rose-400/15 bg-black/20 p-2.5"><p class="text-[9px] font-black uppercase tracking-wider text-rose-300">Tanggal Sakit</p><p id="aimoy-recap-sakit-dates" class="mt-1 text-[10px] leading-relaxed text-slate-300">—</p></div>
+                    </div>
+                    <p class="text-center text-[9px] text-slate-500 mt-2">Rincian tanggal mengikuti catatan absensi dan jadwal yang tersimpan.</p>
                 </section>
 
                 <div class="grid grid-cols-2 gap-2.5 pt-1">
@@ -270,7 +274,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             }, () => {const status=document.getElementById('geo-status');if(status)status.innerHTML='<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> IZINKAN LOKASI';},{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
             initApp();
         });
-        function aimoyKioskLogout(){attendanceSummaryLoadedFor='';attendanceSummaryMessage='';const recap=document.getElementById('aimoy-monthly-recap');if(recap)recap.classList.add('hidden');window.aimoyEmployeeToken='';window.aimoyEmployeeProfile=null;localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');try{const v=document.getElementById('video');if(v&&v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());}catch(e){}location.reload();}
+        function aimoyKioskLogout(){attendanceSummaryLoadedFor='';attendanceSummaryMessage='';['aimoy-recap-off-dates','aimoy-recap-izin-dates','aimoy-recap-sakit-dates'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});const recap=document.getElementById('aimoy-monthly-recap');if(recap)recap.classList.add('hidden');window.aimoyEmployeeToken='';window.aimoyEmployeeProfile=null;localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');try{const v=document.getElementById('video');if(v&&v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());}catch(e){}location.reload();}
 
         async function aimoyCheckPendingRegistration(descriptor){
           const key=descriptor.slice(0,8).map(v=>Number(v).toFixed(2)).join(',');if(key===pendingLookupKey)return;pendingLookupKey=key;
@@ -289,9 +293,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
           const card=document.getElementById('aimoy-monthly-recap');
           if(card) card.classList.remove('hidden');
           const status=document.getElementById('aimoy-recap-status');
-          if(status) status.textContent='Memuat rekap absensi bulan ini…';
-          const waButton=document.getElementById('aimoy-recap-wa');
-          if(waButton){waButton.disabled=true;waButton.classList.add('opacity-50');}
+          if(status) status.textContent='Memuat rekap dan tanggal terkait…';
+          const safeText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value||'Tidak ada catatan';};
           try{
             const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_attendance_summary',payload:{descriptor:info.descriptor}})});
             const d=await r.json();
@@ -300,13 +303,15 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             const put=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=String(Number(v)||0);};
             const period=document.getElementById('aimoy-recap-period'); if(period)period.textContent=m.label||m.periode||'Bulan ini';
             put('aimoy-recap-hadir',m.hariHadir); put('aimoy-recap-off',m.jadwalOff); put('aimoy-recap-izin',m.izin); put('aimoy-recap-sakit',m.sakit);
-            attendanceSummaryMessage=`REKAP ABSENSI AIMOY — BULAN INI\nNama: ${d.employee.nama}\nOutlet: ${d.employee.outlet}\nPeriode: ${m.label||m.periode||'Bulan ini'}\n\nHari hadir: ${Number(m.hariHadir)||0}\nJadwal off: ${Number(m.jadwalOff)||0}\nIzin: ${Number(m.izin)||0}\nSakit: ${Number(m.sakit)||0}\n\nRekap dibuat otomatis oleh AiMoy.`;
-            if(status)status.textContent='Rekap diperbarui dari data absensi. Angka dihitung berdasarkan tanggal unik.';
-            if(waButton){waButton.disabled=false;waButton.classList.remove('opacity-50');waButton.onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(attendanceSummaryMessage),'_blank','noopener,noreferrer');}
+            const fmt=list=>Array.isArray(list)&&list.length?list.map(x=>{try{return new Date(String(x)+'T12:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});}catch(e){return String(x);}}).join(' • '):'Tidak ada catatan';
+            safeText('aimoy-recap-off-dates',fmt(m.tanggalOff));
+            safeText('aimoy-recap-izin-dates',fmt(m.tanggalIzin));
+            safeText('aimoy-recap-sakit-dates',fmt(m.tanggalSakit));
+            if(status)status.textContent='Rekap diperbarui dari data absensi dan jadwal yang tersedia.';
           }catch(e){
             console.warn('Rekap absensi gagal dimuat',e);
             if(status)status.textContent='Rekap belum dapat dimuat. Periksa koneksi, lalu coba pindai kembali.';
-            if(waButton){waButton.disabled=true;waButton.classList.add('opacity-50');}
+            safeText('aimoy-recap-off-dates','Gagal memuat');safeText('aimoy-recap-izin-dates','Gagal memuat');safeText('aimoy-recap-sakit-dates','Gagal memuat');
           }
         }
 
@@ -450,80 +455,44 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         }
 
         function cariShiftOtomatis(outletName, namaKaryawan) {
-            const cleanOutlet = outletName.trim();
-            const shifts = dbShift.filter(s => (s.outlet || "").trim() === cleanOutlet);
-            
-            if (shifts.length === 0) return null;
-
-            if (namaKaryawan && typeof gJadwalHariIni !== 'undefined' && gJadwalHariIni.length > 0) {
-                const myLogs = gJadwalHariIni.filter(r => r.nama === namaKaryawan);
-                const masukLogs = myLogs.filter(r => r.tipe === 'Masuk' || r.tipe === 'Tukar Shift');
-                const pulangLogs = myLogs.filter(r => r.tipe === 'Pulang');
-                
-                if (masukLogs.length > pulangLogs.length) {
-                    const namaShiftAktif = masukLogs[masukLogs.length - 1].shift;
-                    const shiftGantung = shifts.find(s => s.kode === namaShiftAktif);
-                    
-                    if (shiftGantung) {
-                        return shiftGantung;
-                    }
+            const cleanOutlet = String(outletName || '').trim();
+            const shifts = (dbShift || []).filter(s => String(s.outlet || '').trim() === cleanOutlet);
+            if (!shifts.length) return null;
+            // Prioritas 1: shift yang masih menggantung (sudah masuk, belum pulang) dari log hari ini.
+            if (namaKaryawan && Array.isArray(gJadwalHariIni) && gJadwalHariIni.length) {
+                const mine = gJadwalHariIni.filter(r => String(r.nama || '').trim().toUpperCase() === String(namaKaryawan).trim().toUpperCase());
+                const ins = mine.filter(r => ['Masuk','Tukar Shift'].includes(String(r.tipe||'')));
+                const outs = mine.filter(r => String(r.tipe||'') === 'Pulang');
+                if (ins.length > outs.length) {
+                    const code = String(ins[ins.length-1].shift || '').trim();
+                    const pending = shifts.find(s => String(s.kode||'').trim() === code);
+                    if (pending) return pending;
                 }
             }
-            
-            const now = new Date(); 
-            let currentMins = now.getHours() * 60 + now.getMinutes(); 
-            
-            try {
-                const opsiWITA = { timeZone: 'Asia/Makassar', hour: 'numeric', minute: 'numeric', hour12: false };
-                const witaString = new Intl.DateTimeFormat('id-ID', opsiWITA).format(now);
-                const witaParts = witaString.split(/[:.]/);
-                currentMins = parseInt(witaParts[0]) * 60 + parseInt(witaParts[1]);
-            } catch(err) {}
-
-            let bestShift = null;
-            let minDiff = Infinity;
-
-            function formatJamKeMenit(timeStr) {
-                if (!timeStr) return 0;
-                let str = timeStr.toUpperCase().trim();
-                let isPM = str.includes("PM"), isAM = str.includes("AM");
-                str = str.replace("AM", "").replace("PM", "").trim();
-                let parts = str.split(/[:.]/);
-                let hours = parseInt(parts[0]) || 0;
-                let minutes = parseInt(parts[1]) || 0;
-                if (isPM && hours < 12) hours += 12;
-                if (isAM && hours === 12) hours = 0;
-                return hours * 60 + minutes;
-            }
-
-            shifts.forEach(s => {
-                try {
-                    const mMasuk = formatJamKeMenit(s.jamMasuk);
-                    let mKeluar = formatJamKeMenit(s.jamKeluar);
-                    
-                    if (mKeluar < mMasuk) mKeluar += 24 * 60; 
-                    
-                    let diffMasuk = Math.abs(currentMins - mMasuk);
-                    let diffKeluar = Math.abs(currentMins - mKeluar);
-                    let closest = Math.min(diffMasuk, diffKeluar);
-                    
-                    let adjustedCurrent = currentMins;
-                    if (mKeluar > 24*60 && currentMins < mMasuk) adjustedCurrent += 24*60; 
-                    
-                    if (adjustedCurrent >= (mMasuk - 60) && adjustedCurrent <= (mKeluar + 60)) {
-                        closest -= 10000; 
-                    }
-                    
-                    if (closest < minDiff) { 
-                        minDiff = closest; 
-                        bestShift = s; 
-                    }
-                } catch(e) {}
+            const now = new Date();
+            let currentMins = Number(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',hour12:false}).format(now).split(':')[0])*60;
+            const timeParts = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',hour12:false}).format(now).split(':');
+            currentMins = (Number(timeParts[0]) % 24)*60 + Number(timeParts[1]);
+            const toMinutes = value => {
+                const m=String(value||'').trim().match(/^(\d{1,2})[:.](\d{2})(?:\s*(AM|PM))?$/i);
+                if(!m)return null;let h=Number(m[1]),min=Number(m[2]);const ap=(m[3]||'').toUpperCase();if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;if(h>23||min>59)return null;return h*60+min;
+            };
+            // Pilih shift yang sedang berjalan/terdekat dari waktu masuk; dukung shift lintas tengah malam.
+            let best=null,bestScore=Infinity;
+            shifts.forEach(s=>{
+                const start=toMinutes(s.jamMasuk),end0=toMinutes(s.jamKeluar);if(start===null||end0===null)return;
+                const end=end0<=start?end0+1440:end0;
+                const nowCandidates=[currentMins,currentMins+1440];
+                let score=Infinity;
+                nowCandidates.forEach(t=>{
+                    if(t>=start-90 && t<=end+90) score=Math.min(score,Math.abs(t-start)-10000);
+                    else score=Math.min(score,Math.abs(t-start));
+                });
+                if(score<bestScore){bestScore=score;best=s;}
             });
-            
-            return bestShift || shifts[0];
+            return best || shifts[0];
         }
-    
+
         function cekJarak() {
             const outName = document.getElementById('sel-outlet').value, alertBox = document.getElementById('dist-alert'), distText = document.getElementById('dist-text');
             if(!outName || userLat === 0) return;
@@ -625,12 +594,11 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                                     // 🚀 Cari kartu mana yang sesuai dengan tebakan AI, lalu otomatis klik
                                     const btns = document.querySelectorAll('.shift-pill');
                                     let targetBtn = null;
-                                    btns.forEach(b => { if(b.innerHTML.includes(autoShift.kode)) targetBtn = b; });
-                                    
-                                    if (targetBtn) {
-                                        pilihShiftManual(autoShift, targetBtn);
-                                    }
-                                    
+                                    btns.forEach(b => { if(String(b.querySelector('div')?.textContent||'').trim() === String(autoShift.kode).trim()) targetBtn = b; });
+                                    // Tetapkan shift langsung agar tidak bergantung pada kecocokan substring HTML.
+                                    pilihShiftManual(autoShift, targetBtn);
+                                    const shiftLabel=document.getElementById('sel-shift');
+                                    if(shiftLabel) shiftLabel.value=autoShift.kode;
                                     updateUI(true, "READY");
                                     munculkanPopupAutoAbsen(info, autoShift);
                                 } else { updateUI(true, "READY"); }
