@@ -112,6 +112,75 @@ html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}button,a,input,select,
 @media(max-width:640px){body{min-height:100dvh!important;height:auto!important}#aimoy-control-tower{padding:14px!important;border-radius:20px!important}#aimoy-control-tower .flex.flex-col.md\:flex-row{align-items:stretch}#aimoy-control-tower .flex.flex-wrap.gap-2>button{flex:1 1 100%;min-height:46px}#aimoy-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}#aimoy-summary-cards>div{padding:12px!important;border-radius:14px!important}#aimoy-summary-cards .text-2xl{font-size:1.25rem!important}#aimoy-approval-notification{padding:12px!important;border-radius:18px!important}#aimoy-approval-items{grid-template-columns:minmax(0,1fr)!important}#aimoy-owner-search,#aimoy-owner-outlet-filter{min-height:46px}#aimoy-control-tower .grid{min-width:0}#aimoy-outlet-summary>button{align-items:flex-start!important;padding:12px!important}#aimoy-accounts-panel,#aimoy-followup-panel,#aimoy-analytics-panel,#aimoy-schedule-panel{padding:14px!important;border-radius:20px!important}#aimoy-registration-queue article{border-radius:16px!important}#aimoy-registration-queue article .p-4{padding:12px!important}#aimoy-registration-queue article button{flex:1 1 100%;min-height:46px}#aimoy-analytics-panel input,#aimoy-analytics-panel select,#aimoy-schedule-panel input,#aimoy-schedule-panel select{width:100%;min-width:0}#aimoy-analytics-panel .flex.gap-2{flex-wrap:wrap}#aimoy-analytics-panel .flex.gap-2>*{flex:1 1 100%}.nav-mob-btn{min-width:0!important;flex:1;padding:5px 2px!important}.nav-mob-btn span{font-size:9px!important}.nav-mob-btn .nav-mob-pill{width:38px!important;height:30px!important}.drawer-panel{max-width:100vw!important}.view-content table{display:block;max-width:100%;overflow-x:auto}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #2563eb;outline-offset:2px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
+
+<style id="aimoy-v75-mobile-admin-audit">
+/* v75: predictable mobile viewport, touch targets, and contained scrolling */
+:root{--aimoy-safe-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%;}
+html{height:100%;min-height:100%;overscroll-behavior-y:none}
+body{height:100dvh!important;min-height:0!important;max-height:100dvh;overflow:hidden!important;overscroll-behavior:none}
+body>main{min-height:0;height:100%;overflow:hidden}
+body>main>div.flex-1.overflow-y-auto{min-height:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-padding-bottom:calc(92px + var(--aimoy-safe-bottom))}
+#sidebar{height:100dvh;height:100svh;max-height:100dvh;overscroll-behavior:contain}
+#mobile-overlay{touch-action:manipulation}
+#bottom-nav-bar{padding-bottom:calc(8px + var(--aimoy-safe-bottom));min-height:calc(62px + var(--aimoy-safe-bottom));overflow-x:auto;overscroll-behavior-x:contain}
+.drawer-panel{max-height:calc(100dvh - 8px);max-height:calc(100svh - 8px);padding-bottom:var(--aimoy-safe-bottom);overscroll-behavior:contain}
+.drawer-panel>div{min-width:0}
+.view-content{min-width:0;width:100%;animation:none}
+.view-content.active{display:flex}
+.view-content *{min-width:0}
+.view-content table{min-width:640px}
+.view-content .overflow-x-auto{-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+button,a,[role=button]{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button{min-height:44px}
+input,select,textarea{font-size:16px!important;scroll-margin-bottom:120px}
+.swal2-container{padding:12px!important;z-index:10050!important}
+.swal2-popup{width:min(100%,460px)!important;max-width:100%!important;padding:1.25rem!important;border-radius:22px!important}
+.swal2-html-container{max-height:min(58dvh,480px);overflow:auto}
+#aimoy-admin-auth{padding:max(14px,env(safe-area-inset-top)) 14px calc(14px + var(--aimoy-safe-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch}
+#aimoy-admin-auth .auth-card{padding:clamp(18px,5vw,28px);margin:auto}
+#aimoy-control-tower,#aimoy-approval-notification,#aimoy-accounts-panel,#aimoy-followup-panel,#aimoy-analytics-panel,#aimoy-schedule-panel{scroll-margin-top:12px;overflow-wrap:anywhere}
+#aimoy-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+#aimoy-summary-cards>div{min-width:0}
+@media(max-width:640px){
+ body{font-size:14px}
+ body>main{padding-bottom:0!important}
+ body>main>header{height:64px!important;min-height:64px;padding-left:12px!important;padding-right:12px!important;gap:8px}
+ body>main>header>div{min-width:0}
+ body>main>header #header-title{font-size:15px;line-height:1.25;max-width:48vw;overflow-wrap:anywhere}
+ body>main>header #header-date{font-size:9px;max-width:48vw;white-space:normal}
+ body>main>header button{min-width:42px;padding-left:10px!important;padding-right:10px!important}
+ body>main>div.flex-1.overflow-y-auto{padding:12px 12px calc(94px + var(--aimoy-safe-bottom))!important}
+ .view-content{gap:14px!important;padding-bottom:8px}
+ #aimoy-control-tower,#aimoy-approval-notification,#aimoy-accounts-panel,#aimoy-followup-panel,#aimoy-analytics-panel,#aimoy-schedule-panel{padding:14px!important;border-radius:18px!important}
+ #aimoy-control-tower h3{font-size:16px;line-height:1.35}
+ #aimoy-control-tower .flex.flex-wrap.gap-2>button{flex:1 1 100%;justify-content:center;min-height:46px}
+ #aimoy-summary-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ #aimoy-summary-cards>div{padding:11px!important;min-height:96px}
+ #aimoy-summary-cards .text-2xl{font-size:1.2rem!important;line-height:1.3;overflow-wrap:anywhere}
+ #aimoy-owner-trend{overflow-x:auto;max-width:100%;padding-bottom:5px}
+ #aimoy-owner-trend>div:first-child{min-width:320px}
+ #aimoy-outlet-summary>button{min-height:64px;padding:12px!important}
+ #aimoy-approval-items{grid-template-columns:minmax(0,1fr)!important}
+ #aimoy-approval-items button{min-height:66px}
+ #aimoy-owner-search,#aimoy-owner-outlet-filter{min-height:46px;width:100%}
+ #aimoy-analytics-panel .grid,#aimoy-schedule-panel .grid{grid-template-columns:minmax(0,1fr)!important}
+ #aimoy-analytics-panel .flex.gap-2,#aimoy-schedule-panel .flex.gap-2{flex-wrap:wrap}
+ #aimoy-analytics-panel .flex.gap-2>*,#aimoy-schedule-panel .flex.gap-2>*{flex:1 1 100%;width:100%}
+ #aimoy-registration-queue article button{flex:1 1 100%;min-height:46px}
+ #bottom-nav-bar{gap:2px;padding-left:6px;padding-right:6px}
+ .nav-mob-btn{flex:1 0 58px;min-width:58px;min-height:52px;padding:4px 2px!important}
+ .nav-mob-btn span{font-size:9px!important;line-height:1.15;white-space:normal;text-align:center}
+ .nav-mob-btn .nav-mob-pill{width:34px!important;height:28px!important}
+ .drawer-panel{left:0;right:0;bottom:0;width:100%;max-width:100vw;border-radius:22px 22px 0 0;max-height:calc(100dvh - env(safe-area-inset-top) - 8px);max-height:calc(100svh - env(safe-area-inset-top) - 8px)}
+ .drawer-panel .p-6,.drawer-panel .p-8{padding:16px!important}
+ .drawer-panel .flex.gap-3>button{min-height:46px}
+ .view-content table{display:table;min-width:640px}
+ .view-content .overflow-x-auto{max-width:100%}
+}
+@media(min-width:641px) and (max-width:1023px){body>main>div.flex-1.overflow-y-auto{padding:20px!important;padding-bottom:100px!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+
 </head>
 <body class="flex h-[100dvh] text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
 
@@ -767,16 +836,15 @@ html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}button,a,input,select,
             syncDatabase();
         });
 
-        function toggleSidebar() {
+        function toggleSidebar(forceClose = false) {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
+            const shouldOpen = !forceClose && sidebar.classList.contains('-translate-x-full');
+            sidebar.classList.toggle('-translate-x-full', !shouldOpen);
+            overlay.classList.toggle('hidden', !shouldOpen);
+            document.body.classList.toggle('aimoy-sidebar-open', shouldOpen);
+            const trigger = document.querySelector('body>main>header button[onclick="toggleSidebar()"]');
+            if (trigger) trigger.setAttribute('aria-expanded', String(shouldOpen));
         }
 
         function switchView(viewId, desktopBtn = null, mobileBtn = null) {
@@ -822,7 +890,7 @@ html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}button,a,input,select,
 
             const sidebar = document.getElementById('sidebar');
             if (window.innerWidth < 1024 && !sidebar.classList.contains('-translate-x-full')) {
-                toggleSidebar();
+                toggleSidebar(true);
             }
             // Pemicu otomatis memuat data saat tab Otorisasi dibuka
             if(viewId === 'view-otorisasi') muatDataOtorisasi();
@@ -2126,7 +2194,8 @@ document.addEventListener('DOMContentLoaded',()=>{const month=document.getElemen
    finally{btn.disabled=false;btn.textContent='Masuk ke Dashboard';}
  });
  window.addEventListener('storage',function(e){if(e.key===KEY&&!e.newValue){sessionStorage.removeItem(KEY);overlay.style.display='flex';}});
- document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(typeof toggleSidebar==='function'){const s=document.getElementById('sidebar');if(s&&!s.classList.contains('-translate-x-full'))toggleSidebar();}if(typeof closeAllDrawers==='function')closeAllDrawers();}});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(typeof toggleSidebar==='function'){const s=document.getElementById('sidebar');if(s&&!s.classList.contains('-translate-x-full'))toggleSidebar(true);}if(typeof closeAllDrawers==='function')closeAllDrawers();}});
+ window.addEventListener('resize',function(){if(window.innerWidth>=1024&&typeof toggleSidebar==='function'){const s=document.getElementById('sidebar');if(s&&!s.classList.contains('-translate-x-full'))toggleSidebar(true);}});
  window.aimoyAdminLogout=function(){sessionStorage.removeItem(KEY);overlay.style.display='flex';username.focus();};
 })();
 </script>
