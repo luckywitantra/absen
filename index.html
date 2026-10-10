@@ -62,33 +62,6 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 @media(max-width:480px){.glass-input{min-height:46px}.scan-line{animation-duration:2.8s}}
 </style>
-<style id="aimoy-v64-mobile-hardening">
-:root{--aimoy-safe-bottom:env(safe-area-inset-bottom,0px)}
-html{min-height:100%;-webkit-text-size-adjust:100%;scrollbar-gutter:stable}
-body{min-height:100dvh;overscroll-behavior-y:contain}
-video{display:block;max-width:100%;-webkit-transform:translateZ(0);transform:translateZ(0)}
-button,select,input{touch-action:manipulation}
-#cam-instruction{max-width:calc(100% - 20px);white-space:normal;text-align:center;line-height:1.4;justify-content:center}
-#liveness-overlay{pointer-events:none}
-#liveness-overlay button,#liveness-overlay [role="button"]{pointer-events:auto}
-.swal2-popup{max-height:calc(100dvh - 24px);overflow:hidden}
-.swal2-html-container{max-height:calc(100dvh - 190px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-@media(max-width:767px){
- html,body{width:100%;overflow-x:hidden}
- body{padding-bottom:calc(8px + var(--aimoy-safe-bottom))}
- .app-shell{width:100%;max-width:100%;min-height:100dvh;box-sizing:border-box}
- .camera-stage{min-width:0;width:100%;max-width:100%}
- .camera-stage video{width:100%;height:100%;object-fit:cover}
- #hud-scanner{max-width:90%;box-sizing:border-box}
- .control-panel{min-width:0;width:100%;box-sizing:border-box}
- .shift-pill{min-height:58px;touch-action:pan-x}
- .swal2-popup{width:calc(100vw - 20px)!important;padding:1rem!important;border-radius:20px!important}
- .swal2-html-container{margin:.5rem 0!important;max-height:calc(100dvh - 170px)!important}
- .swal2-actions{gap:8px!important;width:100%!important}
- .swal2-actions button{margin:0!important;min-height:46px!important}
-}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
-</style>
 </head>
 <body class="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-[#4a0404] to-[#0a0000] selection:bg-amber-900 selection:text-amber-100">
     <div class="w-full h-full max-w-md mx-auto flex flex-col relative sm:h-[95vh] sm:my-[2.5vh] sm:rounded-[2.5rem] overflow-hidden shadow-2xl sm:border border-white/10">
@@ -353,7 +326,7 @@ button,select,input{touch-action:manipulation}
                     faceapi.nets.faceExpressionNet.loadFromUri(URL) 
                 ]);
             } catch (err) {
-                console.error('Face AI model load failed:', err); return Swal.fire({title:'Model AI belum termuat',text:'Gagal memuat model deteksi/pengenalan wajah. Periksa koneksi internet, lalu muat ulang aplikasi. Absensi tidak dapat dilanjutkan sebelum model siap.',icon:'error',confirmButtonText:'Muat ulang',showCancelButton:true,cancelButtonText:'Tutup'}).then(r=>{if(r.isConfirmed)location.reload();});
+                return Swal.fire('Error AI', 'Gagal memuat model wajah. Periksa koneksi internet Anda.', 'error');
             }
 
             try {
@@ -407,7 +380,7 @@ button,select,input{touch-action:manipulation}
                 }
                 
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640, max: 960 }, height: { ideal: 480, max: 720 }, frameRate: { ideal: 24, max: 30 } }, audio: false })
-                    .then(s => { video.muted = true; video.playsInline = true; video.setAttribute('playsinline',''); video.setAttribute('webkit-playsinline',''); video.srcObject = s; const p = video.play(); if(p && typeof p.catch === 'function') p.catch(err => console.warn('Autoplay kamera ditunda oleh WebView:', err)); Swal.close(); })
+                    .then(s => { video.srcObject = s; Swal.close(); })
                     .catch(e => Swal.fire('Akses Ditolak', 'Kamera harus diizinkan untuk verifikasi biometrik.', 'error'));
             } catch (e) { 
                 console.error("Error Koneksi Database:", e);
@@ -586,16 +559,7 @@ button,select,input{touch-action:manipulation}
                 canvas.getContext('2d').clearRect(0, 0, size.width, size.height);
 
                 if (!document.getElementById('panel-absen').classList.contains('hidden')) {
-                    if (detections.length > 0 && !faceMatcher) {
-                        const percentEl = document.getElementById('hud-percent');
-                        hudScanner.className = "absolute border-2 border-dashed border-amber-400 rounded-3xl z-20 flex flex-col justify-between p-2 box-border";
-                        percentEl.classList.remove('hidden');
-                        percentEl.innerText = gKaryawan && gKaryawan.length ? 'DATA BIOMETRIK BELUM SIAP' : 'BELUM ADA DATA WAJAH';
-                        percentEl.className = "text-[10px] font-black text-white bg-amber-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
-                        document.getElementById('ai-name').innerText = 'Wajah terdeteksi';
-                        document.getElementById('ai-role').innerText = gKaryawan && gKaryawan.length ? 'Menyiapkan data pengenalan…' : 'Hubungi owner untuk pendaftaran wajah';
-                        document.getElementById('btn-in').disabled = true; document.getElementById('btn-out').disabled = true; document.getElementById('btn-izin').disabled = true;
-                    } else if (detections.length > 0 && faceMatcher) {
+                    if (detections.length > 0 && faceMatcher) {
                         
                         const box = resized[0].detection.box;
                         const containerW = video.clientWidth;
@@ -710,7 +674,7 @@ button,select,input{touch-action:manipulation}
                         faceapi.draw.drawFaceLandmarks(canvas, resized, drawBox); 
                     }
                 }
-                } catch (scanError) { console.warn('Pemindaian wajah sementara gagal:', scanError); const percentEl=document.getElementById('hud-percent'); if(percentEl && !isPrompting){percentEl.classList.remove('hidden');percentEl.innerText='MENYIAPKAN PEMINDAI…';percentEl.className='text-[10px] font-black text-white bg-slate-600 px-2.5 py-1 rounded-md shadow-md tracking-wide';} }
+                } catch (scanError) { console.warn('Pemindaian wajah sementara gagal:', scanError); }
                 finally {
                   lastScanDurationMs = performance.now() - scanStartedAt;
                   // Bila perangkat lambat, beri waktu lebih panjang agar UI tetap responsif; tidak ada loop yang overlap.
