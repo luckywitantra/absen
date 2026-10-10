@@ -372,8 +372,23 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
         const UNKNOWN_CONFIRM_MS = 3000;
         const REQUIRED_SMILE_FRAMES = 2;
         const SMILE_WINDOW_SIZE = 4;
-        const MOBILE_SCAN_INPUT = 288;
-        const DESKTOP_SCAN_INPUT = 352;
+        const MOBILE_SCAN_INPUT = 320;
+        const DESKTOP_SCAN_INPUT = 384;
+        const FACE_MATCH_THRESHOLD = 0.48; // 0.38 terlalu ketat untuk variasi kamera/WebView.
+        function aimoyBuildFaceMatcher(rows){
+          const valid=(Array.isArray(rows)?rows:[]).filter(k=>{
+            const d=k && k.descriptor;
+            return Array.isArray(d) && d.length===128 && d.every(v=>Number.isFinite(Number(v))) && k.nama;
+          });
+          if(!valid.length){ faceMatcher=null; return {count:0, invalid:(Array.isArray(rows)?rows.length:0)}; }
+          const labeled=valid.map(k=>new faceapi.LabeledFaceDescriptors(JSON.stringify({n:k.nama,r:k.role,o:k.outlet,id:k.id}),[new Float32Array(k.descriptor.map(Number))]));
+          faceMatcher=new faceapi.FaceMatcher(labeled,FACE_MATCH_THRESHOLD);
+          return {count:valid.length,invalid:(Array.isArray(rows)?rows.length:0)-valid.length};
+        }
+        function aimoyShowRecognitionStatus(message){
+          const el=document.getElementById('hud-percent');
+          if(el){el.classList.remove('hidden');el.textContent=message;el.className='text-[10px] font-black text-white bg-amber-600 px-2.5 py-1 rounded-md shadow-md tracking-wide';}
+        }
         function aimoyResetSmileWindow(){ smileWindow=[]; smileFrames=0; }
         function aimoyAddSmileSample(score){
           smileWindow.push(Number(score)||0);
@@ -513,10 +528,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                                 gJadwalHariIni = freshData.jadwalHariIni || [];
                                 gKaryawan = freshData.dataKaryawan; 
                                 
-                                if (freshData.dataKaryawan.length > 0) {
-                                    const labeled = freshData.dataKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet, id: k.id}), [new Float32Array(k.descriptor)]));
-                                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38);
-                                }
+                                aimoyBuildFaceMatcher(freshData.dataKaryawan || []);
                             }
                         }).catch(e => console.log("Sync background gagal."));
                 } else {
@@ -539,10 +551,8 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                 document.getElementById('sel-outlet').innerHTML = outHtml; 
                 document.getElementById('reg-outlet').innerHTML = outHtml;
 
-                if (gKaryawan.length > 0) {
-                    const labeled = gKaryawan.map(k => new faceapi.LabeledFaceDescriptors(JSON.stringify({n: k.nama, r: k.role, o: k.outlet, id: k.id}), [new Float32Array(k.descriptor)]));
-                    faceMatcher = new faceapi.FaceMatcher(labeled, 0.38); 
-                }
+                const matcherStatus = aimoyBuildFaceMatcher(gKaryawan);
+                if (!matcherStatus.count) console.warn('Data wajah belum tersedia/descriptor tidak valid:', matcherStatus);
                 
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640, max: 960 }, height: { ideal: 480, max: 720 }, frameRate: { ideal: 24, max: 30 } }, audio: false })
                     .then(s => { video.srcObject = s; video.muted = true; video.playsInline = true; const p=video.play(); if(p&&p.catch)p.catch(()=>{}); Swal.close(); })
@@ -817,6 +827,16 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                                 }
                             }
                         }
+                    } else if (detections.length > 0 && !faceMatcher) {
+                        aimoyShowRecognitionStatus('WAJAH TERLIHAT · DATA WAJAH BELUM SIAP');
+                        hudScanner.className = "absolute border-2 border-dashed border-amber-400 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 box-border";
+                        const box = resized[0].detection.box;
+                        const containerW = video.clientWidth, containerH = video.clientHeight;
+                        const scaleCover = Math.max(containerW / size.width, containerH / size.height);
+                        const renderedW = size.width * scaleCover, renderedH = size.height * scaleCover;
+                        hudScanner.style.left = `${((size.width-box.x-box.width)*scaleCover)+(containerW-renderedW)/2}px`;
+                        hudScanner.style.top = `${(box.y*scaleCover)+(containerH-renderedH)/2}px`;
+                        hudScanner.style.width = `${box.width*scaleCover}px`; hudScanner.style.height = `${box.height*scaleCover}px`;
                     } else { 
                         hudScanner.className = "absolute border-2 border-dashed border-white/40 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-300 status-search box-border";
                         hudScanner.style.left = "20%"; hudScanner.style.top = "20%"; hudScanner.style.width = "60%"; hudScanner.style.height = "60%";
