@@ -172,6 +172,33 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
 @media(prefers-reduced-motion:reduce){.scan-line{animation:none!important}}
 </style>
 
+
+<style id="aimoy-v72-mobile-polish">
+:root{--aimoy-safe-bottom:env(safe-area-inset-bottom,0px)}
+button,select,input{touch-action:manipulation}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px}
+#liveness-overlay{bottom:max(12px,var(--aimoy-safe-bottom))!important;left:10px!important;right:10px!important;z-index:45!important}
+#liveness-overlay>div{width:100%;max-width:380px;margin-inline:auto;padding:14px!important;border-radius:20px!important}
+@media(max-width:760px){
+ html,body{width:100%;max-width:100%;overflow-x:hidden!important}
+ .app-shell{padding-left:12px!important;padding-right:12px!important}
+ .camera-stage>div:first-child{aspect-ratio:4/3!important;max-height:56svh!important;min-height:0!important}
+ .camera-stage video{object-fit:cover!important}
+ .control-panel{min-width:0!important;width:100%!important}
+ #sel-outlet{min-height:48px!important;font-size:13px!important}
+ #btn-in,#btn-out{min-height:54px!important;border-radius:15px!important}
+ #btn-izin,#btn-tukar{min-width:52px!important;min-height:48px!important}
+ #shift-container{scrollbar-width:none;scroll-snap-type:x mandatory}
+ #shift-container>*{scroll-snap-align:start;flex-shrink:0}
+ #liveness-overlay .flex.items-center.gap-3{gap:10px!important}
+ #head-progress-title{font-size:13px!important;line-height:1.25!important}
+ #head-progress-copy{font-size:11px!important;line-height:1.4!important}
+ #head-progress-value{font-size:14px!important}
+ #cam-instruction{max-width:calc(100% - 24px);text-align:center;justify-content:center;line-height:1.3;white-space:normal}
+}
+@media(max-width:360px){#liveness-overlay>div{padding:11px!important}#head-progress-icon{width:36px!important;height:36px!important;flex-basis:36px!important}.app-header h1{font-size:22px!important}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body class="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-[#4a0404] to-[#0a0000] selection:bg-amber-900 selection:text-amber-100">
     <div class="app-shell w-full mx-auto flex flex-col relative shadow-2xl">
@@ -218,12 +245,12 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                 <div id="liveness-overlay" class="absolute inset-x-3 bottom-20 z-30 hidden flex-col items-center justify-center transition-opacity duration-300 pointer-events-none">
                     <div class="w-full max-w-sm rounded-2xl border border-sky-300/25 bg-slate-950/90 backdrop-blur-xl shadow-2xl px-4 py-3.5 pointer-events-auto">
                         <div class="flex items-center gap-3">
-                            <div id="smile-progress-icon" class="w-10 h-10 rounded-full border-2 border-sky-300/60 bg-sky-400/10 flex items-center justify-center text-sky-200 shrink-0"><i class="fas fa-face-smile text-lg"></i></div>
-                            <div class="min-w-0 flex-1"><p id="smile-progress-title" class="text-xs font-extrabold text-white">Verifikasi senyum</p><p id="smile-progress-copy" class="text-[10px] text-slate-300 mt-1">Wajah dikenali. Tersenyumlah secara alami.</p></div>
-                            <strong id="smile-progress-value" class="text-sm text-sky-200 tabular-nums">0%</strong>
+                            <div id="head-progress-icon" class="w-10 h-10 rounded-full border-2 border-sky-300/60 bg-sky-400/10 flex items-center justify-center text-sky-200 shrink-0"><i class="fas fa-face-smile text-lg"></i></div>
+                            <div class="min-w-0 flex-1"><p id="head-progress-title" class="text-xs font-extrabold text-white">Verifikasi gerakan kepala</p><p id="head-progress-copy" class="text-[10px] text-slate-300 mt-1">Wajah dikenali. Ikuti instruksi gerakan kepala.</p></div>
+                            <strong id="head-progress-value" class="text-sm text-sky-200 tabular-nums">0%</strong>
                         </div>
-                        <div class="mt-3 h-2 rounded-full overflow-hidden bg-white/10"><div id="smile-progress-bar" class="h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-[width] duration-200 ease-out" style="width:0%"></div></div>
-                        <div class="flex items-center justify-between mt-2 text-[9px] text-slate-400"><span>Verifikasi biometrik</span><span id="smile-progress-steps">Menunggu senyum</span></div>
+                        <div class="mt-3 h-2 rounded-full overflow-hidden bg-white/10"><div id="head-progress-bar" class="h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-[width] duration-200 ease-out" style="width:0%"></div></div>
+                        <div class="flex items-center justify-between mt-2 text-[9px] text-slate-400"><span>Verifikasi biometrik</span><span id="head-progress-steps">Menyiapkan verifikasi</span></div>
                     </div>
                 </div>
 
@@ -360,21 +387,21 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
         window.aimoyEmployeeToken = '';
         window.aimoyEmployeeProfile = null;
         let userLat = 0, userLng = 0, userAccuracy = null, distance = 0, isLocValid = false, lastRecognizedName = null;
-        let isPrompting = false, isLivenessPassed = false;
-        // Toleransi pengenalan: ekspresi senyum sering mengubah descriptor sesaat.
-        // Pertahankan kandidat yang sudah cocok beberapa detik agar tidak berkedip menjadi "Tidak Dikenal".
-        let candidateFace = null, candidateLastMatchedAt = 0, unknownSince = 0, smileFrames = 0, scanInProgress = false;
+        let isPrompting = false, isLivenessPassed = false; aimoyResetHeadLiveness();
+        // Liveness aktif tanpa skor ekspresi senyum. Identitas tetap wajib cocok dengan descriptor terdaftar.
+        let candidateFace = null, candidateLastMatchedAt = 0, unknownSince = 0, scanInProgress = false;
         let pendingLookupAt=0, pendingLookupKey="", miniDashboardShownFor="";
-        // Performa: satu loop pemindaian saja, interval adaptif, dan toleransi frame senyum.
-        let scanLoopStarted = false, smileWindow = [], lastScanDurationMs = 0, adaptiveScanDelay = 220, scanErrorStreak = 0, scanDiagnosticShown = false, noFaceStreak = 0;
-        const REQUIRED_SMILE_SCORE = 0.42;
+        let scanLoopStarted = false, lastScanDurationMs = 0, adaptiveScanDelay = 220, scanErrorStreak = 0, scanDiagnosticShown = false, noFaceStreak = 0;
         const CANDIDATE_GRACE_MS = 8000;
         const UNKNOWN_CONFIRM_MS = 3000;
-        const REQUIRED_SMILE_FRAMES = 2;
-        const SMILE_WINDOW_SIZE = 4;
         const MOBILE_SCAN_INPUT = 320;
         const DESKTOP_SCAN_INPUT = 384;
-        const FACE_MATCH_THRESHOLD = 0.38; // Baseline v63 dipertahankan agar risiko salah cocok tidak meningkat.
+        const FACE_MATCH_THRESHOLD = 0.38; // Ambang baseline dipertahankan.
+        const HEAD_MOVE_THRESHOLD = 0.105; // Perubahan relatif terhadap jarak mata, bukan piksel mentah.
+        const HEAD_STABLE_SAMPLES = 2;
+        const HEAD_BASELINE_SAMPLES = 3;
+        const HEAD_CHALLENGE_TIMEOUT_MS = 9000;
+        let headLiveness = { baseline: [], base: null, direction: 1, startedAt: 0, stable: 0, samples: [], passed: false, stage: 'baseline' };
         function aimoyBuildFaceMatcher(rows){
           const valid=(Array.isArray(rows)?rows:[]).filter(k=>{
             const d=k && k.descriptor;
@@ -389,50 +416,74 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
           const el=document.getElementById('hud-percent');
           if(el){el.classList.remove('hidden');el.textContent=message;el.className='text-[10px] font-black text-white bg-amber-600 px-2.5 py-1 rounded-md shadow-md tracking-wide';}
         }
-        function aimoyResetSmileWindow(){ smileWindow=[]; smileFrames=0; }
-        function aimoyAddSmileSample(score){
-          smileWindow.push(Number(score)||0);
-          if(smileWindow.length>SMILE_WINDOW_SIZE)smileWindow.shift();
-          smileFrames=smileWindow.filter(v=>v>=REQUIRED_SMILE_SCORE).length;
-          return smileFrames>=REQUIRED_SMILE_FRAMES;
+        function aimoyResetHeadLiveness(){
+          headLiveness={baseline:[],base:null,direction:Math.random()<.5?-1:1,startedAt:0,stable:0,samples:[],passed:false,stage:'baseline'};
+          const bar=document.getElementById('head-progress-bar'),value=document.getElementById('head-progress-value'),title=document.getElementById('head-progress-title'),copy=document.getElementById('head-progress-copy'),steps=document.getElementById('head-progress-steps'),icon=document.getElementById('head-progress-icon');
+          if(bar)bar.style.width='8%'; if(value)value.textContent='8%';
+          if(title)title.textContent='Verifikasi gerakan kepala';
+          if(copy)copy.textContent='Hadapkan wajah lurus ke kamera sebentar.';
+          if(steps)steps.textContent='Menyiapkan verifikasi';
+          if(icon){icon.className='w-10 h-10 rounded-full border-2 border-sky-300/60 bg-sky-400/10 flex items-center justify-center text-sky-200 shrink-0';icon.innerHTML='<i class="fas fa-arrows-left-right text-lg"></i>';}
         }
-        function aimoyUpdateSmileProgress(score, passed=false){
-          const overlay=document.getElementById('liveness-overlay');
-          const bar=document.getElementById('smile-progress-bar');
-          const value=document.getElementById('smile-progress-value');
-          const title=document.getElementById('smile-progress-title');
-          const copy=document.getElementById('smile-progress-copy');
-          const steps=document.getElementById('smile-progress-steps');
-          const icon=document.getElementById('smile-progress-icon');
-          const scorePct=Math.max(0,Math.min(100,Math.round((Number(score)||0)/REQUIRED_SMILE_SCORE*100)));
-          const consistencyPct=Math.min(100,Math.round((smileFrames/REQUIRED_SMILE_FRAMES)*100));
-          const pct=passed?100:Math.min(94,Math.round(scorePct*.45+consistencyPct*.55));
-          if(bar)bar.style.width=pct+'%'; if(value)value.textContent=pct+'%';
-          if(title)title.textContent=passed?'Verifikasi berhasil':'Verifikasi senyum';
-          if(copy)copy.textContent=passed?'Wajah terverifikasi. Menyiapkan pilihan absensi…':(Number(score)>=REQUIRED_SMILE_SCORE?'Senyum terdeteksi, memastikan konsistensi…':'Tersenyumlah secara alami selama sesaat.');
-          if(steps)steps.textContent=passed?'Selesai':`${Math.min(smileFrames,REQUIRED_SMILE_FRAMES)} dari ${REQUIRED_SMILE_FRAMES} sampel`;
-          if(icon){icon.className=passed?'w-10 h-10 rounded-full border-2 border-emerald-300/60 bg-emerald-400/10 flex items-center justify-center text-emerald-200 shrink-0':'w-10 h-10 rounded-full border-2 border-sky-300/60 bg-sky-400/10 flex items-center justify-center text-sky-200 shrink-0';icon.innerHTML=passed?'<i class="fas fa-check text-lg"></i>':'<i class="fas fa-face-smile text-lg"></i>';}
-          if(overlay && passed){setTimeout(()=>{if(isLivenessPassed){overlay.classList.add('hidden');overlay.classList.remove('flex');}},450);}
+        function aimoyGetHeadSignal(faceResult){
+          const pts=faceResult&&faceResult.landmarks&&faceResult.landmarks.positions;
+          if(!Array.isArray(pts)||pts.length<68)return null;
+          const avg=ids=>({x:ids.reduce((a,i)=>a+pts[i].x,0)/ids.length,y:ids.reduce((a,i)=>a+pts[i].y,0)/ids.length});
+          const left=avg([36,37,38,39,40,41]),right=avg([42,43,44,45,46,47]);
+          const eyeDistance=Math.hypot(right.x-left.x,right.y-left.y);
+          if(!Number.isFinite(eyeDistance)||eyeDistance<18)return null;
+          const eyeMidX=(left.x+right.x)/2;
+          return (pts[30].x-eyeMidX)/eyeDistance;
         }
-        function aimoyResetSmileProgress(){aimoyResetSmileWindow();aimoyUpdateSmileProgress(0,false);}
-
-        // Hybrid smile score for Android WebView: expression model + mouth landmarks.
-        // The geometry is only a secondary signal; identity still must match an enrolled descriptor.
-        function aimoySmileScore(faceResult){
-          const expressionScore=Number(faceResult && faceResult.expressions && faceResult.expressions.happy)||0;
-          const pts=faceResult && faceResult.landmarks && faceResult.landmarks.positions;
-          if(!Array.isArray(pts) || pts.length<68) return expressionScore;
-          const dist=(a,b)=>Math.hypot(pts[a].x-pts[b].x,pts[a].y-pts[b].y);
-          const width=dist(48,54);
-          if(!Number.isFinite(width)||width<8) return expressionScore;
-          const cornerY=(pts[48].y+pts[54].y)/2;
-          const centerY=(pts[51].y+pts[57].y)/2;
-          const curve=(centerY-cornerY)/width;
-          const mouthOpen=dist(62,66)/width;
-          // Normalize gently; avoids requiring a wide/open smile and tolerates WebView model variance.
-          const geometryScore=Math.max(0,Math.min(0.72,0.30+(curve-0.015)*4.2+(mouthOpen>0.10?0.04:0)));
-          return Math.max(expressionScore,geometryScore);
+        function aimoyUpdateHeadLiveness(faceResult){
+          if(isLivenessPassed)return true;
+          const signal=aimoyGetHeadSignal(faceResult);
+          if(signal===null){aimoyUpdateHeadProgress(0,false,'baseline');return false;}
+          const now=Date.now();
+          if(headLiveness.stage==='baseline'){
+            headLiveness.baseline.push(signal);
+            if(headLiveness.baseline.length>HEAD_BASELINE_SAMPLES)headLiveness.baseline.shift();
+            const pct=Math.min(30,Math.round(headLiveness.baseline.length/HEAD_BASELINE_SAMPLES*30));
+            aimoyUpdateHeadProgress(pct,false,'baseline');
+            if(headLiveness.baseline.length>=HEAD_BASELINE_SAMPLES){
+              headLiveness.base=headLiveness.baseline.reduce((a,b)=>a+b,0)/headLiveness.baseline.length;
+              headLiveness.direction=Math.random()<.5?-1:1;
+              headLiveness.startedAt=now;headLiveness.stage='move';headLiveness.samples=[];headLiveness.stable=0;
+              aimoyUpdateHeadProgress(35,false,'move');
+            }
+            return false;
+          }
+          if(headLiveness.stage==='move'){
+            if(now-headLiveness.startedAt>HEAD_CHALLENGE_TIMEOUT_MS){
+              headLiveness.baseline=[];headLiveness.base=null;headLiveness.stage='baseline';headLiveness.samples=[];headLiveness.stable=0;
+              headLiveness.direction=Math.random()<.5?-1:1;
+              aimoyUpdateHeadProgress(8,false,'baseline');return false;
+            }
+            // Preview is mirrored, detector coordinates are not; invert screen direction.
+            const delta=(signal-headLiveness.base)*(-headLiveness.direction);
+            const good=delta>=HEAD_MOVE_THRESHOLD;
+            headLiveness.samples.push(good);if(headLiveness.samples.length>3)headLiveness.samples.shift();
+            headLiveness.stable=headLiveness.samples.filter(Boolean).length;
+            const pct=Math.min(92,35+Math.round(Math.max(0,Math.min(1,delta/HEAD_MOVE_THRESHOLD))*45)+Math.round(headLiveness.stable/HEAD_STABLE_SAMPLES*12));
+            aimoyUpdateHeadProgress(pct,false,'move');
+            if(headLiveness.stable>=HEAD_STABLE_SAMPLES){
+              headLiveness.passed=true;headLiveness.stage='passed';isLivenessPassed=true;
+              aimoyUpdateHeadProgress(100,true,'passed');return true;
+            }
+          }
+          return false;
         }
+        function aimoyUpdateHeadProgress(pct,passed=false,stage='move'){
+          const overlay=document.getElementById('liveness-overlay'),bar=document.getElementById('head-progress-bar'),value=document.getElementById('head-progress-value'),title=document.getElementById('head-progress-title'),copy=document.getElementById('head-progress-copy'),steps=document.getElementById('head-progress-steps'),icon=document.getElementById('head-progress-icon');
+          const n=Math.max(0,Math.min(100,Math.round(pct||0)));
+          if(bar)bar.style.width=n+'%';if(value)value.textContent=n+'%';
+          if(title)title.textContent=passed?'Verifikasi berhasil':'Verifikasi gerakan kepala';
+          if(copy)copy.textContent=passed?'Gerakan terverifikasi. Menyiapkan pilihan absensi…':stage==='baseline'?'Hadapkan wajah lurus ke kamera sebentar.':`Gerakkan kepala sedikit mengikuti panah ${headLiveness.direction<0?'←':'→'}.`;
+          if(steps)steps.textContent=passed?'Selesai':stage==='baseline'?'Menyiapkan verifikasi':'Ikuti arah panah';
+          if(icon){icon.className=passed?'w-10 h-10 rounded-full border-2 border-emerald-300/60 bg-emerald-400/10 flex items-center justify-center text-emerald-200 shrink-0':'w-10 h-10 rounded-full border-2 border-sky-300/60 bg-sky-400/10 flex items-center justify-center text-sky-200 shrink-0';icon.innerHTML=passed?'<i class="fas fa-check text-lg"></i>':`<span class="text-2xl font-black">${stage==='baseline'?'◎':(headLiveness.direction<0?'←':'→')}</span>`;}
+          if(overlay){if(passed){setTimeout(()=>{if(isLivenessPassed){overlay.classList.add('hidden');overlay.classList.remove('flex');}},500);}else{overlay.classList.remove('hidden');overlay.classList.add('flex');}}
+        }
+        function aimoyResetSmileProgress(){aimoyResetHeadLiveness();}
 
         let gJadwalHariIni = [];
         let gKaryawan = [];
@@ -699,7 +750,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                 scanInProgress = true;
                 const scanStartedAt = performance.now();
                 try {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: detectorInputSize, scoreThreshold: 0.45 })).withFaceLandmarks().withFaceExpressions().withFaceDescriptors();
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: detectorInputSize, scoreThreshold: 0.45 })).withFaceLandmarks().withFaceDescriptors();
                 scanErrorStreak = 0;
                 if(detections.length > 0) { noFaceStreak = 0; const retryBtn=document.getElementById('aimoy-camera-retry'); if(retryBtn)retryBtn.remove(); }
                 if(scanDiagnosticShown) { scanDiagnosticShown = false; }
@@ -741,13 +792,8 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                             candidateFace = info;
                             candidateLastMatchedAt = Date.now();
                             unknownSince = 0;
-                            const expressions = resized[0].expressions;
-                            const smileScore = aimoySmileScore(resized[0]);
-                            const smilePassedNow = aimoyAddSmileSample(smileScore);
-                            aimoyUpdateSmileProgress(smileScore, smilePassedNow);
-                            if (smilePassedNow) { isLivenessPassed = true; }
-
-                            if (!isLivenessPassed) {
+                            const headPassedNow = aimoyUpdateHeadLiveness(resized[0]);
+                            if (!headPassedNow && !isLivenessPassed) {
                                 currentFace = info;
                                 updateUI(true, "LIVENESS_WAIT");
                                 return;
@@ -784,45 +830,23 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                             
                         } else {
                             // Jangan langsung menyatakan tidak dikenal pada satu frame yang gagal.
-                            // Jika wajah sudah cocok dan sedang tersenyum, pertahankan kandidat selama grace period.
+                            // Pertahankan kandidat yang baru cocok selama grace period untuk menghindari flicker.
                             const now = Date.now();
                             if (candidateFace && (now - candidateLastMatchedAt) < CANDIDATE_GRACE_MS) {
-                                // PENTING: ekspresi senyum tetap dievaluasi walau descriptor pada frame ini
-                                // sesaat tidak cocok. Perubahan bentuk mulut sering mengubah descriptor wajah.
+                                // Pertahankan kandidat untuk menghindari flicker, tetapi jangan luluskan liveness
+                                // dari frame yang identitasnya tidak cocok.
                                 currentFace = candidateFace;
-                                const smileScoreDuringGrace = aimoySmileScore(resized[0]);
-                                const smilePassedDuringGrace = aimoyAddSmileSample(smileScoreDuringGrace);
-                                aimoyUpdateSmileProgress(smileScoreDuringGrace, smilePassedDuringGrace);
+                                // Saat kepala bergerak, descriptor dapat berubah sesaat. Izinkan landmark membantu
+                                // hanya bila identitas yang cocok baru saja terlihat dan hanya ada satu wajah.
+                                let graceLivenessPassed = false;
+                                if (detections.length === 1 && (now - candidateLastMatchedAt) < 1800) {
+                                    graceLivenessPassed = aimoyUpdateHeadLiveness(resized[0]);
+                                }
                                 hudScanner.className = "absolute border-4 border-solid border-amber-400 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-amber-400/5 box-border";
                                 percentEl.classList.remove('hidden');
+                                percentEl.innerText = graceLivenessPassed ? "GERAKAN TERVERIFIKASI · MENYELESAIKAN…" : "WAJAH DIKENALI · IKUTI ARAH PANAH";
                                 percentEl.className = "text-[10px] font-black text-white bg-amber-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
-                                if (smilePassedDuringGrace && !isLivenessPassed) {
-                                    // Liveness selesai berdasarkan beberapa sampel; identitas memakai kandidat
-                                    // yang sebelumnya telah cocok, bukan identitas frame yang gagal.
-                                    isLivenessPassed = true;
-                                    lastRecognizedName = candidateFace.n;
-                                    const verifiedInfo = candidateFace;
-                                    currentFace = verifiedInfo;
-                                    percentEl.innerText = "SENYUM TERVERIFIKASI";
-                                    hudScanner.className = "absolute border-4 border-solid border-emerald-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-emerald-500/5 box-border";
-                                    if (miniDashboardShownFor !== String(verifiedInfo.id || verifiedInfo.n)) {
-                                        miniDashboardShownFor = String(verifiedInfo.id || verifiedInfo.n);
-                                        setTimeout(() => aimoyLoadAttendanceSummary(verifiedInfo), 500);
-                                    }
-                                    const outSel = document.getElementById('sel-outlet');
-                                    if (verifiedInfo.o) {
-                                        outSel.value = verifiedInfo.o;
-                                        outSel.disabled = true;
-                                        document.getElementById('outlet-chevron').classList.add('hidden');
-                                        loadShiftDropdown();
-                                    }
-                                    updateUI(true, "READY");
-                                } else {
-                                    percentEl.innerText = smileScoreDuringGrace >= REQUIRED_SMILE_SCORE
-                                        ? "SENYUM TERDETEKSI · MEMASTIKAN…"
-                                        : "WAJAH DIKENALI · TERSENYUMLAH";
-                                    updateUI(true, "LIVENESS_WAIT");
-                                }
+                                updateUI(true, "LIVENESS_WAIT");
                             } else {
                                 if (!unknownSince) unknownSince = now;
                                 if ((now - unknownSince) >= UNKNOWN_CONFIRM_MS) {
@@ -830,7 +854,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                                     hudScanner.className = "absolute border-4 border-solid border-rose-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-rose-500/5 box-border";
                                     percentEl.classList.remove('hidden'); percentEl.innerText = "WAJAH BELUM DIKENALI";
                                     percentEl.className = "text-[10px] font-black text-white bg-rose-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
-                                    lastRecognizedName = null; candidateFace = null; isLivenessPassed = false; aimoyResetSmileWindow(); updateUI(false);
+                                    lastRecognizedName = null; candidateFace = null; isLivenessPassed = false; aimoyResetHeadLiveness(); updateUI(false);
                                 } else {
                                     percentEl.classList.remove('hidden'); percentEl.innerText = "MEMERIKSA WAJAH…";
                                     percentEl.className = "text-[10px] font-black text-white bg-slate-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
@@ -853,7 +877,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                         hudScanner.style.left = "20%"; hudScanner.style.top = "20%"; hudScanner.style.width = "60%"; hudScanner.style.height = "60%";
                         document.getElementById('hud-percent').classList.add('hidden');
                         if (!candidateFace || (Date.now() - candidateLastMatchedAt) >= CANDIDATE_GRACE_MS) {
-                            lastRecognizedName = null; candidateFace = null; unknownSince = 0; isLivenessPassed = false; aimoyResetSmileWindow(); updateUI(false);
+                            lastRecognizedName = null; candidateFace = null; unknownSince = 0; isLivenessPassed = false; aimoyResetHeadLiveness(); updateUI(false);
                             if(noFaceStreak >= 25) { const instruction=document.getElementById('cam-instruction'); if(instruction) { instruction.innerHTML="<i class='fas fa-circle-exclamation text-amber-300'></i> WAJAH BELUM TERDETEKSI · DEKATKAN WAJAH & TAMBAH CAHAYA"; instruction.title='Kamera aktif, tetapi model belum mendeteksi wajah pada beberapa frame.'; } }
                         } else {
                             currentFace = candidateFace;
@@ -908,15 +932,14 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
             if (found && currentFace) {
                 if (state === "LIVENESS_WAIT") {
                     nameEl.innerText = currentFace.n; nameEl.className = "text-[13px] font-black text-amber-400 truncate";
-                    roleEl.innerText = "WAJAH DIKENALI · VERIFIKASI SENYUM"; roleEl.className = "text-[9px] font-black text-amber-500 uppercase tracking-widest truncate animate-pulse";
+                    roleEl.innerText = "WAJAH DIKENALI · VERIFIKASI GERAKAN"; roleEl.className = "text-[9px] font-black text-amber-500 uppercase tracking-widest truncate animate-pulse";
                     iconBg.className = "w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/50 shrink-0 transition-colors";
-                    icon.innerText = "😊";
+                    icon.innerText = "↔";
                     
-                    camInstruction.innerHTML = "<i class='fas fa-face-smile text-amber-400 text-sm'></i> TERSENYUMLAH KE KAMERA"; 
+                    camInstruction.innerHTML = `<i class='fas fa-arrows-left-right text-amber-300 text-sm'></i> IKUTI ARAH PANAH ${headLiveness.direction<0?'←':'→'}`; 
                     camInstruction.className = "bg-amber-900/90 backdrop-blur-md border border-amber-500/50 px-6 py-3 rounded-full text-amber-100 text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2 transition-all duration-300 transform scale-105";
                     
                     livenessOverlay.classList.remove('hidden'); livenessOverlay.classList.add('flex');
-                    aimoyUpdateSmileProgress(smileWindow.length ? smileWindow[smileWindow.length-1] : 0, false);
                     btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
                 } else if (state === "READY") {
                     nameEl.innerText = currentFace.n; nameEl.className = "text-[13px] font-black text-white truncate";
@@ -928,7 +951,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                     camInstruction.className = "bg-emerald-900/90 backdrop-blur-md border border-emerald-500/50 px-5 py-2.5 rounded-full text-emerald-100 text-[10px] font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2 transition-all duration-300";
                     
                     livenessOverlay.classList.add('hidden'); livenessOverlay.classList.remove('flex');
-                    aimoyUpdateSmileProgress(1, true);
+                    aimoyUpdateHeadProgress(100, true, 'passed');
                     
                     if(outSel.value) { btnIzin.disabled = false; document.getElementById('btn-tukar').disabled = false; }  else { btnIzin.disabled = true; document.getElementById('btn-tukar').disabled = true; }
                     if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
@@ -1002,7 +1025,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                         cancelButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-3 text-xs tracking-widest hover:bg-white/20 transition-colors'
                     }
                 }).then((result) => { 
-                    if (result.isConfirmed) { ajukanIzin(); } else { isPrompting = false; isLivenessPassed = false; lastRecognizedName = null; }
+                    if (result.isConfirmed) { ajukanIzin(); } else { isPrompting = false; isLivenessPassed = false; aimoyResetHeadLiveness(); lastRecognizedName = null; }
                 }); 
                 return;
             }
@@ -1039,7 +1062,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                     } else if (result.isDenied) {
                         kirimAbsen('Masuk'); 
                     } else {
-                        isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false);
+                        isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; aimoyResetHeadLiveness(); updateUI(false);
                     }
                 });
                 return; 
@@ -1106,7 +1129,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
             }).then((result) => {
                 if (result.isConfirmed) { kirimAbsen('Masuk'); } 
                 else if (result.isDenied) { kirimAbsen('Pulang'); } 
-                else { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); } 
+                else { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; aimoyResetHeadLiveness(); updateUI(false); } 
             });
         }
         
@@ -1225,14 +1248,14 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                         </div>`,
                         showConfirmButton: false, allowOutsideClick: false, heightAuto: false, background: 'rgba(8, 15, 28, 0.98)', customClass: { popup: 'swal2-popup', htmlContainer: 'aimoy-attendance-modal-content' }
                     }).then(() => { 
-                        isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); 
+                        isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; aimoyResetHeadLiveness(); document.getElementById('sel-shift').value = ""; updateUI(false); 
                     });
                 } else { 
                     window.aimoyPendingRequestId = null;
-                    Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Ditolak Sistem</span>', html: `<span class="text-[#e8d5c4] text-xs">${result.message}</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); 
+                    Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Ditolak Sistem</span>', html: `<span class="text-[#e8d5c4] text-xs">${result.message}</span>`, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; aimoyResetHeadLiveness(); }); 
                 }
             } catch (e) { 
-                Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gangguan Sinyal</span>', html: '<span class="text-[#e8d5c4] text-xs">Gagal terhubung ke pangkalan data.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; }); 
+                Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gangguan Sinyal</span>', html: '<span class="text-[#e8d5c4] text-xs">Gagal terhubung ke pangkalan data.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; aimoyResetHeadLiveness(); }); 
             }
         }
 
@@ -1299,7 +1322,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                             </button>
                             </div>`, 
                             showConfirmButton: false, allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' } 
-                        }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); });
+                        }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; aimoyResetHeadLiveness(); updateUI(false); });
                     }
                 } catch (e) { Swal.fire({ icon: 'error', title: '<span class="text-[#F8F1E5]">Gagal</span>', html: '<span class="text-[#e8d5c4] text-xs">Cek koneksi internet Anda.</span>', background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup', confirmButton: 'bg-white/10 text-white rounded-xl font-black px-6 py-2.5 text-xs tracking-widest' } }).then(() => { isPrompting = false; }); }
             } else { isPrompting = false; }
@@ -1387,7 +1410,7 @@ video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibilit
                                 </button>
                                 </div>`, 
                                 showConfirmButton: false, allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
-                            }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; updateUI(false); });
+                            }).then(() => { isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; aimoyResetHeadLiveness(); updateUI(false); });
                         } else {
                             Swal.fire('Gagal', result.message, 'error');
                             isPrompting = false;
