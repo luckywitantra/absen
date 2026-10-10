@@ -157,6 +157,22 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                     <input type="hidden" id="sel-shift-lembur" value="">
                 </div>
                 
+                <section id="aimoy-monthly-recap" class="hidden rounded-2xl border border-[#D4AF37]/30 bg-gradient-to-br from-[#21100B] to-[#100706] p-3.5 shadow-lg" aria-live="polite">
+                    <div class="flex items-center justify-between gap-2 mb-3">
+                        <div><p class="text-[9px] font-black tracking-[.18em] text-[#D4AF37] uppercase">Rekap absensi pribadi</p><p id="aimoy-recap-period" class="text-xs font-bold text-[#F8F1E5] mt-1">Bulan ini</p></div>
+                        <span class="text-[9px] rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 px-2 py-1"><i class="fas fa-shield-check mr-1"></i>TERVERIFIKASI</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="aimoy-recap-metrics">
+                        <div class="rounded-xl bg-white/5 p-2.5"><p class="text-[9px] text-slate-400">Hari hadir</p><p class="text-xl font-black text-white" id="aimoy-recap-hadir">—</p></div>
+                        <div class="rounded-xl bg-white/5 p-2.5"><p class="text-[9px] text-slate-400">Jadwal off</p><p class="text-xl font-black text-[#D4AF37]" id="aimoy-recap-off">—</p></div>
+                        <div class="rounded-xl bg-white/5 p-2.5"><p class="text-[9px] text-slate-400">Izin</p><p class="text-xl font-black text-sky-300" id="aimoy-recap-izin">—</p></div>
+                        <div class="rounded-xl bg-white/5 p-2.5"><p class="text-[9px] text-slate-400">Sakit</p><p class="text-xl font-black text-rose-300" id="aimoy-recap-sakit">—</p></div>
+                    </div>
+                    <p id="aimoy-recap-status" class="text-[10px] text-slate-400 mt-2">Memuat rekap bulan ini…</p>
+                    <button id="aimoy-recap-wa" type="button" class="mt-3 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-[10px] font-black tracking-widest text-white shadow-lg active:scale-[.99] transition-transform"><i class="fab fa-whatsapp text-base mr-2"></i>KIRIM REKAP ABSEN VIA GRUP WA</button>
+                    <p class="text-center text-[9px] text-slate-500 mt-1.5">WhatsApp terbuka dengan pesan siap kirim.</p>
+                </section>
+
                 <div class="grid grid-cols-2 gap-2.5 pt-1">
                     <button id="btn-in" onclick="kirimAbsen('Masuk')" disabled class="bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-to-bracket text-blue-300"></i> MASUK</button>
                     <button id="btn-out" onclick="kirimAbsen('Pulang')" disabled class="bg-rose-600 hover:bg-rose-500 text-white py-4 rounded-xl font-black shadow-[0_0_20px_rgba(225,29,72,0.3)] disabled:opacity-20 disabled:shadow-none transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-right-from-bracket text-rose-300"></i> PULANG</button>
@@ -254,7 +270,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             }, () => {const status=document.getElementById('geo-status');if(status)status.innerHTML='<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> IZINKAN LOKASI';},{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
             initApp();
         });
-        function aimoyKioskLogout(){window.aimoyEmployeeToken='';window.aimoyEmployeeProfile=null;localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');try{const v=document.getElementById('video');if(v&&v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());}catch(e){}location.reload();}
+        function aimoyKioskLogout(){attendanceSummaryLoadedFor='';attendanceSummaryMessage='';const recap=document.getElementById('aimoy-monthly-recap');if(recap)recap.classList.add('hidden');window.aimoyEmployeeToken='';window.aimoyEmployeeProfile=null;localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');try{const v=document.getElementById('video');if(v&&v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());}catch(e){}location.reload();}
 
         async function aimoyCheckPendingRegistration(descriptor){
           const key=descriptor.slice(0,8).map(v=>Number(v).toFixed(2)).join(',');if(key===pendingLookupKey)return;pendingLookupKey=key;
@@ -263,47 +279,35 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             Swal.fire({icon:'warning',title:d.status==='pending'?'Pendaftaran belum diotorisasi':'Pendaftaran belum disetujui',html:'<div class="text-sm text-left"><b>'+String(d.nama||'').replace(/[&<>]/g,'')+'</b><br>'+String(d.outlet||'').replace(/[&<>]/g,'')+'<p class="mt-3">'+String(d.message||'').replace(/[&<>]/g,'')+'</p><button id="aimoy-pending-wa" class="mt-3 w-full rounded-xl bg-emerald-600 text-white font-bold p-3"><i class="fab fa-whatsapp mr-2"></i>Forward ke grup WhatsApp</button></div>',showConfirmButton:false,showCloseButton:true,didOpen:()=>{const b=document.getElementById('aimoy-pending-wa');if(b)b.onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank','noopener,noreferrer');}});
           }}catch(e){console.warn('Status pendaftaran belum dapat diperiksa',e);}
         }
-        async function aimoyTryMiniDashboard(info){
-          if(!info||!info.descriptor)return;
-          // Alur bertahap: wajah + liveness -> mini dashboard (jika diizinkan) -> kembali ke alur absensi.
-          // Tidak ada lagi dialog pilihan. Dashboard menjadi tahap informasi sebelum pegawai melanjutkan absen.
-          let accessEnabled=false, accessCheckFailed=false, dashboardData=null;
+        let attendanceSummaryLoadedFor = '';
+        let attendanceSummaryMessage = '';
+        async function aimoyLoadAttendanceSummary(info){
+          if(!info || !info.descriptor) return;
+          const key=String(info.id||info.n||'');
+          if(attendanceSummaryLoadedFor===key) return;
+          attendanceSummaryLoadedFor=key;
+          const card=document.getElementById('aimoy-monthly-recap');
+          if(card) card.classList.remove('hidden');
+          const status=document.getElementById('aimoy-recap-status');
+          if(status) status.textContent='Memuat rekap absensi bulan ini…';
+          const waButton=document.getElementById('aimoy-recap-wa');
+          if(waButton){waButton.disabled=true;waButton.classList.add('opacity-50');}
           try{
-            const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_mini_dashboard',payload:{descriptor:info.descriptor}})});
+            const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_attendance_summary',payload:{descriptor:info.descriptor}})});
             const d=await r.json();
-            accessEnabled=d.status==='success';
-            accessCheckFailed=!(d.status==='success'||d.status==='disabled');
-            if(accessEnabled)dashboardData=d;
-          }catch(e){accessCheckFailed=true;console.warn('Pemeriksaan akses mini dashboard gagal',e);}
-
-          if(accessEnabled){
-            // Beri transisi singkat agar pengguna memahami tahapan berikutnya, terutama pada HP.
-            await Swal.fire({toast:true,position:'top',icon:'success',title:'Wajah terverifikasi',text:'Memuat mini dashboard Anda sebelum absensi…',showConfirmButton:false,timer:1100,timerProgressBar:true});
-            await aimoyRenderMiniDashboard(info,dashboardData);
-            // Setelah pegawai menutup mini dashboard, tampilan absensi yang sudah siap di belakangnya
-            // menjadi tahap berikutnya. Tidak mengirim absensi otomatis dan tidak melewati konfirmasi shift.
-            return;
+            if(!r.ok || d.status!=='success') throw new Error(d.message||'Rekap belum dapat dimuat.');
+            const m=d.current||{};
+            const put=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=String(Number(v)||0);};
+            const period=document.getElementById('aimoy-recap-period'); if(period)period.textContent=m.label||m.periode||'Bulan ini';
+            put('aimoy-recap-hadir',m.hariHadir); put('aimoy-recap-off',m.jadwalOff); put('aimoy-recap-izin',m.izin); put('aimoy-recap-sakit',m.sakit);
+            attendanceSummaryMessage=`REKAP ABSENSI AIMOY — BULAN INI\nNama: ${d.employee.nama}\nOutlet: ${d.employee.outlet}\nPeriode: ${m.label||m.periode||'Bulan ini'}\n\nHari hadir: ${Number(m.hariHadir)||0}\nJadwal off: ${Number(m.jadwalOff)||0}\nIzin: ${Number(m.izin)||0}\nSakit: ${Number(m.sakit)||0}\n\nRekap dibuat otomatis oleh AiMoy.`;
+            if(status)status.textContent='Rekap diperbarui dari data absensi. Angka dihitung berdasarkan tanggal unik.';
+            if(waButton){waButton.disabled=false;waButton.classList.remove('opacity-50');waButton.onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(attendanceSummaryMessage),'_blank','noopener,noreferrer');}
+          }catch(e){
+            console.warn('Rekap absensi gagal dimuat',e);
+            if(status)status.textContent='Rekap belum dapat dimuat. Periksa koneksi, lalu coba pindai kembali.';
+            if(waButton){waButton.disabled=true;waButton.classList.add('opacity-50');}
           }
-
-          // Jika owner belum memberi akses, atau pemeriksaan akses gagal, jangan menghambat absensi biasa.
-          // Pemeriksaan gagal tetap fail-closed untuk dashboard, tetapi fail-open untuk alur absensi.
-          if(accessCheckFailed){
-            Swal.fire({toast:true,position:'top',icon:'info',title:'Lanjut ke absensi',text:'Mini dashboard tidak dapat diverifikasi saat ini.',showConfirmButton:false,timer:2200});
-          }
-        }
-        async function aimoyRenderMiniDashboard(info, initialData){
-          let d=initialData;
-          try{
-            // Ambil data segar saat dibuka, bukan hanya mengandalkan hasil pemeriksaan awal.
-            const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_mini_dashboard',payload:{descriptor:info.descriptor}})});
-            const fresh=await r.json();
-            if(fresh.status==='success')d=fresh;
-            else if(fresh.status==='disabled'){await Swal.fire('Dashboard belum diaktifkan','Owner belum memberikan akses mini dashboard untuk akun ini.','info');return;}
-            else {await Swal.fire('Data belum tersedia','Mini dashboard tidak dapat dimuat. Silakan coba kembali atau lanjutkan absensi biasa.','warning');return;}
-          }catch(e){await Swal.fire('Koneksi bermasalah','Rekap tidak dapat dimuat saat ini. Silakan coba kembali.','warning');return;}
-          const render=m=>`<div class="grid grid-cols-2 gap-2 text-left"><div class="rounded-xl bg-slate-50 p-3"><div class="text-xs text-slate-500">Total catatan</div><div class="text-2xl font-black">${Number(m.total)||0}</div></div><div class="rounded-xl bg-amber-50 p-3"><div class="text-xs text-slate-500">Terlambat</div><div class="text-2xl font-black text-amber-700">${Number(m.terlambat)||0}</div></div><div class="rounded-xl bg-blue-50 p-3"><div class="text-xs text-slate-500">Masuk</div><div class="text-xl font-black">${Number(m.masuk)||0}</div></div><div class="rounded-xl bg-indigo-50 p-3"><div class="text-xs text-slate-500">Pulang</div><div class="text-xl font-black">${Number(m.pulang)||0}</div></div></div>`;
-          const wa=`REKAP ABSENSI AIMOY\nNama: ${d.employee.nama}\nOutlet: ${d.employee.outlet}\n\nBULAN INI (${d.current.periode})\nTotal catatan: ${d.current.total}\nMasuk: ${d.current.masuk}\nPulang: ${d.current.pulang}\nTerlambat: ${d.current.terlambat}\nIzin: ${d.current.izin}\nSakit: ${d.current.sakit}\n\nBULAN LALU (${d.previous.periode})\nTotal catatan: ${d.previous.total}\nMasuk: ${d.previous.masuk}\nPulang: ${d.previous.pulang}\nTerlambat: ${d.previous.terlambat}\nIzin: ${d.previous.izin}\nSakit: ${d.previous.sakit}`;
-          Swal.fire({title:'Tahap 2 dari 3 · Mini Dashboard',html:`<div class="text-left"><div class="mb-3 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-800"><i class="fas fa-route mr-1"></i> Setelah melihat rekap, tutup halaman ini untuk melanjutkan absensi.</div><div class="mb-1 text-lg font-black text-slate-900">${String(d.employee.nama||'').replace(/[&<>]/g,'')}</div><div class="mb-4 text-xs text-slate-500">${String(d.employee.outlet||'').replace(/[&<>]/g,'')}</div><h3 class="mb-2 text-sm font-bold">Bulan ini · ${d.current.periode}</h3>${render(d.current)}<h3 class="mb-2 mt-4 text-sm font-bold">Bulan lalu · ${d.previous.periode}</h3>${render(d.previous)}<button id="aimoy-mini-wa" class="mt-4 w-full rounded-xl bg-emerald-600 p-3 font-bold text-white"><i class="fab fa-whatsapp mr-2"></i>Bagikan rekap ke WhatsApp</button><p class="mt-2 text-center text-xs text-slate-500">Pilih grup tujuan dan kirim melalui WhatsApp.</p></div>`,showConfirmButton:false,showCloseButton:true,width:Math.min(520,window.innerWidth-24),heightAuto:true,customClass:{popup:'aimoy-mini-dashboard-popup'},didOpen:()=>{const popup=Swal.getPopup();if(popup){popup.style.maxHeight='88dvh';popup.style.overflowY='auto';popup.style.borderRadius='22px';}const b=document.getElementById('aimoy-mini-wa');if(b)b.onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(wa),'_blank','noopener,noreferrer');}});
         }
 
         function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
@@ -607,7 +611,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 
                             if(lastRecognizedName !== info.n) { 
                                 lastRecognizedName = info.n; currentFace = info; 
-                                if(miniDashboardShownFor!==String(info.id||info.n)){miniDashboardShownFor=String(info.id||info.n);setTimeout(()=>aimoyTryMiniDashboard(info),650);}
+                                if(miniDashboardShownFor!==String(info.id||info.n)){miniDashboardShownFor=String(info.id||info.n);setTimeout(()=>aimoyLoadAttendanceSummary(info),650);}
                                 const outSel = document.getElementById('sel-outlet'); 
                                 if(info.o) { 
                                     outSel.value = info.o; 
@@ -656,7 +660,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                                     hudScanner.className = "absolute border-4 border-solid border-emerald-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-emerald-500/5 box-border";
                                     if (miniDashboardShownFor !== String(verifiedInfo.id || verifiedInfo.n)) {
                                         miniDashboardShownFor = String(verifiedInfo.id || verifiedInfo.n);
-                                        setTimeout(() => aimoyTryMiniDashboard(verifiedInfo), 500);
+                                        setTimeout(() => aimoyLoadAttendanceSummary(verifiedInfo), 500);
                                     }
                                     const outSel = document.getElementById('sel-outlet');
                                     if (verifiedInfo.o) {
