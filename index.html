@@ -63,7 +63,16 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 @media(max-width:480px){.glass-input{min-height:46px}.scan-line{animation-duration:2.8s}}
 </style>
 
-<style id="aimoy-superapp-ui-v67">
+
+/* v68: camera-first staged attendance and native-like liveness progress */
+#liveness-overlay{pointer-events:none!important}
+#liveness-overlay>div{pointer-events:auto!important}
+.swal2-popup{max-height:min(88dvh,760px)!important;overflow:hidden!important}
+.swal2-html-container{max-height:calc(88dvh - 170px)!important;overflow-y:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important}
+.aimoy-stage-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(125,211,252,.22);background:rgba(14,165,233,.08);border-radius:999px;padding:6px 10px;color:#bae6fd;font-size:10px;font-weight:800;letter-spacing:.06em}
+@media(max-width:640px){.swal2-popup{width:calc(100vw - 24px)!important;padding:1.1rem!important;border-radius:24px!important}.swal2-html-container{margin:.5rem 0!important;max-height:calc(88dvh - 150px)!important}.swal2-actions{width:100%!important;gap:8px!important}.swal2-actions button{margin:0!important;min-height:48px!important}}
+</style>
+<style id="aimoy-superapp-ui-v68">
 :root{color-scheme:dark;--app-bg:#0b1220;--panel:#111c2e;--panel-2:#152238;--line:rgba(148,163,184,.19);--text:#f1f5f9;--muted:#9aaac0;--brand:#38bdf8;--brand-2:#0ea5e9;--good:#34d399;--warn:#fbbf24;--danger:#fb7185}
 html{height:100%;scroll-behavior:smooth;background:var(--app-bg)}
 body{position:relative!important;inset:auto!important;width:100%!important;height:auto!important;min-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;display:block!important;background:radial-gradient(ellipse at 15% 0%,#16304b 0%,transparent 42%),linear-gradient(180deg,#0b1220 0%,#0d1727 55%,#0b1220 100%)!important;color:var(--text)!important;touch-action:pan-y!important}
@@ -178,8 +187,16 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                     </div>
                 </div>
 
-                <div id="liveness-overlay" class="absolute inset-0 bg-black/70 backdrop-blur-sm z-30 hidden flex-col items-center justify-center transition-opacity duration-300">
-                    <div class="w-48 h-48 rounded-full border-4 border-dashed border-[#D4AF37] animate-[spin_10s_linear_infinite]"></div>
+                <div id="liveness-overlay" class="absolute inset-x-3 bottom-20 z-30 hidden flex-col items-center justify-center transition-opacity duration-300 pointer-events-none">
+                    <div class="w-full max-w-sm rounded-2xl border border-sky-300/25 bg-slate-950/90 backdrop-blur-xl shadow-2xl px-4 py-3.5 pointer-events-auto">
+                        <div class="flex items-center gap-3">
+                            <div id="smile-progress-icon" class="w-10 h-10 rounded-full border-2 border-sky-300/60 bg-sky-400/10 flex items-center justify-center text-sky-200 shrink-0"><i class="fas fa-face-smile text-lg"></i></div>
+                            <div class="min-w-0 flex-1"><p id="smile-progress-title" class="text-xs font-extrabold text-white">Verifikasi senyum</p><p id="smile-progress-copy" class="text-[10px] text-slate-300 mt-1">Wajah dikenali. Tersenyumlah secara alami.</p></div>
+                            <strong id="smile-progress-value" class="text-sm text-sky-200 tabular-nums">0%</strong>
+                        </div>
+                        <div class="mt-3 h-2 rounded-full overflow-hidden bg-white/10"><div id="smile-progress-bar" class="h-full rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 transition-[width] duration-200 ease-out" style="width:0%"></div></div>
+                        <div class="flex items-center justify-between mt-2 text-[9px] text-slate-400"><span>Verifikasi biometrik</span><span id="smile-progress-steps">Menunggu senyum</span></div>
+                    </div>
                 </div>
 
                 <div class="absolute bottom-4 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
@@ -336,6 +353,26 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
           smileFrames=smileWindow.filter(v=>v>=REQUIRED_SMILE_SCORE).length;
           return smileFrames>=REQUIRED_SMILE_FRAMES;
         }
+        function aimoyUpdateSmileProgress(score, passed=false){
+          const overlay=document.getElementById('liveness-overlay');
+          const bar=document.getElementById('smile-progress-bar');
+          const value=document.getElementById('smile-progress-value');
+          const title=document.getElementById('smile-progress-title');
+          const copy=document.getElementById('smile-progress-copy');
+          const steps=document.getElementById('smile-progress-steps');
+          const icon=document.getElementById('smile-progress-icon');
+          const scorePct=Math.max(0,Math.min(100,Math.round((Number(score)||0)/REQUIRED_SMILE_SCORE*100)));
+          const consistencyPct=Math.min(100,Math.round((smileFrames/REQUIRED_SMILE_FRAMES)*100));
+          const pct=passed?100:Math.min(94,Math.round(scorePct*.45+consistencyPct*.55));
+          if(bar)bar.style.width=pct+'%'; if(value)value.textContent=pct+'%';
+          if(title)title.textContent=passed?'Verifikasi berhasil':'Verifikasi senyum';
+          if(copy)copy.textContent=passed?'Wajah terverifikasi. Menyiapkan pilihan absensi…':(Number(score)>=REQUIRED_SMILE_SCORE?'Senyum terdeteksi, memastikan konsistensi…':'Tersenyumlah secara alami selama sesaat.');
+          if(steps)steps.textContent=passed?'Selesai':`${Math.min(smileFrames,REQUIRED_SMILE_FRAMES)} dari ${REQUIRED_SMILE_FRAMES} sampel`;
+          if(icon){icon.className=passed?'w-10 h-10 rounded-full border-2 border-emerald-300/60 bg-emerald-400/10 flex items-center justify-center text-emerald-200 shrink-0':'w-10 h-10 rounded-full border-2 border-sky-300/60 bg-sky-400/10 flex items-center justify-center text-sky-200 shrink-0';icon.innerHTML=passed?'<i class="fas fa-check text-lg"></i>':'<i class="fas fa-face-smile text-lg"></i>';}
+          if(overlay && passed){setTimeout(()=>{if(isLivenessPassed){overlay.classList.add('hidden');overlay.classList.remove('flex');}},450);}
+        }
+        function aimoyResetSmileProgress(){aimoyResetSmileWindow();aimoyUpdateSmileProgress(0,false);}
+
         let gJadwalHariIni = [];
         let gKaryawan = [];
         window.addEventListener('load', () => {
@@ -640,6 +677,7 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                             unknownSince = 0;
                             const expressions = resized[0].expressions;
                             const smilePassedNow = aimoyAddSmileSample(expressions.happy);
+                            aimoyUpdateSmileProgress(expressions.happy, smilePassedNow);
                             if (smilePassedNow) { isLivenessPassed = true; }
 
                             if (!isLivenessPassed) {
@@ -687,6 +725,7 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                                 currentFace = candidateFace;
                                 const smileScoreDuringGrace = Number(resized[0]?.expressions?.happy || 0);
                                 const smilePassedDuringGrace = aimoyAddSmileSample(smileScoreDuringGrace);
+                                aimoyUpdateSmileProgress(smileScoreDuringGrace, smilePassedDuringGrace);
                                 hudScanner.className = "absolute border-4 border-solid border-amber-400 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-amber-400/5 box-border";
                                 percentEl.classList.remove('hidden');
                                 percentEl.className = "text-[10px] font-black text-white bg-amber-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
@@ -779,6 +818,7 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                     camInstruction.className = "bg-amber-900/90 backdrop-blur-md border border-amber-500/50 px-6 py-3 rounded-full text-amber-100 text-[11px] font-black tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2 transition-all duration-300 transform scale-105";
                     
                     livenessOverlay.classList.remove('hidden'); livenessOverlay.classList.add('flex');
+                    aimoyUpdateSmileProgress(smileWindow.length ? smileWindow[smileWindow.length-1] : 0, false);
                     btnIn.disabled = true; btnOut.disabled = true; btnIzin.disabled = true;
                 } else if (state === "READY") {
                     nameEl.innerText = currentFace.n; nameEl.className = "text-[13px] font-black text-white truncate";
@@ -790,6 +830,7 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                     camInstruction.className = "bg-emerald-900/90 backdrop-blur-md border border-emerald-500/50 px-5 py-2.5 rounded-full text-emerald-100 text-[10px] font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2 transition-all duration-300";
                     
                     livenessOverlay.classList.add('hidden'); livenessOverlay.classList.remove('flex');
+                    aimoyUpdateSmileProgress(1, true);
                     
                     if(outSel.value) { btnIzin.disabled = false; document.getElementById('btn-tukar').disabled = false; }  else { btnIzin.disabled = true; document.getElementById('btn-tukar').disabled = true; }
                     if (isLocValid && shf) { btnIn.disabled = false; btnOut.disabled = false; } else { btnIn.disabled = true; btnOut.disabled = true; }
@@ -952,10 +993,13 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
             // MUNCULKAN POPUP
             Swal.fire({
                 title: `<span class="text-[#F8F1E5] text-xl font-black">Hai, ${faceInfo.n}! 👋</span>`,
-                html: `<div class="text-[#e8d5c4] text-xs w-full overflow-hidden">Anda terdeteksi berada di <b class="text-white">${faceInfo.o}</b>.<br><br>Target Shift Hari Ini:${shiftCardsHtml}</div>`,
-                showDenyButton: true, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)', confirmButtonText: '<i class="fas fa-right-to-bracket mr-1"></i> MASUK', denyButtonText: '<i class="fas fa-right-from-bracket mr-1"></i> PULANG', cancelButtonText: 'Batal', allowOutsideClick: false,
+                html: `<div class="text-slate-300 text-sm w-full overflow-hidden text-left">
+                    <div class="aimoy-stage-pill mb-3"><i class="fas fa-check-circle"></i> WAJAH TERVERIFIKASI</div>
+                    <div class="rounded-2xl border border-sky-300/20 bg-sky-400/5 p-3 mb-3"><p class="text-[9px] uppercase tracking-[.16em] text-sky-200 font-extrabold mb-1">Cabang terdeteksi otomatis</p><div class="flex items-center gap-2 text-white font-extrabold"><i class="fas fa-store text-sky-300"></i><span>${String(faceInfo.o||'Outlet belum terdeteksi').replace(/[&<>"']/g,'')}</span></div><p class="text-[10px] text-slate-400 mt-1">Periksa cabang sebelum memilih tindakan absensi.</p></div>
+                    <p class="text-[10px] uppercase tracking-[.16em] font-extrabold text-slate-400">Pilih jadwal shift</p><p class="text-[10px] text-slate-400 mt-1">Shift terbaik dipilih otomatis. Anda tetap dapat menggantinya jika jadwal berbeda.</p>${shiftCardsHtml}</div>`, 
+                showDenyButton: true, showCancelButton: true, background: 'rgba(26, 1, 1, 0.95)', confirmButtonText: '<i class="fas fa-right-to-bracket mr-1"></i> MASUK', denyButtonText: '<i class="fas fa-right-from-bracket mr-1"></i> PULANG', cancelButtonText: 'Batal', allowOutsideClick: false, heightAuto: false,
                 customClass: { 
-                    popup: 'swal2-popup', 
+                    popup: 'swal2-popup', htmlContainer: 'aimoy-shift-modal-content',
                     confirmButton: 'bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-colors', 
                     denyButton: 'bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black w-full mb-2 text-xs py-3.5 tracking-wider shadow-[0_0_15px_rgba(225,29,72,0.4)] transition-colors', 
                     cancelButton: 'bg-transparent text-slate-400 hover:text-white rounded-xl w-full text-xs py-2 border border-white/10 transition-colors', 
@@ -1067,17 +1111,21 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                     Swal.fire({
                         icon: iconType, 
                         title: `<span class="text-[#F8F1E5] text-xl font-black">${titleText}</span>`,
-                        html: `<div class="text-[#e8d5c4] text-xs">${infoMsg}<br><br>
-                        <div class="bg-black/50 p-4 rounded-xl border border-white/5 mb-3">
-                            <span class="block text-[9px] uppercase tracking-widest text-slate-500 mb-1">Status Kehadiran</span>
-                            <b class="${statusColor} text-lg tracking-wider">${result.statusWaktu}</b>
+                        html: `<div class="text-slate-300 text-sm text-left">
+                        <div class="aimoy-stage-pill mb-3"><i class="fas fa-check-circle"></i> TAHAP 3 · LAPORAN ABSENSI</div>
+                        <p class="text-xs text-slate-300 mb-3">${infoMsg}</p>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div class="bg-white/5 p-3 rounded-xl border border-white/10"><span class="block text-[9px] uppercase tracking-widest text-slate-400 mb-1">Nama</span><b class="text-white text-xs">${String(currentFace.n||'').replace(/[&<>"']/g,'')}</b></div>
+                            <div class="bg-white/5 p-3 rounded-xl border border-white/10"><span class="block text-[9px] uppercase tracking-widest text-slate-400 mb-1">Cabang · Shift</span><b class="text-white text-xs">${String(out||'').replace(/[&<>"']/g,'')} · ${String(shiftDipakai||'').replace(/[&<>"']/g,'')}</b></div>
+                            <div class="col-span-2 bg-black/40 p-3 rounded-xl border border-white/10"><span class="block text-[9px] uppercase tracking-widest text-slate-400 mb-1">Status Kehadiran</span><b class="${statusColor} text-base tracking-wider">${String(result.statusWaktu||'TERSIMPAN').replace(/[&<>"']/g,'')}</b><p class="text-[10px] text-slate-400 mt-1">${String(result.jam||'').replace(/[&<>"']/g,'')}</p></div>
                         </div>
+                        ${rawSummary ? `<details class="rounded-xl border border-white/10 bg-black/30 p-3 mb-3"><summary class="cursor-pointer text-[10px] font-bold text-slate-300">Lihat detail rekap absensi</summary><pre class="whitespace-pre-wrap break-words text-[10px] text-slate-400 mt-2 font-sans">${rawSummary.replace(/[&<>]/g,'')}</pre></details>` : ''}
                         <button onclick="bagikanLaporanWhatsApp()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3.5 rounded-xl font-black shadow-lg block text-center uppercase tracking-widest text-xs hover:from-emerald-400 hover:to-teal-500 transition-all shadow-emerald-900/50 mt-2">
                             <i class="fab fa-whatsapp text-lg mr-1 align-middle"></i> ${isDuplicate ? 'KIRIM ULANG KE WA' : 'LAPORKAN KE GRUP WA'}
                         </button>
                         <p class="text-[9px] text-slate-500 mt-3 leading-tight text-left"><i class="fas fa-info-circle text-amber-500"></i> Jika tombol error, teks laporan akan otomatis disalin.</p>
                         </div>`,
-                        showConfirmButton: false, allowOutsideClick: false, background: 'rgba(26, 1, 1, 0.95)', customClass: { popup: 'swal2-popup' }
+                        showConfirmButton: false, allowOutsideClick: false, heightAuto: false, background: 'rgba(8, 15, 28, 0.98)', customClass: { popup: 'swal2-popup', htmlContainer: 'aimoy-attendance-modal-content' }
                     }).then(() => { 
                         isPrompting = false; lastRecognizedName = null; isLivenessPassed = false; document.getElementById('sel-shift').value = ""; updateUI(false); 
                     });
