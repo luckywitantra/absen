@@ -64,7 +64,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 </style>
 
 
-<style>
+<style id="aimoy-v68-popup-fix">
 /* v68: camera-first staged attendance and native-like liveness progress */
 #liveness-overlay{pointer-events:none!important}
 #liveness-overlay>div{pointer-events:auto!important}
@@ -145,6 +145,33 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
 @media(prefers-reduced-motion:reduce){#hud-scanner *,#cam-instruction{animation:none!important;transition:none!important}}
 </style>
 
+
+<style id="aimoy-android-webview-v69">
+html,body{min-height:100%;height:auto;-webkit-text-size-adjust:100%;overscroll-behavior-y:contain}
+body{overflow-x:hidden!important;overflow-y:auto!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px)!important}
+video#video{transform:scaleX(-1);-webkit-transform:scaleX(-1);backface-visibility:hidden;will-change:auto}
+#liveness-overlay{z-index:35!important;bottom:max(16px,env(safe-area-inset-bottom,0px))!important}
+#liveness-overlay>div{width:100%;max-width:360px}
+.camera-stage>div:first-child{isolation:isolate;contain:layout paint}
+.control-panel{min-height:0!important}
+@media(max-width:760px){
+ .app-shell{min-height:100svh!important;min-height:100dvh!important;padding-top:max(10px,env(safe-area-inset-top,0px))!important}
+ .app-header{position:relative!important;z-index:5!important}
+ .camera-stage{width:100%!important;flex:none!important}
+ .camera-stage>div:first-child{width:100%!important;aspect-ratio:4/4.35!important;min-height:260px!important;max-height:52svh!important;max-height:52dvh!important}
+ .control-panel{width:100%!important;flex:none!important;max-height:none!important;overflow:visible!important}
+ #panel-absen{min-width:0!important}
+ #shift-container{max-width:100%!important;scroll-snap-type:x mandatory!important}
+ #shift-container>.shift-pill{scroll-snap-align:center!important;min-height:76px!important}
+ #aimoy-monthly-recap{margin-top:4px!important}
+ #btn-in,#btn-out{min-height:54px!important;touch-action:manipulation!important}
+ .swal2-container{padding:12px!important;align-items:center!important}
+ .swal2-popup{width:calc(100vw - 24px)!important;max-width:440px!important;max-height:calc(100svh - 24px)!important;max-height:calc(100dvh - 24px)!important;overflow:hidden!important}
+ .swal2-html-container{max-height:calc(100svh - 210px)!important;max-height:calc(100dvh - 210px)!important;overflow-y:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important}
+}
+@media(prefers-reduced-motion:reduce){.scan-line{animation:none!important}}
+</style>
+
 </head>
 <body class="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-[#4a0404] to-[#0a0000] selection:bg-amber-900 selection:text-amber-100">
     <div class="app-shell w-full mx-auto flex flex-col relative shadow-2xl">
@@ -158,7 +185,7 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                 </div>
                 <div>
                     <h1 class="text-xl font-black tracking-tight text-[#F8F1E5] leading-none">Si-Amoy</h1>
-                    <p class="text-[9px] text-amber-200/75 tracking-[0.18em] font-extrabold mt-1 uppercase">ABSENSI WAJAH · AICHA MOMOYO</p>
+                    <p class="text-[9px] text-amber-200/75 tracking-[0.18em] font-extrabold mt-1 uppercase">ABSENSI WAJAH · TANPA LOGIN</p>
                     <a href="./register.html" aria-label="Pendaftaran wajah karyawan baru" class="inline-flex items-center justify-center gap-2 text-[11px] sm:text-xs text-[#1a0101] bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 font-black mt-2.5 px-3.5 py-2.5 rounded-xl border border-amber-100 shadow-lg shadow-amber-500/20 hover:brightness-105 active:scale-[.98] transition w-full max-w-[245px]"><i class="fas fa-user-plus"></i><span>KARYAWAN BARU · DAFTAR WAJAH</span><i class="fas fa-arrow-right text-[10px]"></i></a>
                     <p id="geo-status" class="text-rose-400 text-[9px] tracking-widest font-bold mt-1 uppercase flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> Mencari Satelit
@@ -345,8 +372,8 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
         const UNKNOWN_CONFIRM_MS = 3000;
         const REQUIRED_SMILE_FRAMES = 2;
         const SMILE_WINDOW_SIZE = 4;
-        const MOBILE_SCAN_INPUT = 320;
-        const DESKTOP_SCAN_INPUT = 384;
+        const MOBILE_SCAN_INPUT = 288;
+        const DESKTOP_SCAN_INPUT = 352;
         function aimoyResetSmileWindow(){ smileWindow=[]; smileFrames=0; }
         function aimoyAddSmileSample(score){
           smileWindow.push(Number(score)||0);
@@ -373,6 +400,24 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
           if(overlay && passed){setTimeout(()=>{if(isLivenessPassed){overlay.classList.add('hidden');overlay.classList.remove('flex');}},450);}
         }
         function aimoyResetSmileProgress(){aimoyResetSmileWindow();aimoyUpdateSmileProgress(0,false);}
+
+        // Hybrid smile score for Android WebView: expression model + mouth landmarks.
+        // The geometry is only a secondary signal; identity still must match an enrolled descriptor.
+        function aimoySmileScore(faceResult){
+          const expressionScore=Number(faceResult && faceResult.expressions && faceResult.expressions.happy)||0;
+          const pts=faceResult && faceResult.landmarks && faceResult.landmarks.positions;
+          if(!Array.isArray(pts) || pts.length<68) return expressionScore;
+          const dist=(a,b)=>Math.hypot(pts[a].x-pts[b].x,pts[a].y-pts[b].y);
+          const width=dist(48,54);
+          if(!Number.isFinite(width)||width<8) return expressionScore;
+          const cornerY=(pts[48].y+pts[54].y)/2;
+          const centerY=(pts[51].y+pts[57].y)/2;
+          const curve=(centerY-cornerY)/width;
+          const mouthOpen=dist(62,66)/width;
+          // Normalize gently; avoids requiring a wide/open smile and tolerates WebView model variance.
+          const geometryScore=Math.max(0,Math.min(0.72,0.30+(curve-0.015)*4.2+(mouthOpen>0.10?0.04:0)));
+          return Math.max(expressionScore,geometryScore);
+        }
 
         let gJadwalHariIni = [];
         let gKaryawan = [];
@@ -500,7 +545,7 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                 }
                 
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640, max: 960 }, height: { ideal: 480, max: 720 }, frameRate: { ideal: 24, max: 30 } }, audio: false })
-                    .then(s => { video.srcObject = s; Swal.close(); })
+                    .then(s => { video.srcObject = s; video.muted = true; video.playsInline = true; const p=video.play(); if(p&&p.catch)p.catch(()=>{}); Swal.close(); })
                     .catch(e => Swal.fire('Akses Ditolak', 'Kamera harus diizinkan untuk verifikasi biometrik.', 'error'));
             } catch (e) { 
                 console.error("Error Koneksi Database:", e);
@@ -628,7 +673,7 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
             scanLoopStarted = true;
             const size = { width: video.videoWidth, height: video.videoHeight };
             faceapi.matchDimensions(canvas, size);
-            const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+            const isMobileDevice = /Android|iPhone|iPad|iPod|wv|WebView/i.test(navigator.userAgent) || window.innerWidth < 768;
             const detectorInputSize = isMobileDevice ? MOBILE_SCAN_INPUT : DESKTOP_SCAN_INPUT;
             const scheduleNextScan = (delay=adaptiveScanDelay) => { if(scanLoopStarted) setTimeout(runFaceScan, delay); };
             const runFaceScan = async () => {
@@ -677,8 +722,9 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                             candidateLastMatchedAt = Date.now();
                             unknownSince = 0;
                             const expressions = resized[0].expressions;
-                            const smilePassedNow = aimoyAddSmileSample(expressions.happy);
-                            aimoyUpdateSmileProgress(expressions.happy, smilePassedNow);
+                            const smileScore = aimoySmileScore(resized[0]);
+                            const smilePassedNow = aimoyAddSmileSample(smileScore);
+                            aimoyUpdateSmileProgress(smileScore, smilePassedNow);
                             if (smilePassedNow) { isLivenessPassed = true; }
 
                             if (!isLivenessPassed) {
@@ -724,7 +770,7 @@ div:where(.swal2-container) .swal2-popup{background:#111c2e!important;border:1px
                                 // PENTING: ekspresi senyum tetap dievaluasi walau descriptor pada frame ini
                                 // sesaat tidak cocok. Perubahan bentuk mulut sering mengubah descriptor wajah.
                                 currentFace = candidateFace;
-                                const smileScoreDuringGrace = Number(resized[0]?.expressions?.happy || 0);
+                                const smileScoreDuringGrace = aimoySmileScore(resized[0]);
                                 const smilePassedDuringGrace = aimoyAddSmileSample(smileScoreDuringGrace);
                                 aimoyUpdateSmileProgress(smileScoreDuringGrace, smilePassedDuringGrace);
                                 hudScanner.className = "absolute border-4 border-solid border-amber-400 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-amber-400/5 box-border";
