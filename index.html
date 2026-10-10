@@ -226,6 +226,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
         // Toleransi pengenalan: ekspresi senyum sering mengubah descriptor sesaat.
         // Pertahankan kandidat yang sudah cocok beberapa detik agar tidak berkedip menjadi "Tidak Dikenal".
         let candidateFace = null, candidateLastMatchedAt = 0, unknownSince = 0, smileFrames = 0, scanInProgress = false;
+        let pendingLookupAt=0, pendingLookupKey="", miniDashboardShownFor="";
         const REQUIRED_SMILE_SCORE = 0.52;
         const CANDIDATE_GRACE_MS = 4500;
         const UNKNOWN_CONFIRM_MS = 1800;
@@ -242,6 +243,22 @@ body{padding-bottom:env(safe-area-inset-bottom)}
             initApp();
         });
         function aimoyKioskLogout(){window.aimoyEmployeeToken='';window.aimoyEmployeeProfile=null;localStorage.removeItem('aimoy_master_data');localStorage.removeItem('aimoy_master_time');try{const v=document.getElementById('video');if(v&&v.srcObject)v.srcObject.getTracks().forEach(t=>t.stop());}catch(e){}location.reload();}
+
+        async function aimoyCheckPendingRegistration(descriptor){
+          const key=descriptor.slice(0,8).map(v=>Number(v).toFixed(2)).join(',');if(key===pendingLookupKey)return;pendingLookupKey=key;
+          try{const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_registration_status',payload:{descriptor}})});const d=await r.json();if(d.status==='pending'||d.status==='rejected'){
+            const msg='STATUS PENDAFTARAN AIMOY\nNama: '+d.nama+'\nOutlet: '+d.outlet+'\nStatus: '+(d.status==='pending'?'MENUNGGU OTORISASI OWNER':'PENDAFTARAN BELUM DISETUJUI')+'\nReferensi: '+(d.requestId||'-')+'\n'+d.message;
+            Swal.fire({icon:'warning',title:d.status==='pending'?'Pendaftaran belum diotorisasi':'Pendaftaran belum disetujui',html:'<div class="text-sm text-left"><b>'+String(d.nama||'').replace(/[&<>]/g,'')+'</b><br>'+String(d.outlet||'').replace(/[&<>]/g,'')+'<p class="mt-3">'+String(d.message||'').replace(/[&<>]/g,'')+'</p><button id="aimoy-pending-wa" class="mt-3 w-full rounded-xl bg-emerald-600 text-white font-bold p-3"><i class="fab fa-whatsapp mr-2"></i>Forward ke grup WhatsApp</button></div>',showConfirmButton:false,showCloseButton:true,didOpen:()=>{const b=document.getElementById('aimoy-pending-wa');if(b)b.onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank','noopener,noreferrer');}});
+          }}catch(e){console.warn('Status pendaftaran belum dapat diperiksa',e);}
+        }
+        async function aimoyTryMiniDashboard(info){
+          if(!info||!info.descriptor)return;
+          try{const r=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'employee_mini_dashboard',payload:{descriptor:info.descriptor}})});const d=await r.json();if(d.status==='disabled')return;if(d.status!=='success')return;
+            const render=m=>`<div class="grid grid-cols-2 gap-2 text-left"><div class="rounded-xl bg-slate-50 p-3"><div class="text-xs text-slate-500">Total catatan</div><div class="text-2xl font-black">${m.total}</div></div><div class="rounded-xl bg-slate-50 p-3"><div class="text-xs text-slate-500">Terlambat</div><div class="text-2xl font-black text-amber-700">${m.terlambat}</div></div><div class="rounded-xl bg-slate-50 p-3"><div class="text-xs text-slate-500">Masuk</div><div class="text-xl font-black">${m.masuk}</div></div><div class="rounded-xl bg-slate-50 p-3"><div class="text-xs text-slate-500">Pulang</div><div class="text-xl font-black">${m.pulang}</div></div></div>`;
+            const wa=`REKAP ABSENSI AIMOY\nNama: ${d.employee.nama}\nOutlet: ${d.employee.outlet}\n\nBULAN INI (${d.current.periode})\nTotal catatan: ${d.current.total}\nMasuk: ${d.current.masuk}\nPulang: ${d.current.pulang}\nTerlambat: ${d.current.terlambat}\nIzin: ${d.current.izin}\nSakit: ${d.current.sakit}\n\nBULAN LALU (${d.previous.periode})\nTotal catatan: ${d.previous.total}\nMasuk: ${d.previous.masuk}\nPulang: ${d.previous.pulang}\nTerlambat: ${d.previous.terlambat}\nIzin: ${d.previous.izin}\nSakit: ${d.previous.sakit}`;
+            Swal.fire({title:'Mini Dashboard Pegawai',html:`<div class="text-left"><div class="font-black text-slate-900 mb-1">${d.employee.nama}</div><div class="text-xs text-slate-500 mb-3">${d.employee.outlet}</div><h3 class="font-bold text-sm mb-2">Bulan ini · ${d.current.periode}</h3>${render(d.current)}<h3 class="font-bold text-sm mt-4 mb-2">Bulan lalu · ${d.previous.periode}</h3>${render(d.previous)}<button id="aimoy-mini-wa" class="mt-4 w-full rounded-xl bg-emerald-600 text-white font-bold p-3"><i class="fab fa-whatsapp mr-2"></i>Forward rekap ke grup WhatsApp</button></div>`,showConfirmButton:false,showCloseButton:true,width:520,didOpen:()=>{const b=document.getElementById('aimoy-mini-wa');if(b)b.onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(wa),'_blank','noopener,noreferrer');}});
+          }catch(e){console.warn('Mini dashboard tidak dapat dimuat',e);}
+        }
 
         function hitungJarak(lat1, lon1, lat2Str, lon2Str) {
             const lat2 = parseFloat(lat2Str), lon2 = parseFloat(lon2Str);
@@ -518,6 +535,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                             percentEl.className = "text-[10px] font-black text-white bg-blue-600 px-2.5 py-1 rounded-md shadow-md tracking-widest";
 
                             const info = JSON.parse(match.label);
+                            info.descriptor = Array.from(resized[0].descriptor);
                             candidateFace = info;
                             candidateLastMatchedAt = Date.now();
                             unknownSince = 0;
@@ -536,6 +554,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 
                             if(lastRecognizedName !== info.n) { 
                                 lastRecognizedName = info.n; currentFace = info; 
+                                if(miniDashboardShownFor!==String(info.id||info.n)){miniDashboardShownFor=String(info.id||info.n);setTimeout(()=>aimoyTryMiniDashboard(info),650);}
                                 const outSel = document.getElementById('sel-outlet'); 
                                 if(info.o) { 
                                     outSel.value = info.o; 
@@ -573,6 +592,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
                             } else {
                                 if (!unknownSince) unknownSince = now;
                                 if ((now - unknownSince) >= UNKNOWN_CONFIRM_MS) {
+                                    if(detections.length===1 && now-pendingLookupAt>8000){pendingLookupAt=now;aimoyCheckPendingRegistration(Array.from(resized[0].descriptor));}
                                     hudScanner.className = "absolute border-4 border-solid border-rose-500 rounded-3xl z-20 flex flex-col justify-between p-2 transition-all duration-200 bg-rose-500/5 box-border";
                                     percentEl.classList.remove('hidden'); percentEl.innerText = "WAJAH BELUM DIKENALI";
                                     percentEl.className = "text-[10px] font-black text-white bg-rose-600 px-2.5 py-1 rounded-md shadow-md tracking-wide";
