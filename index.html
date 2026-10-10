@@ -387,7 +387,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
         window.aimoyEmployeeToken = '';
         window.aimoyEmployeeProfile = null;
         let userLat = 0, userLng = 0, userAccuracy = null, distance = 0, isLocValid = false, lastRecognizedName = null;
-        let isPrompting = false, isLivenessPassed = false; aimoyResetHeadLiveness();
+        let isPrompting = false, isLivenessPassed = false;
         // Liveness aktif tanpa skor ekspresi senyum. Identitas tetap wajib cocok dengan descriptor terdaftar.
         let candidateFace = null, candidateLastMatchedAt = 0, unknownSince = 0, scanInProgress = false;
         let pendingLookupAt=0, pendingLookupKey="", miniDashboardShownFor="";
