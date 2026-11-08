@@ -181,6 +181,19 @@ input,select,textarea{font-size:16px!important;scroll-margin-bottom:120px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 
+
+<style id="aimoy-v78-owner-mobile">
+@media(max-width:640px){
+ #view-otorisasi{padding:12px!important}
+ #view-otorisasi h2{font-size:1.2rem!important;line-height:1.3!important}
+ #container-otorisasi{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+ #container-otorisasi>div{padding:16px!important;border-radius:18px!important;min-width:0!important}
+ #container-otorisasi button,#container-otorisasi a{min-height:46px!important;width:100%!important;white-space:normal!important}
+ #container-otorisasi .flex.flex-col{gap:8px!important}
+ #drawer-approval .p-6,#drawer-approval .md\:p-8{padding:16px!important}
+ .drawer-panel{max-height:calc(100dvh - env(safe-area-inset-top,0px))!important;overflow-y:auto!important;overscroll-behavior:contain!important}
+}
+</style>
 </head>
 <body class="flex h-[100dvh] text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
 
@@ -1614,10 +1627,9 @@ input,select,textarea{font-size:16px!important;scroll-margin-bottom:120px}
                         const tglGanti = match[2].trim();
                         const alasan = match[3].trim();
                         
-                        const isApproved = logs.some(l => l.tanggal === r.tanggal && l.nama === namaB && (l.info || '').includes('ACC Owner'));
-                        if (!isApproved) {
-                            pendingApprovals.push({ ts: r.ts, tanggal: r.tanggal, outlet: r.outlet, shiftTarget: r.shift, namaA: r.nama, namaB: namaB, tglGanti: tglGanti, alasan: alasan, foto: r.foto });
-                        }
+                        const state=String(r.status||'').toUpperCase();
+                        const resolved=state.includes('DITOLAK OWNER')||state.includes('DISETUJUI OWNER')||(r.info||'').includes('ACC Owner');
+                        if (!resolved) pendingApprovals.push({ ts:r.ts, requestId:r.requestId||'', tanggal:r.tanggal, outlet:r.outlet, shiftTarget:r.shift, namaA:r.nama, namaB:namaB, tglGanti:tglGanti, alasan:alasan, foto:r.foto });
                     }
                 });
 
@@ -1648,7 +1660,8 @@ input,select,textarea{font-size:16px!important;scroll-margin-bottom:120px}
             try {
                 const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'tarik_laporan', payload: { outlet: 'Semua' } }) });
                 const result = await res.json();
-                const logs = result.data || [];
+                if (!res.ok || result.status !== 'success') throw new Error(result.message || 'Respons server tidak valid.');
+                const logs = Array.isArray(result.data) ? result.data : [];
                 
                 const tukarLogs = logs.filter(r => r.tipe === 'Tukar Shift');
                 let pending = [];
@@ -1664,10 +1677,9 @@ input,select,textarea{font-size:16px!important;scroll-margin-bottom:120px}
                         const alasan = match[3].trim();
                         
                         // Cek apakah Owner sudah menyetujui (jika sudah ada log bertanda 'ACC Owner' di hari itu)
-                        const isApproved = logs.some(l => l.tanggal === r.tanggal && l.nama === namaB && (l.info || '').includes('ACC Owner'));
-                        if (!isApproved) {
-                            pending.push({ ts: r.ts, tanggal: r.tanggal, outlet: r.outlet, shiftTarget: r.shift, namaA: r.nama, namaB: namaB, tglOff: tglOffMasaDepan, alasan: alasan, foto: r.foto });
-                        }
+                        const state=String(r.status||'').toUpperCase();
+                        const resolved=state.includes('DITOLAK OWNER')||state.includes('DISETUJUI OWNER')||infoText.includes('ACC Owner');
+                        if (!resolved) pending.push({ ts:r.ts, requestId:r.requestId||'', status:r.status||'MENUNGGU OTORISASI', tanggal:r.tanggal, outlet:r.outlet, shiftTarget:r.shift, namaA:r.nama, namaB:namaB, tglOff:tglOffMasaDepan, alasan:alasan, foto:r.foto });
                     }
                 });
 
@@ -1684,30 +1696,53 @@ input,select,textarea{font-size:16px!important;scroll-margin-bottom:120px}
                         <div>
                             <div class="flex justify-between items-start mb-4 border-b border-slate-50 pb-3">
                                 <div>
-                                    <div class="font-black text-slate-800 text-sm">${p.namaA}</div>
-                                    <div class="text-[9px] text-slate-500 font-bold mt-1 uppercase tracking-widest"><i class="fas fa-exchange-alt text-purple-400 mx-1"></i> Ganti: <span class="text-purple-600 font-black">${p.namaB}</span></div>
+                                    <div class="font-black text-slate-800 text-sm">${aimoyEsc(p.namaA)}</div>
+                                    <div class="text-[9px] text-slate-500 font-bold mt-1 uppercase tracking-widest"><i class="fas fa-exchange-alt text-purple-400 mx-1"></i> Ganti: <span class="text-purple-600 font-black">${aimoyEsc(p.namaB)}</span></div>
                                 </div>
-                                <span class="text-[9px] bg-slate-100 text-slate-600 px-2.5 py-1.5 rounded-lg font-black tracking-widest border border-slate-200"><i class="far fa-calendar-alt mr-1 text-slate-400"></i> ${p.tanggal}</span>
+                                <span class="text-[9px] bg-slate-100 text-slate-600 px-2.5 py-1.5 rounded-lg font-black tracking-widest border border-slate-200"><i class="far fa-calendar-alt mr-1 text-slate-400"></i> ${aimoyEsc(p.tanggal)}</span>
                             </div>
-                            <div class="text-[11px] text-slate-600 mb-3 bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed"><i class="fas fa-quote-left text-slate-300 mr-1.5"></i> ${p.alasan}</div>
+                            <div class="text-[11px] text-slate-600 mb-3 bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed"><i class="fas fa-quote-left text-slate-300 mr-1.5"></i> ${aimoyEsc(p.alasan)}</div>
                             
                             <div class="text-[10px] text-indigo-600 font-bold mb-4 bg-indigo-50 p-3 rounded-xl border border-indigo-100 flex flex-col gap-1 shadow-inner">
-                                <span><i class="fas fa-calendar-alt text-center w-4 text-purple-500"></i> Tanggal Tukar OFF: <b class="text-slate-800">${p.tglOff}</b></span>
+                                <span><i class="fas fa-calendar-alt text-center w-4 text-purple-500"></i> Tanggal Tukar OFF: <b class="text-slate-800">${aimoyEsc(p.tglOff)}</b></span>
                                 <span><i class="fas fa-reply text-center w-4 text-emerald-500"></i> Hutang Shift: <b class="text-emerald-600">${p.namaB} Wajib Masuk</b></span>
                             </div>
                         </div>
                         <div class="flex flex-col gap-2 mt-auto">
                             <a href="${p.foto}" target="_blank" class="text-xs text-blue-600 font-bold hover:bg-blue-100 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100 text-center transition-colors"><i class="fas fa-camera mr-1"></i> Cek Foto Kehadiran</a>
-<button onclick="setujuiOtorisasi('${p.tanggal}', '${p.namaA}', '${p.namaB}', '${p.outlet}', '${p.shiftTarget}', '${p.tglOff}', '${p.ts}')" 
+<button onclick="setujuiOtorisasi('${p.tanggal}', '${aimoyEsc(p.namaA)}', '${aimoyEsc(p.namaB)}', '${aimoyEsc(p.outlet)}', '${aimoyEsc(p.shiftTarget)}', '${p.tglOff}', '${p.ts}')" 
         class="bg-purple-600 text-white px-4 py-3.5 rounded-xl font-black text-xs hover:bg-purple-700 active:scale-95 transition-all shadow-[0_8px_15px_rgba(147,51,234,0.25)] flex justify-center items-center gap-2">
     <i class="fas fa-check-circle text-purple-200"></i> SETUJUI OTORISASI
 </button>
+<button type="button" onclick="tolakOtorisasiTukar('${aimoyEsc(p.requestId)}','${p.ts}')" class="bg-rose-50 text-rose-700 border border-rose-200 px-4 py-3 rounded-xl font-black text-xs hover:bg-rose-100 active:scale-95 transition-all flex justify-center items-center gap-2"><i class="fas fa-ban"></i> TOLAK PERMINTAAN</button>
                         </div>
                     </div>`;
                 });
                 container.innerHTML = html;
             } catch(e) { 
-                container.innerHTML = '<div class="col-span-full text-center text-rose-400 font-bold py-10">Gagal terhubung ke pangkalan data.</div>';
+                container.innerHTML = `<div class="col-span-full text-center text-rose-700 font-bold py-8 px-4 bg-rose-50 rounded-2xl border border-rose-100">Gagal memuat otorisasi: ${aimoyEsc(e.message||'Periksa koneksi dan sesi admin.')}</div>`;
+            }
+        }
+
+        async function tolakOtorisasiTukar(requestId, ts) {
+            const result = await Swal.fire({
+                title: 'Tolak permintaan tukar shift?',
+                text: 'Permintaan akan diberi status DITOLAK OWNER. Bukti absensi asli tetap disimpan dan jadwal tidak diubah.',
+                input: 'textarea', inputLabel: 'Alasan penolakan (disarankan)', inputPlaceholder: 'Contoh: jadwal outlet tidak memungkinkan…',
+                inputAttributes: { maxlength: 500, 'aria-label': 'Alasan penolakan' },
+                showCancelButton: true, confirmButtonText: 'Ya, Tolak', cancelButtonText: 'Batal',
+                confirmButtonColor: '#e11d48',
+                customClass: { popup: 'swal2-popup', confirmButton: 'rounded-xl font-black px-5 py-3', cancelButton: 'rounded-xl px-5 py-3' }
+            });
+            if (!result.isConfirmed) return;
+            try {
+                Swal.fire({ title: 'Menyimpan keputusan…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const data = await aimoyApi('shift_swap_decision', { requestId: requestId || '', ts: ts || '', keputusan: 'Ditolak', catatan: result.value || '' });
+                await Swal.fire({ icon: 'success', title: 'Permintaan ditolak', text: data.message || 'Keputusan owner berhasil disimpan.', confirmButtonText: 'Tutup' });
+                await muatDataOtorisasi();
+                if (typeof aimoyRefreshControlTower === 'function') aimoyRefreshControlTower(true);
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Gagal menolak', text: e.message || 'Keputusan tidak dapat disimpan.' });
             }
         }
 
