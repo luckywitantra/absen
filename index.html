@@ -1429,7 +1429,8 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
             const selOff = document.getElementById('swal-tgl-off');
             if(!window.tempOffData) return;
 
-            const offRekan = window.tempOffData.filter(r => r.nama === namaRekan);
+            const normNamaOff = v => String(v || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase('id-ID');
+            const offRekan = window.tempOffData.filter(r => normNamaOff(r.nama) === normNamaOff(namaRekan));
 
             if(offRekan.length === 0) {
                 selOff.innerHTML = '<option value="" disabled selected>⚠️ Rekan ini tidak memiliki jadwal OFF di masa depan</option>';
