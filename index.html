@@ -199,6 +199,32 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 @media(max-width:360px){#liveness-overlay>div{padding:11px!important}#head-progress-icon{width:36px!important;height:36px!important;flex-basis:36px!important}.app-header h1{font-size:22px!important}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
+
+<style id="aimoy-v78-kiosk-mobile">
+/* Mobile kiosk polish: preserve all controls while making the camera and attendance panel easy to reach. */
+html{min-height:100%;height:auto;overflow-x:hidden}
+@media(max-width:760px){
+ .app-shell{display:flex!important;flex-direction:column!important;gap:12px!important;padding:10px 10px calc(18px + env(safe-area-inset-bottom,0px))!important}
+ .app-header{width:100%!important;min-width:0!important;flex-wrap:nowrap!important}
+ .app-header>div:first-child{min-width:0!important;flex:1 1 auto!important}
+ .app-header>div:first-child>div:last-child{min-width:0!important}
+ .app-header h1{font-size:clamp(22px,6vw,27px)!important}
+ .app-header a{max-width:100%!important;white-space:normal!important;text-align:center!important}
+ .camera-stage{width:100%!important;min-width:0!important;flex:none!important;padding:0!important}
+ .camera-stage>div:first-child{width:100%!important;min-height:240px!important;max-height:55dvh!important;aspect-ratio:4/4.1!important}
+ .control-panel{width:100%!important;min-width:0!important;max-height:none!important;overflow:visible!important;padding:14px!important}
+ #panel-absen{width:100%!important;min-width:0!important}
+ #shift-container{width:100%!important;max-width:100%!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;-webkit-overflow-scrolling:touch!important}
+ #shift-container>*{flex:0 0 auto!important;scroll-snap-align:start}
+ #btn-in,#btn-out{width:100%!important;min-height:54px!important}
+ #btn-izin,#btn-tukar{min-width:56px!important;min-height:50px!important}
+ input,select,textarea{font-size:16px!important;max-width:100%!important}
+ .swal2-container{padding:10px!important}
+ .swal2-popup{width:calc(100vw - 20px)!important;max-width:460px!important;max-height:calc(100dvh - 20px)!important}
+ .swal2-html-container{max-height:calc(100dvh - 190px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+}
+@media(max-width:380px){.app-header .text-right .text-\[9px\]{font-size:8px!important}.camera-stage>div:first-child{min-height:220px!important;aspect-ratio:1/1.05!important}}
+</style>
 </head>
 <body class="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-[#4a0404] to-[#0a0000] selection:bg-amber-900 selection:text-amber-100">
     <div class="app-shell w-full mx-auto flex flex-col relative shadow-2xl">
