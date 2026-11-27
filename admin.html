@@ -1293,46 +1293,428 @@
             Toast.fire({ icon: 'success', title: 'Teks WA detail disalin & dibuka' });
         }
 
-        function exportAuditPersonPDF() {
-            const r = gAuditMap[currentAuditPerson]; if (!r) return;
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            const dStart = document.getElementById('filter-start').value, dEnd = document.getElementById('filter-end').value;
-            doc.setFontSize(14); doc.text(`AUDIT KEHADIRAN INDIVIDU — ${r.nama}`, 14, 16);
-            doc.setFontSize(9); doc.text(`Outlet: ${r.outlet} | Periode: ${dStart} s/d ${dEnd}`, 14, 22);
-            doc.autoTable({
-                startY: 28,
-                head: [['Total Hadir','Lupa Pulang','Alpa','Terlambat','Izin/Sakit','OFF','Lembur']],
-                body: [[`${r.masukList.length} Hr`,`${r.lupaPulangList.length}x`,`${r.alpaList.length} Hr`,`${r.telatList.length}x (${r.telatMenit}m)`,`${r.izinList.length} Hr`,`${r.offList.length} Hr`,`${r.lemburMenit} mnt`]]
+       // ==========================================
+        // 📄 MODUL EKSPOR PDF PROFESIONAL (V81)
+        // ==========================================
+        function pdfDrawHeader_(doc, title, metaLines = []) {
+            const pageW = doc.internal.pageSize.getWidth();
+            doc.setFillColor(15, 23, 42);
+            doc.rect(0, 0, pageW, 24, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(13);
+            doc.text("AIMOY HUMAN CAPITAL", 12, 10);
+
+            doc.setFontSize(10);
+            doc.setTextColor(147, 197, 253);
+            doc.text(String(title || '').toUpperCase(), 12, 17);
+
+            doc.setTextColor(226, 232, 240);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            const rightText = metaLines.slice(0, 2);
+            rightText.forEach((line, idx) => {
+                doc.text(String(line), pageW - 12, 10 + (idx * 5.5), { align: 'right' });
             });
-            const details = [
-                ...r.lupaPulangList.map(x => [x.tanggal, 'LUPA PULANG', `Masuk ${x.jamMasuk}, Shift ${x.shift}`]),
-                ...r.alpaList.map(x => [x.tanggal, 'ALPA', 'Tidak ada log absensi']),
-                ...r.telatList.map(x => [x.tanggal, 'TERLAMBAT', `Masuk ${x.jam} (+${x.menit} menit)`]),
-                ...r.izinList.map(x => [x.tanggal, x.tipe.toUpperCase(), x.info]),
-                ...r.offList.map(x => [x.tanggal, 'JADWAL OFF', x.passed ? 'Sudah lewat' : 'Akan datang'])
-            ].sort((a,b) => a[0].localeCompare(b[0]));
-            doc.autoTable({ startY: doc.lastAutoTable.finalY + 8, head: [['Tanggal','Kategori','Keterangan']], body: details.length ? details : [['-','BERSIH','Tidak ada catatan anomali']] });
-            doc.save(`Audit_${r.nama.replace(/\s+/g,'_')}_${dStart}_${dEnd}.pdf`);
+
+            let y = 30;
+            if (metaLines.length > 2) {
+                doc.setTextColor(71, 85, 105);
+                doc.setFontSize(8.5);
+                metaLines.slice(2).forEach(line => {
+                    doc.text(String(line), 12, y);
+                    y += 4.5;
+                });
+                y += 1.5;
+            }
+            return y;
         }
 
-        function exportPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape');
-            const dStart = document.getElementById('filter-start').value, dEnd = document.getElementById('filter-end').value;
-            doc.setFontSize(14); doc.text('LAPORAN AUDIT & REKAP GAJI — AIMOY', 14, 16);
-            doc.setFontSize(9); doc.text(`Periode: ${dStart} s/d ${dEnd}`, 14, 22);
-            if (modeLaporan === 'rekap') {
-                if (!gAuditList.length) return Toast.fire({ icon: 'warning', title: 'Data kosong' });
-                doc.autoTable({
-                    startY: 28,
-                    head: [['Nama','Outlet','Hadir','Lupa Pulang','Alpa','Terlambat','Izin/Sakit','OFF','Lembur']],
-                    body: gAuditList.map(r => [r.nama, r.outlet, r.masukList.length, r.lupaPulangList.length, r.alpaList.length, `${r.telatList.length}x (${r.telatMenit}m)`, r.izinList.length, r.offList.length, `${r.lemburMenit}m`])
-                });
-                doc.save(`Audit_Rekap_${dStart}_${dEnd}.pdf`);
-            } else {
-                if (!gLaporanRinci.length) return Toast.fire({ icon: 'warning', title: 'Data kosong' });
-                doc.autoTable({ startY: 28, styles: { fontSize: 7 }, head: [['Tanggal','Jam','Nama','Outlet','Shift','Tipe','Status','Lembur','Ket']], body: gLaporanRinci.map(r => [r.tanggal,r.jam,r.nama,r.outlet,r.shift,r.tipe,r.status,r.lembur,r.info]) });
-                doc.save(`Log_Rinci_${dStart}_${dEnd}.pdf`);
+        function pdfApplyFooters_(doc) {
+            const totalPages = doc.internal.getNumberOfPages();
+            const nowStr = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Makassar', dateStyle: 'medium', timeStyle: 'short' }) + ' WITA';
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                const pageW = doc.internal.pageSize.getWidth();
+                const pageH = doc.internal.pageSize.getHeight();
+                doc.setDrawColor(226, 232, 240);
+                doc.line(12, pageH - 12, pageW - 12, pageH - 12);
+                doc.setFontSize(7.5);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Dicetak pada: ${nowStr} oleh Sistem Admin AiMoy HC`, 12, pageH - 7);
+                doc.text(`Halaman ${i} dari ${totalPages}`, pageW - 12, pageH - 7, { align: 'right' });
             }
+        }
+
+        function pdfDrawSignature_(doc, startY, roles = ['Disiapkan oleh,\nAdmin HRD', 'Disetujui oleh,\nOwner AiMoy']) {
+            const pageH = doc.internal.pageSize.getHeight();
+            const pageW = doc.internal.pageSize.getWidth();
+            let y = startY + 10;
+            if (y + 30 > pageH - 16) { doc.addPage(); y = 24; }
+
+            const colW = (pageW - 24) / roles.length;
+            doc.setFontSize(8.5);
+            doc.setTextColor(51, 65, 85);
+            roles.forEach((role, idx) => {
+                const cx = 12 + (colW * idx) + (colW / 2);
+                doc.setFont("helvetica", "bold");
+                doc.text(role, cx, y, { align: 'center' });
+                doc.setDrawColor(148, 163, 184);
+                doc.line(cx - 24, y + 22, cx + 24, y + 22);
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(7.5);
+                doc.text("( ........................................ )", cx, y + 26, { align: 'center' });
+                doc.setFontSize(8.5);
+            });
+        }
+
+        // 1. PDF AUDIT INDIVIDU (LAMPIRAN SLIP GAJI — TIMESHEET LENGKAP)
+        function exportAuditPersonPDF() {
+            const r = gAuditMap[currentAuditPerson];
+            if (!r) return Toast.fire({ icon: 'warning', title: 'Data staf tidak ditemukan' });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('portrait', 'mm', 'a4');
+            const dStart = document.getElementById('filter-start').value;
+            const dEnd = document.getElementById('filter-end').value;
+            const dates = getDateRangeArray(dStart, dEnd);
+            const todayStr = new Date().toISOString().slice(0, 10);
+
+            let y = pdfDrawHeader_(doc, 'LAPORAN AUDIT KEHADIRAN INDIVIDU (TIMESHEET)', [
+                `Periode: ${dStart} s/d ${dEnd}`,
+                `Outlet: ${r.outlet}`,
+                `Nama Karyawan: ${r.nama}   |   Jabatan: ${r.role}   |   ID: ${r.id || '-'}`
+            ]);
+
+            // Ringkasan KPI Individu
+            doc.autoTable({
+                startY: y,
+                margin: { left: 12, right: 12 },
+                theme: 'grid',
+                headStyles: { fillColor: [30, 41, 59], fontSize: 8, halign: 'center' },
+                styles: { fontSize: 8.5, halign: 'center', fontStyle: 'bold' },
+                head: [['Total Hadir', 'Lupa Pulang', 'Alpa', 'Terlambat', 'Izin/Sakit', 'Jadwal OFF', 'Lembur']],
+                body: [[
+                    `${r.masukList.length} Hari`,
+                    `${r.lupaPulangList.length}x`,
+                    `${r.alpaList.length} Hari`,
+                    `${r.telatList.length}x (${r.telatMenit}m)`,
+                    `${r.izinList.length} Hari`,
+                    `${r.offList.length} Hari`,
+                    `${r.lemburMenit} mnt`
+                ]]
+            });
+
+            // Timesheet Harian Lengkap (Hari ke-1 s/d Akhir)
+            const sheetRows = dates.map(dStr => {
+                const m = r.masukList.find(x => x.tanggal === dStr);
+                const lp = r.lupaPulangList.find(x => x.tanggal === dStr);
+                const tl = r.telatList.find(x => x.tanggal === dStr);
+                const iz = r.izinList.find(x => x.tanggal === dStr);
+                const of = r.offList.find(x => x.tanggal === dStr);
+                const al = r.alpaList.find(x => x.tanggal === dStr);
+                const lmb = r.lemburList.filter(x => x.tanggal === dStr).reduce((a, b) => a + b.menit, 0);
+
+                if (m) {
+                    const ketParts = [];
+                    if (tl) ketParts.push(`Terlambat +${tl.menit} menit`);
+                    if (lp) ketParts.push('TIDAK ABSEN PULANG');
+                    if (lmb > 0) ketParts.push(`Lembur +${lmb} menit`);
+                    return [dStr, m.shift, m.jamMasuk, m.jamPulang, lp ? 'LUPA PULANG' : (tl ? 'TERLAMBAT' : 'HADIR'), lmb ? `${lmb}m` : '-', ketParts.join(' | ') || 'On-Time / Normal'];
+                }
+                if (iz) return [dStr, '-', '-', '-', iz.tipe.toUpperCase(), '-', iz.info || 'Izin/Sakit'];
+                if (of) return [dStr, 'OFF', '-', '-', 'DAY OFF', '-', of.info || (of.passed ? 'Jadwal Libur (Selesai)' : 'Jadwal Libur (Mendatang)')];
+                if (al) return [dStr, '-', '-', '-', 'ALPA', '-', 'Tidak ada log absensi, izin, maupun OFF'];
+                return [dStr, '-', '-', '-', dStr > todayStr ? 'BELUM BERJALAN' : 'BERJALAN', '-', '-'];
+            });
+
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 6,
+                margin: { left: 12, right: 12 },
+                theme: 'grid',
+                headStyles: { fillColor: [37, 99, 235], fontSize: 7.5, halign: 'center' },
+                styles: { fontSize: 7.2, cellPadding: 1.8, valign: 'middle' },
+                columnStyles: {
+                    0: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
+                    1: { cellWidth: 16, halign: 'center' },
+                    2: { cellWidth: 16, halign: 'center' },
+                    3: { cellWidth: 16, halign: 'center' },
+                    4: { cellWidth: 25, halign: 'center', fontStyle: 'bold' },
+                    5: { cellWidth: 14, halign: 'center' },
+                    6: { cellWidth: 'auto' }
+                },
+                head: [['Tanggal', 'Shift', 'Masuk', 'Pulang', 'Status', 'Lembur', 'Keterangan Detail']],
+                body: sheetRows,
+                didParseCell: data => {
+                    if (data.section === 'body' && data.column.index === 4) {
+                        const v = String(data.cell.raw);
+                        if (v === 'ALPA') { data.cell.styles.fillColor = [254, 226, 226]; data.cell.styles.textColor = [185, 28, 28]; }
+                        else if (v === 'LUPA PULANG') { data.cell.styles.fillColor = [255, 237, 213]; data.cell.styles.textColor = [194, 65, 12]; }
+                        else if (v === 'TERLAMBAT') { data.cell.styles.fillColor = [254, 243, 199]; data.cell.styles.textColor = [180, 83, 9]; }
+                        else if (v === 'HADIR') { data.cell.styles.textColor = [4, 120, 87]; }
+                        else if (v === 'DAY OFF') { data.cell.styles.textColor = [79, 70, 229]; }
+                    }
+                }
+            });
+
+            // Blok Tanda Tangan 3 Pihak
+            pdfDrawSignature_(doc, doc.lastAutoTable.finalY, [
+                `Menyetujui Data,\n${r.nama}`,
+                'Disiapkan oleh,\nAdmin HRD',
+                'Disahkan oleh,\nOwner AiMoy'
+            ]);
+
+            pdfApplyFooters_(doc);
+            doc.save(`Audit_Individu_${r.nama.replace(/\s+/g, '_')}_${dStart}_${dEnd}.pdf`);
+        }
+
+        // 2 & 3. PDF REKAP GAJI (DENGAN LAMPIRAN KETERANGAN) & PDF LOG RINCI HARIAN
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+            const dStart = document.getElementById('filter-start').value;
+            const dEnd = document.getElementById('filter-end').value;
+            const outlet = document.getElementById('filter-outlet').value;
+            const kar = document.getElementById('filter-karyawan').value;
+
+            if (modeLaporan === 'rekap') {
+                if (!gAuditList.length) return Toast.fire({ icon: 'warning', title: 'Data audit kosong' });
+
+                let y = pdfDrawHeader_(doc, 'LAPORAN AUDIT KEHADIRAN & REKAP GAJI', [
+                    `Periode: ${dStart} s/d ${dEnd}`,
+                    `Outlet: ${outlet} | Karyawan: ${kar}`,
+                    `Total Karyawan Diaudit: ${gAuditList.length} Orang`
+                ]);
+
+                // KPI Global
+                const sum = fn => gAuditList.reduce((a, r) => a + fn(r), 0);
+                doc.autoTable({
+                    startY: y,
+                    margin: { left: 12, right: 12 },
+                    theme: 'grid',
+                    headStyles: { fillColor: [30, 41, 59], fontSize: 8, halign: 'center' },
+                    styles: { fontSize: 8.5, halign: 'center', fontStyle: 'bold' },
+                    head: [['Total Hadir', 'Total Lupa Pulang', 'Total Alpa', 'Total Terlambat', 'Total Izin/Sakit', 'Total OFF', 'Total Lembur']],
+                    body: [[
+                        `${sum(r => r.masukList.length)} Hr`,
+                        `${sum(r => r.lupaPulangList.length)} Kasus`,
+                        `${sum(r => r.alpaList.length)} Hr`,
+                        `${sum(r => r.telatList.length)}x (${sum(r => r.telatMenit)}m)`,
+                        `${sum(r => r.izinList.length)} Hr`,
+                        `${sum(r => r.offList.length)} Hr`,
+                        `${sum(r => r.lemburMenit)} mnt`
+                    ]]
+                });
+
+                // Tabel Rekap Utama
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 5,
+                    margin: { left: 12, right: 12 },
+                    theme: 'grid',
+                    headStyles: { fillColor: [37, 99, 235], fontSize: 8, halign: 'center' },
+                    styles: { fontSize: 8, valign: 'middle', halign: 'center' },
+                    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' }, 1: { halign: 'left' } },
+                    head: [['Nama Karyawan', 'Outlet', 'Total Hadir', 'Lupa Pulang', 'Alpa', 'Terlambat', 'Izin/Sakit', 'Jadwal OFF', 'Lembur']],
+                    body: gAuditList.map(r => [
+                        r.nama, r.outlet,
+                        `${r.masukList.length} Hr`,
+                        r.lupaPulangList.length ? `${r.lupaPulangList.length}x` : '-',
+                        r.alpaList.length ? `${r.alpaList.length} Hr` : '-',
+                        r.telatList.length ? `${r.telatList.length}x (${r.telatMenit}m)` : '-',
+                        r.izinList.length ? `${r.izinList.length} Hr` : '-',
+                        r.offList.length ? `${r.offList.length} Hr` : '-',
+                        r.lemburMenit ? `${r.lemburMenit} mnt` : '-'
+                    ]),
+                    didParseCell: data => {
+                        if (data.section === 'body') {
+                            const v = String(data.cell.raw);
+                            if (data.column.index === 2) { data.cell.styles.fillColor = [236, 253, 245]; data.cell.styles.textColor = [4, 120, 87]; data.cell.styles.fontStyle = 'bold'; }
+                            if (data.column.index === 3 && v !== '-') { data.cell.styles.fillColor = [255, 237, 213]; data.cell.styles.textColor = [194, 65, 12]; data.cell.styles.fontStyle = 'bold'; }
+                            if (data.column.index === 4 && v !== '-') { data.cell.styles.fillColor = [254, 226, 226]; data.cell.styles.textColor = [185, 28, 28]; data.cell.styles.fontStyle = 'bold'; }
+                        }
+                    }
+                });
+
+                // Lampiran Otomatis: Rincian Keterangan & Tanggal per Karyawan
+                const detailRows = gAuditList.map(r => {
+                    const fmtShort = d => d.slice(8, 10) + '/' + d.slice(5, 7);
+                    const ket = [];
+                    if (r.lupaPulangList.length) ket.push(`Lupa Pulang: ${r.lupaPulangList.map(x => `${fmtShort(x.tanggal)}(${x.shift})`).join(', ')}`);
+                    if (r.alpaList.length) ket.push(`Alpa: ${r.alpaList.map(x => fmtShort(x.tanggal)).join(', ')}`);
+                    if (r.telatList.length) ket.push(`Telat: ${r.telatList.map(x => `${fmtShort(x.tanggal)}(+${x.menit}m)`).join(', ')}`);
+                    if (r.izinList.length) ket.push(`Izin/Sakit: ${r.izinList.map(x => `${fmtShort(x.tanggal)}(${x.tipe}: ${x.info})`).join(', ')}`);
+                    if (r.offList.length) ket.push(`OFF: ${r.offList.map(x => fmtShort(x.tanggal) + (x.passed ? '✓' : '')).join(', ')}`);
+                    return [r.nama, r.outlet, ket.join('\n') || 'Kehadiran lengkap tanpa anomali.'];
+                });
+
+                doc.addPage();
+                let y2 = pdfDrawHeader_(doc, 'LAMPIRAN RINCIAN KETERANGAN & TANGGAL PER KARYAWAN', [
+                    `Periode: ${dStart} s/d ${dEnd}`,
+                    `Outlet: ${outlet}`
+                ]);
+                doc.autoTable({
+                    startY: y2,
+                    margin: { left: 12, right: 12 },
+                    theme: 'grid',
+                    headStyles: { fillColor: [30, 41, 59], fontSize: 8 },
+                    styles: { fontSize: 7.5, valign: 'top', cellPadding: 2.5 },
+                    columnStyles: { 0: { cellWidth: 45, fontStyle: 'bold' }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' } },
+                    head: [['Nama Karyawan', 'Outlet', 'Rincian Tanggal (Lupa Pulang, Alpa, Telat, Izin/Sakit, OFF)']],
+                    body: detailRows
+                });
+
+                pdfDrawSignature_(doc, doc.lastAutoTable.finalY);
+                pdfApplyFooters_(doc);
+                doc.save(`Audit_Rekap_Lengkap_${dStart}_${dEnd}.pdf`);
+            } else {
+                if (!gLaporanRinci.length) return Toast.fire({ icon: 'warning', title: 'Data log rinci kosong' });
+
+                let y = pdfDrawHeader_(doc, 'LAPORAN LOG MENTAH HARIAN ABSENSI', [
+                    `Periode: ${dStart} s/d ${dEnd}`,
+                    `Outlet: ${outlet} | Karyawan: ${kar}`,
+                    `Total Baris Log: ${gLaporanRinci.length} Transaksi`
+                ]);
+
+                doc.autoTable({
+                    startY: y,
+                    margin: { left: 12, right: 12 },
+                    theme: 'grid',
+                    headStyles: { fillColor: [15, 23, 42], fontSize: 7.5, halign: 'center' },
+                    styles: { fontSize: 7, cellPadding: 1.8, valign: 'middle', overflow: 'linebreak' },
+                    columnStyles: {
+                        0: { cellWidth: 20, halign: 'center' },
+                        1: { cellWidth: 13, halign: 'center' },
+                        2: { cellWidth: 34, fontStyle: 'bold' },
+                        3: { cellWidth: 26 },
+                        4: { cellWidth: 16, halign: 'center' },
+                        5: { cellWidth: 18, halign: 'center', fontStyle: 'bold' },
+                        6: { cellWidth: 28, halign: 'center' },
+                        7: { cellWidth: 14, halign: 'center' },
+                        8: { cellWidth: 22, halign: 'center' },
+                        9: { cellWidth: 'auto' }
+                    },
+                    head: [['Tanggal', 'Jam', 'Nama', 'Outlet', 'Shift', 'Tipe', 'Status', 'Lembur', 'Bukti', 'Keterangan / Alasan']],
+                    body: gLaporanRinci.map(r => [
+                        r.tanggal, r.jam, r.nama, r.outlet, r.shift, r.tipe, r.status,
+                        r.lembur && Number(r.lembur) > 0 ? `${r.lembur}m` : '-',
+                        r.foto && r.foto.startsWith('http') ? 'Foto Drive' : (r.foto || '-'),
+                        r.info || '-'
+                    ])
+                });
+
+                // Ringkasan Jumlah Log per Tipe
+                const cnt = t => gLaporanRinci.filter(r => r.tipe === t).length;
+                let fy = doc.lastAutoTable.finalY + 6;
+                if (fy > doc.internal.pageSize.getHeight() - 25) { doc.addPage(); fy = 22; }
+                doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42);
+                doc.text(`RINGKASAN LOG:  Masuk: ${cnt('Masuk')}  |  Pulang: ${cnt('Pulang')}  |  Izin: ${cnt('Izin')}  |  Sakit: ${cnt('Sakit')}  |  Libur/OFF: ${cnt('Libur')}  |  Tukar Shift: ${cnt('Tukar Shift')}`, 12, fy);
+
+                pdfApplyFooters_(doc);
+                doc.save(`Log_Rinci_Lengkap_${dStart}_${dEnd}.pdf`);
+            }
+        }
+
+        // 4. PDF ROSTER MATRIX WFM (LENGKAP DENGAN LEGENDA SHIFT & RINCIAN BEBAN KERJA)
+        function downloadMatrixPDF() {
+            const bulanVal = document.getElementById('matrix-bulan').value;
+            const outletVal = document.getElementById('matrix-outlet').value;
+            if (!bulanVal || !outletVal) return Toast.fire({ icon: 'warning', title: 'Pilih bulan & cabang terlebih dahulu' });
+
+            const [yyyy, mm] = bulanVal.split('-');
+            const days = new Date(yyyy, mm, 0).getDate();
+            const monthName = new Date(yyyy, mm - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            const trs = document.querySelectorAll('#tbody-matrix tr');
+            if (!trs.length || trs[0].innerText.includes('Pilih Bulan')) return Toast.fire({ icon: 'warning', title: 'Data matrix kosong' });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'mm', 'legal');
+
+            let y = pdfDrawHeader_(doc, 'LAPORAN ROSTER MATRIX JADWAL KERJA (WFM)', [
+                `Cabang: ${outletVal}`,
+                `Periode: ${monthName}`
+            ]);
+
+            const head = ['NAMA STAF'];
+            const sundayCols = new Set();
+            for (let d = 1; d <= days; d++) {
+                head.push(String(d));
+                if (new Date(yyyy, mm - 1, d).getDay() === 0) sundayCols.add(d);
+            }
+            head.push('HDR', 'OFF', 'IZN');
+
+            const body = [], rincian = [];
+            trs.forEach(tr => {
+                const nama = tr.querySelector('span')?.textContent;
+                if (!nama) return;
+                let h = 0, o = 0, iz = 0;
+                const row = [nama];
+                tr.querySelectorAll('.sel-matrix').forEach(s => {
+                    if (s.value === 'OFF') { o++; row.push('OFF'); }
+                    else if (s.value === 'IZIN') { iz++; row.push('IZN'); }
+                    else if (!s.value) row.push('-');
+                    else { h++; row.push(s.value.slice(0, 4).toUpperCase()); }
+                });
+                row.push(String(h), String(o), String(iz));
+                body.push(row);
+                rincian.push(`• ${nama}: Masuk ${h} hari, Libur/OFF ${o} hari, Izin/Sakit ${iz} hari.`);
+            });
+
+            doc.autoTable({
+                startY: y,
+                margin: { left: 10, right: 10 },
+                head: [head],
+                body,
+                theme: 'grid',
+                styles: { fontSize: 6.5, cellPadding: 1.2, halign: 'center', valign: 'middle' },
+                headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold' },
+                columnStyles: { 0: { halign: 'left', fontStyle: 'bold', cellWidth: 36 } },
+                didParseCell: data => {
+                    if (data.section === 'body') {
+                        const val = data.cell.raw;
+                        if (sundayCols.has(data.column.index)) data.cell.styles.fillColor = [255, 241, 242];
+                        if (val === 'OFF') { data.cell.styles.textColor = [225, 29, 72]; data.cell.styles.fontStyle = 'bold'; }
+                        else if (val === 'IZN') { data.cell.styles.textColor = [217, 119, 6]; data.cell.styles.fontStyle = 'bold'; }
+                        else if (val !== '-' && data.column.index > 0 && data.column.index <= days) { data.cell.styles.textColor = [4, 120, 87]; data.cell.styles.fontStyle = 'bold'; }
+                        if (data.column.index > days) {
+                            data.cell.styles.fillColor = [248, 250, 252]; data.cell.styles.fontStyle = 'bold';
+                            if (data.column.index === days + 1) data.cell.styles.textColor = [4, 120, 87];
+                            if (data.column.index === days + 2) data.cell.styles.textColor = [225, 29, 72];
+                            if (data.column.index === days + 3) data.cell.styles.textColor = [217, 119, 6];
+                        }
+                    }
+                }
+            });
+
+            // Keterangan Kode & Aturan Shift
+            let fy = doc.lastAutoTable.finalY + 7;
+            if (fy > doc.internal.pageSize.getHeight() - 45) { doc.addPage(); fy = 22; }
+            doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42);
+            doc.text("KETERANGAN KODE & ATURAN SHIFT:", 10, fy);
+            doc.setFont("helvetica", "normal"); doc.setTextColor(71, 85, 105);
+            doc.text("- OFF : Libur / Day Off   |   - IZN : Izin / Sakit   |   - (-) : Belum Dijadwalkan   |   - Kolom merah muda : Hari Minggu", 10, fy + 4.5);
+
+            const shiftRules = gShift.filter(s => s.outlet === outletVal);
+            let sy = fy + 9;
+            shiftRules.forEach(s => {
+                doc.text(`- ${s.kode.slice(0, 4).toUpperCase()} (${s.kode}): ${s.jamMasuk} s/d ${s.jamKeluar} | Toleransi Telat: ${s.toleransi} mnt | Min. Lembur: >${s.ambangLembur || 60} mnt`, 10, sy);
+                sy += 4;
+            });
+
+            // Rincian Beban Kerja per Staf (2 Kolom)
+            sy += 4;
+            if (sy > doc.internal.pageSize.getHeight() - 35) { doc.addPage(); sy = 22; }
+            doc.setFont("helvetica", "bold"); doc.setTextColor(15, 23, 42);
+            doc.text("RINCIAN BEBAN KERJA PEGAWAI:", 10, sy);
+            doc.setFont("helvetica", "normal"); doc.setTextColor(71, 85, 105);
+            const half = Math.ceil(rincian.length / 2);
+            doc.text(rincian.slice(0, half), 10, sy + 5);
+            if (rincian.length > half) doc.text(rincian.slice(half), 180, sy + 5);
+
+            pdfDrawSignature_(doc, sy + (half * 4) + 6, ['Disiapkan oleh,\nKepala Toko / Admin', 'Disetujui oleh,\nOwner AiMoy']);
+            pdfApplyFooters_(doc);
+            doc.save(`Roster_Matrix_Lengkap_${outletVal}_${yyyy}${mm}.pdf`);
         }
 
         // --- 4. JADWAL WFM ---
@@ -1412,22 +1794,7 @@
                 Swal.close(); Toast.fire({ icon: 'success', title: 'Matrix disimpan' }); renderTabelMatrix();
             } catch (e) { Swal.fire('Gagal', e.message, 'error'); }
         }
-        function downloadMatrixPDF() {
-            const bulanVal = document.getElementById('matrix-bulan').value, outletVal = document.getElementById('matrix-outlet').value;
-            if (!bulanVal || !outletVal) return Toast.fire({ icon: 'warning', title: 'Pilih bulan & cabang' });
-            const [yyyy, mm] = bulanVal.split('-'), days = new Date(yyyy, mm, 0).getDate();
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('landscape', 'mm', 'legal');
-            doc.setFontSize(13); doc.text(`ROSTER MATRIX — ${outletVal} (${bulanVal})`, 10, 14);
-            const head = ['NAMA', ...Array.from({length:days}, (_,i)=>String(i+1)), 'HDR','OFF','IZN'], body = [];
-            document.querySelectorAll('#tbody-matrix tr').forEach(tr => {
-                const nama = tr.querySelector('span')?.textContent; if (!nama) return;
-                let h=0, o=0, iz=0; const row = [nama];
-                tr.querySelectorAll('.sel-matrix').forEach(s => { if (s.value==='OFF'){o++;row.push('OFF');} else if (s.value==='IZIN'){iz++;row.push('IZN');} else if (!s.value) row.push('-'); else {h++;row.push(s.value.slice(0,4).toUpperCase());} });
-                row.push(h, o, iz); body.push(row);
-            });
-            doc.autoTable({ startY: 20, head: [head], body, theme: 'grid', styles: { fontSize: 6.5, halign: 'center' }, columnStyles: { 0: { halign: 'left', cellWidth: 35 } } });
-            doc.save(`Roster_${outletVal}_${bulanVal}.pdf`);
-        }
+       
         async function aimoyGenerateSchedule() {
             const bulan = document.getElementById('auto-sched-month').value, outlet = document.getElementById('auto-sched-outlet').value, headcountPerShift = Number(document.getElementById('auto-sched-hc').value);
             if (!bulan || !outlet) return Toast.fire({ icon: 'warning', title: 'Pilih bulan & outlet' });
